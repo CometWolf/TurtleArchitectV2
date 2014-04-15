@@ -110,7 +110,7 @@ tTool = { --Default equipped tools and colors
   },
   select = {}, --contains selection tool info
   clipboard = false, --tool clipboard
-  circle = {} --contains circle tool info
+  shape = {} --contains circle and square tool info
 }
 
 tMode = { -- default modes

@@ -40,7 +40,7 @@ local tool = {
     tTool.change("fCircle",1,2)
   end,
   renderFunc = function(event,button,x,z,color)
-    local c = tTool.circle
+    local c = tTool.shape
     if event == "mouse_click" then
       if button == 1 then
         c.sX = x+tTerm.scroll.x
@@ -53,7 +53,7 @@ local tool = {
       elseif c.eX then --button 2
         tBlueprint[tTerm.scroll.layer]:paste(c.l,math.min(c.sX,c.eX)-1,math.min(c.sZ,c.eZ)-1)
         renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
-        tTool.circle = {}
+        tTool.shape = {}
         renderToolOverlay()
       end
     elseif button == 1 and c.sX then --drag

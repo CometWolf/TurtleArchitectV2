@@ -497,7 +497,7 @@ function renderToolOverlay() --renders all tool overlays
   screen:delLayer(screen.layers.toolsOverlay)
   screen:setLayer(screen.layers.toolsOverlay)
   local view = tTerm.viewable
-  local t = tTool.clipboard or (tTool.circle.eX and tTool.circle)
+  local t = tTool.clipboard or (tTool.shape.eX and tTool.shape)
   if t then
     local sX = math.min(t.sX,t.eX)
     local eX = math.max(t.eX,t.sX)
