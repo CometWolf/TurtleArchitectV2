@@ -168,7 +168,7 @@ sleep = function(time)
     screen:refresh()
     sleepTime = 0
   end
-  sleep(time)
+  _G.sleep(time)
 end
 
 

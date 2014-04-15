@@ -5,9 +5,10 @@ tTool.change = function(tool,b1,b2) --tool change function
       tTool[b2].tool = tool
     end
   end
-  if tool ~= "Select" then
+  if tTool.shape.eX or tTool.clipboard or tTool.select.sX then
     tTool.select = {}
     tTool.clipboard = false
+    tTool.shape = {}
     screen:delLayer(screen.layers.toolsOverlay)
   end
 end
