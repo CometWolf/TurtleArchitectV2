@@ -3,7 +3,7 @@ local calcFunc = function(x1,z1,x2,z2,color)
     max = math.max(x1,x2),
     min = math.min(x1,x2)
   }
-  x.max = x.max-x.min
+  x.max = x.max-x.min+1
   x.min = 1
   x.rad = math.round((x.max-x.min)/2)
   x.center = x.rad+x.min
@@ -11,7 +11,7 @@ local calcFunc = function(x1,z1,x2,z2,color)
     max = math.max(z1,z2),
     min = math.min(z1,z2)
   }
-  z.max = z.max-z.min
+  z.max = z.max-z.min+1
   z.min = 1
   z.rad = math.round((z.max-z.min)/2)
   z.center = z.rad+z.min
@@ -51,7 +51,7 @@ local tool = {
         tTool.circle = {}
         renderToolOverlay()
       end
-    elseif button == 1 then --drag
+    elseif button == 1 and c.sX then --drag
       c.eX = x+tTerm.scroll.x
       c.eZ = z+tTerm.scroll.z
       c.l = calcFunc(c.sX,c.sZ,c.eX,c.eZ,color)
