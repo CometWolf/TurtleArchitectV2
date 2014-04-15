@@ -796,6 +796,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   end
   local function refreshField(field)
    --updates input fields
+     screen:setLayer(screen.layers.dialouge)
     field = tInputs[field]
     if field.cX > field.lX then
       field.scroll = field.scroll+(field.cX-field.lX)
