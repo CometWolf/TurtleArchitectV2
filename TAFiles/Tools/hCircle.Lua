@@ -3,12 +3,16 @@ local calcFunc = function(x1,z1,x2,z2,color)
     max = math.max(x1,x2),
     min = math.min(x1,x2)
   }
+  x.max = x.max-x.min
+  x.min = 1
   x.rad = math.round((x.max-x.min)/2)
   x.center = x.rad+x.min
   local z = {
     max = math.max(z1,z2),
     min = math.min(z1,z2)
   }
+  z.max = z.max-z.min
+  z.min = 1
   z.rad = math.round((z.max-z.min)/2)
   z.center = z.rad+z.min
   local qPoints = class.matrix.new(2)
@@ -36,12 +40,12 @@ end
 local tool = {
   menuOrder = 4, --menu order, 1 being top
   selectFunc = function(button)
-    tTool.change("hCircle",button)
+    tTool.change("hCircle",1,2)
   end,
   renderFunc = function(event,button,x,z,color)
-    if button == 1 then
-      local c = tTool.circle
-      if event == "mouse_click" then
+    local c = tTool.circle
+    if event == "mouse_click" then
+      if button == 1 then
         c.sX = x+tTerm.scroll.x
         c.sZ = z+tTerm.scroll.z
         if c.eX then
@@ -49,15 +53,17 @@ local tool = {
         end
         c.eX = false
         c.eZ = false
-      else
-        c.eX = x+tTerm.scroll.x
-        c.eZ = z+tTerm.scroll.z
-        screen:delLayer(screen.layers.toolsOverlay)
-        screen:setLayer(screen.layers.toolsOverlay)
-        screen:setBackgroundColor(color)
-        c.l = calcFunc(c.sX,c.sZ,c.eX,c.eZ,color)
+      elseif c.eX then --button 2
+        tBlueprint[tTerm.scroll.layer]:paste(c.l,math.min(c.sX,c.eX)-1,math.min(c.sZ,c.eZ)-1)
+        renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
+        tTool.circle = {}
         renderToolOverlay()
       end
+    elseif button == 1 then --drag
+      c.eX = x+tTerm.scroll.x
+      c.eZ = z+tTerm.scroll.z
+      c.l = calcFunc(c.sX,c.sZ,c.eX,c.eZ,color)
+      renderToolOverlay()
     end
   end,
 }

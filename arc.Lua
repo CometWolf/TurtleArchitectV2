@@ -100,7 +100,7 @@ setmetatable(debug,
 --[[----------------------------------------------------------------------------------------------------------
 File paths
 ----------------------------------------------------------------------------------------------------------]]--
-tFile.folder = "TurtleArchitectV2/TAFiles" --program files folder
+tFile.folder = tFile.program:match"^(.+/).-$".."/TAFiles" --program files folder
 tFile.classFolder = tFile.folder.."/Classes" --classes folder
 tFile.menuFolder = tFile.folder.."/Menus" --menu tables folder
 tFile.mainMenuFolder = tFile.menuFolder.."/mainMenus" --main menus folder
@@ -267,7 +267,7 @@ tBar = { --menu bar variables
 --[[----------------------------------------------------------------------------------------------------------
 Rendering functions
 ----------------------------------------------------------------------------------------------------------]]--
-function renderBottomBar()
+function renderBottomBar() --renders bottom bar and updates info
   screen:setLayer(screen.layers.bottomBar)
   screen:setCursorPos(1,tTerm.screen.y)
   local bgColor = tColors.bottomBar
@@ -335,7 +335,7 @@ function renderBottomBar()
   end
 end
 
-function renderMenu(menu)
+function renderMenu(menu) --renders the given menu and creates touchmap for said menu
   tMenu.touchMap = class.matrix.new(2)
   screen:delLayer(4)
   if not menu 
@@ -387,7 +387,7 @@ function renderMenu(menu)
   end
 end
 
-function renderSideBar()
+function renderSideBar() --renders sidebar and creates touchmap for sidebar buttons
   screen:setLayer(screen.layers.sideBar)
   local posX,posY = tTerm.screen.x,(tTerm.screen.y > 8+#tMenu.main and tTerm.screen.y-1) or tTerm.screen.y
   for k,v in pairs(colorKey) do
@@ -493,15 +493,19 @@ function scroll(layer,x,z,absolute) --scrolls the canvas x and z on layer, if ab
   end
 end
 
-function renderToolOverlay()
+function renderToolOverlay() --renders all tool overlays
   screen:delLayer(screen.layers.toolsOverlay)
   screen:setLayer(screen.layers.toolsOverlay)
   local view = tTerm.viewable
   local t = tTool.clipboard or (tTool.circle.eX and tTool.circle)
   if t then
-    for iX = math.max(t.sX,view.sX),math.min(t.eX,view.eX) do
-      for iZ = math.max(t.sZ,view.sZ),math.min(t.eZ,view.eZ) do 
-        local block = t.l[iX-t.sX+1][iZ-t.sZ+1]
+    local sX = math.min(t.sX,t.eX)
+    local eX = math.max(t.eX,t.sX)
+    local sZ = math.min(t.sZ,t.eZ)
+    local eZ = math.max(t.eZ,t.sZ)
+    for iX = math.max(sX,view.sX),math.min(eX,view.eX) do
+      for iZ = math.max(sZ,view.sZ),math.min(eZ,view.eZ) do 
+        local block = t.l[iX-sX+1][iZ-sZ+1]
         if block ~= " " then
           screen:drawPoint(iX-tTerm.scroll.x+tTerm.viewable.mX,iZ-tTerm.scroll.z+tTerm.viewable.mZ,colorKey[block])
         end
@@ -532,7 +536,7 @@ function renderToolOverlay()
   end
 end
 
-function writePoint(x,z,color)
+function writePoint(x,z,color) --renders the specified blueprint point at wherever the cursor is
   local marker,bColor
   color = color or tBlueprint[tTerm.scroll.layer][x][z]
   if tMode.backgroundLayer and color == " " and tMode.backgroundLayer[x][z] ~= " " then
@@ -566,7 +570,7 @@ function renderPoint(x,z,color,skipScroll) --renders the point on screen, withou
   writePoint(x,z,false)
 end
 
-function renderArea(x1,z1,x2,z2,skipScroll)
+function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the blueprint on screen
   layer = layer or tBlueprint[tTerm.scroll.layer]
   local view = tTerm.viewable
   if not skipScroll then
@@ -576,8 +580,8 @@ function renderArea(x1,z1,x2,z2,skipScroll)
     z2 = z2+tTerm.scroll.z
   end
   screen:setLayer(screen.layers.canvas)
-  for iX = math.max(x1,view.sX),math.min(x2,view.eX) do
-    for iZ = math.max(z1,view.sZ),math.min(z2,view.eZ) do
+  for iX = math.max(math.min(x1,x2),view.sX),math.min(math.max(x2,x1),view.eX) do
+    for iZ = math.max(math.min(z1,z2),view.sZ),math.min(math.max(z2,z1),view.eZ) do
       screen:setCursorPos(iX-tTerm.scroll.x+view.mX,iZ-tTerm.scroll.z+view.mZ)
       writePoint(iX,iZ)
     end
@@ -941,19 +945,8 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Other functions
 ----------------------------------------------------------------------------------------------------------]]--
-tTool.change = function(tool,b1,b2) --tool change function
-  if b1 then
-    tTool[b1].tool = tool
-    if b2 then
-      tTool[b2].tool = tool
-    end
-  end
-  if tool ~= "Select" then
-    tTool.select = {}
-    tTool.clipboard = false
-    screen:delLayer(screen.layers.toolsOverlay)
-  end
-end
+
+
 --[[----------------------------------------------------------------------------------------------------------
 Program execution begins
 ----------------------------------------------------------------------------------------------------------]]--
@@ -1017,7 +1010,7 @@ Color program
           scroll()
           renderBottomBar()
           renderSideBar()
-        else
+        elseif button ~= 3 then
           --executes tool function
           local tool = tTool[button].tool
           local color = tTool[button].color

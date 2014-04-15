@@ -35,7 +35,6 @@ menu = {
     clipboard = true,
     func = function()
       local c = tTool.clipboard
-      local view = tTerm.viewable
       tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX-1,c.sZ-1)
       renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       c.sX = c.sX+1

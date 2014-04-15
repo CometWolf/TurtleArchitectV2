@@ -1,3 +1,17 @@
+tTool.change = function(tool,b1,b2) --tool change function
+  if b1 then
+    tTool[b1].tool = tool
+    if b2 then
+      tTool[b2].tool = tool
+    end
+  end
+  if tool ~= "Select" then
+    tTool.select = {}
+    tTool.clipboard = false
+    screen:delLayer(screen.layers.toolsOverlay)
+  end
+end
+
 local menu
 menu = {}
 --load tools
