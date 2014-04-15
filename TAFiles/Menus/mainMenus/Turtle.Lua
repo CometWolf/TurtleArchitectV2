@@ -13,17 +13,17 @@ menu = {
           {
             name = "X",
             value = cTurtle.tPos.x,
-            accepted = "%d"
+            accepted = "[-+%d]"
           },
           {
             name = "Y",
             value = cTurtle.tPos.y,
-            accepted = "%d"
+            accepted = "[-+%d]"
           },
           {
             name = "Z",
             value = cTurtle.tPos.z,
-            accepted = "%d"
+            accepted = "[-+%d]"
           },
         }
       )
@@ -32,7 +32,7 @@ menu = {
       end
     end
   },
-  [1] = {
+  [2] = {
     name = "Turn",
     func = function()
       local button, tRes = input(
@@ -57,13 +57,34 @@ menu = {
       
     end
   },
-  [1] = {
-    name = "Create new...",
+  [4] = {
+    name = "Build blueprint...",
     func = function()
-      
+      local button, tRes = input(
+        "Input layer range to build",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "Start",
+            value = 1,
+            accepted = "%d"
+          },
+          {
+            name = "End",
+            value = #tBlueprint,
+            accepted = "%d"
+          }
+        }
+      )
+      if button == "Ok" then
+        build(tBlueprint,tRes.Start,tRes.End)
+      end
     end
   },
-  [1] = {
+  [5] = {
     name = "Create new...",
     func = function()
       

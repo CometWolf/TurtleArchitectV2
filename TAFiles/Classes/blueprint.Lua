@@ -3,7 +3,8 @@ blueprint = { --blueprint class
   new = function()
     return setmetatable(
       {
-        [1] = class.layer.new()
+        [1] = class.layer.new(),
+        colorSlots = class.matrix.new(2)
       },
       {
         __index = blueprint

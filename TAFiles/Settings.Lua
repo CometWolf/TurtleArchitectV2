@@ -80,11 +80,13 @@ colorKey = setmetatable(
 )
 local colorKeyNames = {}
 local colorKeyUpper = {}
+keyColor = {}
 for kK,vK in pairs(colorKey) do -- add color names to colorKey table
   colorKeyUpper[kK:upper()] = vK
   for kC,vC in pairs(colors) do
     if vC == vK then
-    colorKeyNames[kC] = kK
+      colorKeyNames[kC] = kK
+      keyColor[kK] = kC
       break
     end
   end

@@ -12,7 +12,7 @@ layer = { --layer class
               t[k] = class.x:new()
               return t[k]
             else
-              error("Attempt to access invalid x-axis "..k,2)
+              error("Attempt to access invalid x-axis "..tostring(k),2)
             end
           end
           return layer[k]

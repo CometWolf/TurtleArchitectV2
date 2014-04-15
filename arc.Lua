@@ -108,6 +108,13 @@ tFile.toolFolder = tFile.folder.."/Tools" --tools folder
 tFile.cTurtle = "/cTurtle" --cTurtle API,downloaded automatically if missing on a turtle.
 tFile.settings = tFile.folder.."/settings.Lua" --settings file
 
+tPaste = {
+--pastebin codes and functions
+  program = "VTZ6CqWY", --program installer
+  cTurtle = "JRPN0P8x", --Turtle API, downloaded automatically if needed
+  key = "0ec2eb25b6166c0c27a394ae118ad829", -- pastbin dev key, cc default
+}
+
 --[[----------------------------------------------------------------------------------------------------------
 API mods
 ----------------------------------------------------------------------------------------------------------]]--
@@ -116,6 +123,16 @@ os = setmetatable(
     pullEvent = function(sFilter) --refreshes the screen every time pullEvent is used
       screen:refresh()
       return _G.os.pullEvent(sFilter)
+    end,
+    sleepTime = 0,
+    sleep = function(time)
+    --refreshes screen if more than 1 second of sleep time has elapsed
+      os.sleepTime = os.sleepTime+time
+      if os.sleepTime > 1 then
+        screen:refresh()
+        os.sleepTime = 0
+      end
+      G.sleep(time)
     end
   },
   {
@@ -160,17 +177,77 @@ string = setmetatable(
   }
 )
 
-local sleepTime = 0
-sleep = function(time)
-  --refreshes screen if more than 1 second of sleep time has elapsed
-  sleepTime = sleepTime+time
-  if sleepTime > 1 then
-    screen:refresh()
-    sleepTime = 0
-  end
-  _G.sleep(time)
-end
-
+http = setmetatable(
+  {
+    paste = {
+      get = function(code,file,blueprint)
+        local response = http.get("http://pastebin.com/raw.php?i="..code)
+        if response then
+        --sucesss
+          local paste = response.readAll()
+          response.close()
+          if file then
+            --save to file
+            local file = fs.open(file,"w")
+            file.write(paste)
+            file.close()
+            return true
+          end
+          --save to variable
+          return paste
+        else
+          --failure
+          return false
+        end
+      end,
+      put = function(file,name)
+        local upload
+        if type(file) == "string" and fs.exists(file) then
+        --local file
+          file = fs.open("file","r")
+          upload = file.readAll()
+          file.close()
+        elseif type(file) == "table" then
+        --blueprint
+          upload = "Blueprint file for CometWolf's Turtle Architect. Pastebin: "..tPaste.program
+          for layer=1,#tBlueprint do
+            upload = upload.."\nLayer "..layer.." :"
+            for x=1,#tBlueprint[layer] do
+              local line = "X"..x..string.rep(" ",#string.format(#tBlueprint[layer])-#string.format(x))..": "
+              for z=1,#tBlueprint[layer][x] do
+                local block = tBlueprint[layer][x][z] or "0"
+                line = line..block..string.rep(" ",3-#string.format(block))
+              end
+              upload = upload.."\n"..line
+            end
+          end
+        end
+        local key = tPaste.key
+        local response = http.post(
+          "http://pastebin.com/api/api_post.php",
+          "api_option=paste&"..
+          "api_dev_key="..key.."&"..
+          "api_paste_format=text&"..
+          "api_paste_name="..textutils.urlEncode(name or "Untitled").."&"..
+          "api_paste_code="..textutils.urlEncode(upload)
+        )
+        if response then
+        --sucess
+          local sResponse = response.readAll()
+          response.close()      
+          local sCode = string.match( sResponse, "[^/]+$" )
+          return sResponse, sCode
+        else
+          --failure
+          return false
+        end
+      end
+    }
+  },
+  {
+    __index = _G.http
+  }
+)
 
 --[[----------------------------------------------------------------------------------------------------------
 Program files loading
@@ -213,9 +290,6 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Assorted variables
 ----------------------------------------------------------------------------------------------------------]]--
-tPaste = { --pastebin program codes
-  program = "WIP"
-}
 
 tTerm = { --screen size and viewing area
   screen = {}, --screen size
@@ -244,6 +318,10 @@ tTerm.scroll.layer = 1
 tTerm.color = term.isColor()
 
 tBlueprint = class.blueprint.new() --stores current blueprint file
+
+tOngoing = { --stores ongoing build info
+  dir = {}
+}
 
 screen = class.screenBuffer.new() --screen buffer, supports layers and uses custom methods, no silly redirect here.
 screen.layers = {
@@ -706,7 +784,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     --closes input box and returns event and the values in the input fields
     local tRes = {}
     for iR=1,#tInputs do
-      tRes[tInputs[iR].name] = tonumber(tInputs[iR].value) or tInputs[iR].value
+      tRes[tInputs[iR].name] = tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
     end
     screen:setCursorBlink(false)
     if reInput then
@@ -905,26 +983,66 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--
+function saveProgress(fileName)
+  local file = class.fileTable.new()
+  file:write("sLayer: "..(tOngoing.sLayer or 1))
+  file:write("eLayer: "..(tOngoing.eLayer or #tBlueprint))
+  file:write("X: "..(tOngoing.x or 0))
+  file:write("Y: "..(tOngoing.y or 0))
+  file:write("Z: "..(tOngoing.z or 0))
+  file:write("dir X: "..(tOngoing.dir.x or "+"))
+  file:write("dir Y: "..(tOngoing.dir.y or "+"))
+  file:write("dir Z: "..(tOngoing.dir.z or "+"))
+  file:write("Ender chest: "..(tOngoing.enderChest or 0))
+  file:save(fileName..".TAO")
+end
+
+function loadProgress(fileName)
+  local tOngoing = {}
+  local file = fs.open(fileName..".TAO","r")
+  local read = file.read
+  local line = read()
+  tOngoing.sLayer = tonumber(line:match"sLayer: (%d+)" or 1)
+  line = read()
+  tOngoing.eLayer = tonumber(line:match"eLayer: (%d+)" or #tBlueprint)
+  line = read()
+  tOngoing.x = tonumber(line:match"X: (%d+)" or 0)
+  line = read()
+  tOngoing.y = tonumber(line:match"Y: (%d+)" or 0)
+  line = read()
+  tOngoing.z = tonumber(line:match"Z: (%d+)" or 0)
+  tOngoing.dir = {}
+  tOngoing.dir.x = line:match"dir Y: ([+-])" or "+"
+  line = read()
+  tOngoing.dir.y = line:match"dir Y: ([+-])" or "+"
+  line = read()
+  tOngoing.dir.z = line:match"dir Y: ([+-])" or "+"
+  line = read()
+  tOngoing.enderChest = tonumber(line:match"EnderChest: (%d+)") or false
+  file.close()
+  return tOngoing
+end
+
 function selectColor(color,threshold)
   --checks the slots assigned to (color) for blocks,
   --and acts accordingly
   threshold = threshold or 0 --min amount of items in accepted slot
   while true do
-    for k,v in pairs(tColorSlots[color]) do
+    for k,v in pairs(tBlueprint.colorSlots[color]) do
       if turtle.getItemCount(v) > threshold then
         turtle.select(v)
         return true
       end
     end
     if cTurtle.tSettings.enderChest then
-      if cTurtle.enderRestock(cTurtle.tSettings.enderChest,tColorSlots[colorNum],tColorSlots[colorNum]) then
-        turtle.select(tColorSlots[color][1])
+      if cTurtle.enderRestock(cTurtle.tSettings.enderChest,tBlueprint.colorSlots[colorNum],tBlueprint.colorSlots[colorNum]) then
+        turtle.select(tBlueprint.colorSlots[color][1])
         return true
       end
     end
-    local retry = os.startTimer(tTimers.restockRetry)
+    local retry = os.startTimer(tTimers.restockRetry.time)
     local button,tRes = input(
-      color.." blocks required in slots "..tColorSlots[color][1].."-"..tColorSlots[color][#tColorSlots[color]],
+      keyColor[color].." blocks required in slots "..tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]],
       {
         "Cancel",
         "Ok"
@@ -942,27 +1060,278 @@ function selectColor(color,threshold)
   end
 end
 
+function checkUsage(blueprint,sLayer,eLayer)
+  --checks amount of materials required to build the given blueprint
+  blueprint = blueprint or tBlueprint
+  tOngoing.sLayer = sLayer or 1 --start layer
+  tOngoing.eLayer = eLayer or #blueprint --end layer
+  local tUsage = {
+    fuel = 0
+  }
+  local tPos = {
+    x = 0,
+    y = 0,
+    z = 0
+  }
+  for i = sLayer,eLayer do
+    for nX,vX in pairs(blueprint[i]) do
+      tUsage.fuel = math.abs(nX-tPos.x)+tUsage.fuel
+      tPos.x = nX
+      for nZ,block in pairs(vX) do
+        tUsage.fuel = math.abs(nZ-tPos.z)+tUsage.fuel
+        tPos.z = nZ
+        tUsage[block] = (tUsage[block] or 0)+1
+      end
+    end
+    tUsage.fuel = math.abs(i-tPos.y)+tUsage.fuel
+    tPos.y = i
+  end
+  return tUsage
+end
+
+function assignColorSlots(color)
+  local button, tRes, reInput = input(
+    "Input slot range to use for "..keyColor[color],
+    {
+      "Cancel",
+      "Ok",
+    },
+    {
+      {
+        name = "From",
+        value = tBlueprint.colorSlots[color][1] or 1,
+        accepted = "%d"
+      },
+      {
+        name = "To",
+        value = tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]] or 16,
+        accepted = "%d"
+      },
+    },
+    false,
+    true
+  )
+  while button ~= "Cancel" do
+    if not tRes.From then
+      button,tRes,reInput = reInput("Missing parameter From!")
+    elseif not tRes.To then
+      button,tRes,reInput = reInput("Missing parameter To!")
+    elseif tRes.From < 1 or tRes.From > tRes.To
+    or tRes.To > 16 then
+      button,tRes,reInput = reInput("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
+    elseif button == "Ok" then
+      tBlueprint.colorSlots[color] = {}
+      for i=tRes.From,tRes.To do
+        tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]+1] = i
+      end
+      return true
+    end
+  end
+  return false
+end
+
+
 function build(blueprint,sLayer,eLayer)
   --builds the given blueprint layers
   blueprint = blueprint or tBlueprint
-  sLayer = sLayer or 1 --start layer
-  eLayer = eLayer or #blueprint --end layer
-  local tOrigin = {}--construction start point
-  for k,v in pairs(cTurtle.tPos) do
-    tOrigin[k] = v
+  tOngoing.sLayer = sLayer or 1 --start layer
+  tOngoing.eLayer = eLayer or #blueprint --end layer
+  if not tFile.blueprint then
+    local button, tRes = input(
+      "Blueprint must be saved locally prior to building",
+      {
+        "Cancel",
+        "Ok"
+      },
+      {
+        {
+          name = "File name",
+          value = "/",
+          accepted = "."
+        },
+      }
+    )
+    if button ~= "Cancel" then
+      local fileName = tRes["File name"]
+      tBlueprint:save(fileName)
+      tFile.blueprint = fileName
+      input("Sucessfully saved "..fileName..".TAb")
+    else
+      input("Construction cancelled.")
+      return
+    end
+  elseif fs.exists(tFile.blueprint..".TAO") then
+    local button = input(
+      "In-progress build of current blueprint found. Load?",
+      {
+        "Yes",
+        "No"
+      }
+    )
+    if button ~= "No" then
+      tOngoing = loadProgress(tFile.blueprint)
+    end
   end
-  for i = sLayer,eLayer do
-    for kX,vX in pairs(blueprint[i]) do
-      cTurtle.moveTo(kX,"X")
-      for kZ,vZ in pairs(blueprint[i][k]) do
-        cTurtle.moveTo(kZ,"Z")
-        if not selectColor(v) then
-          return
-        end
-        cTurtle.replace(buildDir)
+  local tUsage = checkUsage(blueprint,sLayer,eLayer)
+  local fuelUsage = tUsage.fuel
+  tUsage.fuel = nil
+  for k,v in pairs(tUsage) do
+    if not tBlueprint.colorSlots[k][1] then
+      if not assignColorSlots(k) then
+        input("Construction cancelled.")
+        return
       end
     end
-    cTurtle.move"up"
+  end
+  if not tOngoing.x then
+    local button, tRes, reInput = input(
+      "Input build coordinates",
+      {
+        "Cancel",
+        "Ok",
+        "Cur pos"
+      },
+      {
+        {
+          name = "X",
+          value = cTurtle.tPos.x,
+          accepted = "[+-%d]"
+        },
+        {
+          name = "Y",
+          value = cTurtle.tPos.y,
+          accepted = "[+-%d]"
+        },
+        {
+          name = "Z",
+          value = cTurtle.tPos.z,
+          accepted = "[+-%d]"
+        },
+      },
+      false,
+      true
+    )
+    while button ~= "Cancel" do
+      if button == "Cur pos" then
+        tRes.X = cTurtle.tPos.x
+        tRes.Y = cTurtle.tPos.y
+        tRes.Z = cTurtle.tPos.z
+      end
+      if not tRes.X then
+        button,tRes,reInput = reInput("Missing parameter X!")
+      elseif not tRes.Y then
+        button,tRes,reInput = reInput("Missing parameter Y!")
+      elseif not tRes.Z then
+        button,tRes,reInput = reInput("Missing parameter Z!")
+      elseif button == "Ok" or button == "Cur pos" then
+        tOngoing.x = tRes.X
+        tOngoing.y = tRes.Y
+        tOngoing.z = tRes.Z
+        break
+      end
+    end
+  end
+  if not tOngoing.dir.x then
+    local button, tRes, reInput = input(
+      "Input build directions",
+      {
+        "Cancel",
+        "Ok",
+      },
+      {
+        {
+          name = "X",
+          value = "+",
+          accepted = "[+-]"
+        },
+        {
+          name = "Y",
+          value = "+",
+          accepted = "[+-]"
+        },
+        {
+          name = "Z",
+          value = "+",
+          accepted = "[+-]"
+        },
+      },
+      false,
+      true
+    )
+    while button ~= "Cancel" do
+      if not tRes.X then
+        button,tRes,reInput = reInput("Missing parameter X!")
+      elseif not tRes.Y then
+        button,tRes,reInput = reInput("Missing parameter Y!")
+      elseif not tRes.Z then
+        button,tRes,reInput = reInput("Missing parameter Z!")
+      elseif button == "Ok" or button == "Locate" then
+        tOngoing.dir.x = tRes.X
+        tOngoing.dir.y = tRes.Y
+        tOngoing.dir.z = tRes.Z
+        break
+      end
+    end
+  end
+  if not tOngoing.enderChest then
+    local button, tRes, reInput = input(
+      "Enable ender chest?",
+      {
+        "Cancel",
+        "Ok",
+        "Permanent"
+      },
+      {
+        {
+          name = "Slot",
+          value = "",
+          accepted = "[+-%d]"
+        },
+      },
+      false,
+      true
+    )
+    while button ~= "Cancel" do
+      if tRes.Slot and (tRes.Slot > 16 or tRes.slot < 1 ) then
+        button,tRes,reInput = reInput("Invalid slot "..tRes.Slot)
+      elseif button == "Ok" then
+        tOngoing.enderChest = tRes.Slot
+        break
+      elseif button == "Permanent" then
+        tOngoing.enderChest = tRes.Slot
+        cTurtle.tSettings.enderFuel = tOngoing.enderChest
+        cTurtle.saveSettings()
+        break
+      end
+    end
+  end
+  cTurtle.tSettings.enderFuel = tOngoing.enderChest
+  for i = sLayer,eLayer do
+    for nX,vX in pairs(blueprint[i]) do
+      for nZ,block in pairs(vX) do
+        if block:match"%l" then
+          cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX),"X")
+          cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ),"Z")
+          if not selectColor(block,1) then
+            input("Construction cancelled.")
+            return
+          end
+          cTurtle.replace("-Y"..tOngoing.dir.y)
+          vX[nZ] = block:upper()
+        elseif block == "X" then
+          cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX),"X")
+          cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ),"Z")
+          selectColor(block,-1)
+          cTurtle.drop("Y-",64)
+          cTurtle.dig("-Y"..tOngoing.dir.y)
+          cTurtle.drop("Y-",64)
+          vX[nZ] = nil
+        end
+      end
+    end
+    if i < eLayer then
+      cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..i),"Y")
+    end
   end
 end
 
@@ -976,10 +1345,20 @@ Program execution begins
 ----------------------------------------------------------------------------------------------------------]]--
 tBlueprint = tBlueprint.load(tArg[1] or "") or tBlueprint
 tFile.blueprint = tBlueprint[1] and tArg[1]
+if turtle then
+  if not fs.exists(tFile.cTurtle) then
+    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
+  end
+  os.loadAPI"cTurtle"
+  cTurtle.tSettings.renderMove = false
+end
 --[[----------------------------------------------------------------------------------------------------------
 Non-color program
 ----------------------------------------------------------------------------------------------------------]]--
 if not tTerm.color then
+  if not turtle then
+    error("This software is incompatible with regular computers!")
+  end
   while true do
     local tEvent = {os.pullEvent()}
     if tEvent[1] == "key" then
