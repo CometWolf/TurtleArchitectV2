@@ -69,6 +69,7 @@ colorKey = setmetatable(
     m = 2 ^ 13,
     n = 2 ^ 14,
     o = 2 ^ 15,  --black
+    X = colors.red --break block marker
   },
   {
     __index = function(t,k)
@@ -79,7 +80,7 @@ colorKey = setmetatable(
 )
 local colorKeyNames = {}
 local colorKeyUpper = {}
-for kK,vK in pairs(colorKey) do -- add color names to colorKey to colorKey table
+for kK,vK in pairs(colorKey) do -- add color names to colorKey table
   colorKeyUpper[kK:upper()] = vK
   for kC,vC in pairs(colors) do
     if vC == vK then

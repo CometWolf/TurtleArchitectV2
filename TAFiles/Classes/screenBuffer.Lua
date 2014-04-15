@@ -79,7 +79,7 @@ screenBuffer = {
       end
     end
   end,
-  write = function(buffer,text)
+  write = function(buffer,text,bColor,tColor)
     for character in string.gmatch(text,".") do
       if buffer.x > tTerm.screen.x then
         return

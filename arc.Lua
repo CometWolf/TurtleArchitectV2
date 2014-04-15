@@ -293,7 +293,7 @@ function renderBottomBar() --renders bottom bar and updates info
   screen:setBackgroundColor(bgColor)
   local cursX,cursY = screen:getCursorPos()
   local coordString = "X:"..tTerm.scroll.x.." Y:"..tTerm.scroll.layer.." Z:"..tTerm.scroll.z
-  local screenX = tTerm.screen.y > 8+#tMenu.main and tTerm.screen.x or tTerm.screen.x-2
+  local screenX = tTerm.screen.y > 8+#tMenu.main and tTerm.screen.x-2 or tTerm.screen.x-3
   screen:write(string.rep(" ",screenX-#coordString-cursX+1)..coordString)
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function()
@@ -459,6 +459,25 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       end
       tBar.touchMap[tTerm.screen.x-1][2] = tBar.touchMap[tTerm.screen.x][2]
     end
+    screen:setCursorPos(tTerm.screen.x-1,tTerm.screen.y)
+    screen:setBackgroundColor(colors.black)
+    screen:setTextColor(colorKey.X)
+    screen:write("XX")
+    for i=0,1 do
+      tBar.touchMap[tTerm.screen.x-i][tTerm.screen.y] = function(button)
+        tTool[button].color = "X"
+        renderBottomBar()
+      end
+    end
+  else
+    screen:setCursorPos(tTerm.screen.x-2,tTerm.screen.y)
+    screen:setBackgroundColor(colors.black)
+    screen:setTextColor(colorKey.X)
+    screen:write("X")
+    tBar.touchMap[tTerm.screen.x-2][tTerm.screen.y] = function(button)
+      tTool[button].color = "X"
+      renderBottomBar()
+    end
   end
 end
 
@@ -539,7 +558,11 @@ end
 function writePoint(x,z,color) --renders the specified blueprint point at wherever the cursor is
   local marker,bColor
   color = color or tBlueprint[tTerm.scroll.layer][x][z]
-  if tMode.backgroundLayer and color == " " and tMode.backgroundLayer[x][z] ~= " " then
+  if color == "X" then
+    marker = "X"
+    screen:setTextColor(color)
+    bColor = colors.white
+  elseif tMode.backgroundLayer and color == " " and tMode.backgroundLayer[x][z] ~= " " then
     marker = tMode.grid and "+" or " "
     bColor = tColors.backgroundLayer
   elseif tMode.builtRender and color:match"%u" then
