@@ -1,0 +1,191 @@
+local menu
+menu = {
+  [1] = {
+    name = "Create new...",
+    func = function()
+      local button, tRes = input(
+        "Create new blueprint file...",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "File name",
+            value = "/",
+            accepted = "."
+          }
+        }
+      )
+      while button ~= "Cancel" do
+        tBlueprint = class.blueprint.new()
+        tFile.blueprint = tRes["File name"]
+        tTerm.scroll.layer = 1
+        scroll()
+        return
+      end
+    end
+  },
+  [2] = {
+    name = "Load...",
+    func = function()
+      local button, tRes, reInput = input(
+        "Load blueprint file",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "File name",
+            value = "/",
+            accepted = "."
+          },
+        },
+        false,
+        true
+      )
+      while button ~= "Cancel" do
+        local fileName = tRes["File name"]
+        local blueprint = tBlueprint.load(fileName)
+        if not fs.exists(fileName..".TAb") then
+          button,tRes,reInput = reInput(fileName.." does not exist!")
+        elseif not blueprint then
+          button,tRes,reInput = reInput(fileName.." is not a blueprint file!")
+        elseif button == "Ok" then
+          tFile.blueprint = fileName
+          tBlueprint = blueprint
+          scroll()
+          return
+        end
+      end
+    end
+  },
+  [3] = {
+    name = "Save",
+    func = function()
+      local fileName = tFile.blueprint
+      local button,tRes
+      if not fileName then
+        button, tRes = input(
+          "No file name for current blueprint,",
+          {
+            "Cancel",
+            "Ok"
+          },
+          {
+            {
+              name = "File name",
+              value = "/",
+              accepted = "."
+            },
+          }
+        )
+      end
+      while button ~= "Cancel" do
+        fileName = fileName or tRes["File name"]
+        tBlueprint:save(fileName)
+        tFile.blueprint = fileName
+        input("Sucessfully saved "..fileName..".TAb")
+        return
+      end
+    end
+  },
+  [4] = {
+    name = "Save as...",
+    func = function()
+      local button, tRes = input(
+        "Save current blueprint as",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "File name",
+            value = tFile.blueprint or "/",
+            accepted = "."
+          },
+        }
+      )
+      while button ~= "Cancel" do
+        fileName = fileName or tRes["File name"]
+        tBlueprint:save(fileName)
+        tFile.blueprint = fileName
+        input("Sucessfully saved "..fileName..".TAb")
+        return
+      end
+    end
+  },
+  [5] = {
+    name = "Flip...",
+    func = function()
+      local button = input(
+        "Flip the entire blueprint",
+        {
+          "Cancel",
+          "Horizontal",
+          "Vertical"
+        }
+      )
+      if button == "Horizontal" then
+        tBlueprint:flipX()
+        scroll()
+      elseif button == "Vertical" then
+        tBlueprint:flipZ()
+        scroll()
+      end
+    end
+  },
+  [6] = {
+    name = "Edit slot data...(WIP)",
+    func = function()
+      
+    end
+  },
+  [7] = {
+    name = "Mark built",
+    func = function()
+      local curLayer = tTerm.scroll.layer
+      local button, tRes = input(
+        "Mark the entire blueprint as built. This means the turtle will not build it",
+        {
+          "Cancel",
+          "Ok"
+        }
+      )
+      if button == "Ok" then
+        tBlueprint:markBuilt()
+        if tMode.builtRender then
+          scroll()
+        end
+      end
+    end
+  },
+  [8] = {
+    name = "Mark unbuilt",
+    func = function()
+      local curLayer = tTerm.scroll.layer
+      local button, tRes = input(
+        "Mark the entire blueprint as unbuilt. This will reset any progress the turtle has made",
+        {
+          "Cancel",
+          "Ok"
+        }
+      )
+      if button == "Ok" then
+        tBlueprint:markUnbuilt()
+        if tMode.builtRender then
+          scroll()
+        end
+      end
+    end
+  },
+  [9] = {
+    name = "Check usage(WIP)",
+    func = function()
+      
+    end
+  },
+}
+return menu

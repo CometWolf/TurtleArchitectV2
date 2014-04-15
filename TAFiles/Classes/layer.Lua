@@ -1,0 +1,228 @@
+local layer
+layer = { --layer class
+  new = function()
+    return setmetatable(
+      {
+      
+      },
+      {
+        __index = function(t,k)
+          if not layer[k] then
+            if type(k) == "number" then
+              t[k] = class.x:new()
+              return t[k]
+            else
+              error("Attempt to access invalid x-axis "..k,2)
+            end
+          end
+          return layer[k]
+        end,
+      }
+    )
+  end,
+  size = function(layer)
+    local size = 0
+    for nX,vX in pairs(layer) do
+      size = math.max(nX,size)
+    end
+    return size
+  end,
+  copy = function(layer,x1,z1,x2,z2,clipboard)
+  --returns a layer copy, optional coordinates
+    local copy = layer:new()
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 1,math.huge
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+    end
+    local eZ = 1
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      nX = nX-x.min+1
+      copy[nX] = vX:new()
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          copy[nX][nZ-z.min+1] = vZ
+          eZ = math.max(eZ,nZ)
+        end
+      end
+    end
+    if clipboard then
+      return {
+        l = copy,
+        sX = x.min,
+        eX = x.max,
+        sZ = z.min,
+        eZ = eZ,
+        lX = x.max-x.min+1,
+        lZ = eZ-z.min+1,
+      }
+    end
+    return copy
+  end,
+  paste = function(layer,clipboard,pX,pZ)
+    --combines layers, with an optional offset
+    pX = pX or 0
+    pZ = pZ or 0
+    for nX,vX in pairs(clipboard) do
+      for nZ,vZ in pairs(vX) do
+        layer[nX+pX][nZ+pZ] = vZ
+      end
+    end
+  end,
+  markBuilt = function(layer,x1,z1,x2,z2)
+    --marks the layer as built, optionally just one area
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 1,math.huge
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+    end
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          vX[nZ] = vZ:upper()
+        end
+      end
+    end
+  end,
+  markUnbuilt = function(layer,x1,z1,x2,z2)
+    --marks the layer as unbuilt, optionally just one area
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 1,math.huge
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+    end
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          vX[nZ] = vZ:lower()
+        end
+      end
+    end
+  end,
+  flipX = function(layer,x1,z1,x2,z2)
+  --flips layer on the x-axis, optionally just one area
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+      x.size = #layer+1
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+      x.size = x.max+1
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 1,math.huge
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+    end
+    local flipped = layer:new()
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      nX = x.size-nX
+      flipped[nX] = vX:new()
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          flipped[nX][nZ] = vZ
+        end
+      end
+    end
+    return flipped
+  end,
+  flipZ = function(layer,x1,z1,x2,z2)
+  --flips layer on the Z-axis, optionally just one area
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 0,math.huge
+      z.size = 0
+      for nX,vX in pairs(layer) do
+        z.size = math.max(z.size,vX:size())
+      end
+      z.size = z.size+1
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+      z.size = z.max+1
+    end
+    local flipped = layer:new()
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      flipped[nX] = vX:new()
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          flipped[nX][z.size-nZ] = vZ
+        end
+      end
+    end
+    return flipped
+  end,
+  recolor = function(layer,color,x1,z1,x2,z2)
+  --changes all colored blocks to the specified color, optionally within an area
+    local x,z = {},{}
+    if not (x1 and x2) then
+      x.min,x.max = 1,#layer
+    else
+      x.max = math.max(x1,x2)
+      x.min = math.min(x1,x2)
+    end
+    if not (z1 and z2) then
+      z.min,z.max = 1,math.huge
+    else
+      z.max = math.max(z1,z2)
+      z.min = math.min(z1,z2)
+    end
+    for nX = x.min,x.max do
+      local vX = layer[nX]
+      for nZ,vZ in pairs(vX) do
+        if nZ >= z.min and nZ <= z.max then
+          layer[nX][nZ] = color
+        end
+      end
+    end
+  end,
+  render = function(layer)
+  --renders the layer on the canvas
+    local view = tTerm.viewable
+    screen:setLayer(screen.layers.canvas)
+    for x = view.sX,view.eX do
+      for z = view.sZ,view.eZ do
+        screen:setCursorPos(x-tTerm.scroll.x+tTerm.viewable.mX,z-tTerm.scroll.z+tTerm.viewable.mZ)
+        writePoint(x,z)
+      end
+    end
+  end
+}
+return layer

@@ -1,0 +1,27 @@
+local x 
+x = { --x-axis class
+  new = function()
+    return setmetatable(
+      {
+
+      },
+      {
+        __index = function(t,k)
+          if not x[k] then
+            assert(type(k) == "number","Error: Attempt to access non-number value "..k.." on z-axis")
+            return " "
+          end
+          return x[k]
+        end
+      }
+    )
+  end,
+  size = function(t)
+    local size = 0
+    for nZ,vZ in pairs(t) do
+      size = math.max(size,nZ)
+    end
+    return size
+  end
+}
+return x
