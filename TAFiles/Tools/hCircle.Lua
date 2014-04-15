@@ -15,26 +15,18 @@ local calcFunc = function(x1,z1,x2,z2,color)
   z.min = 1
   z.rad = math.round((z.max-z.min)/2)
   z.center = z.rad+z.min
-  local qPoints = class.matrix.new(2)
+  local points = class.layer.new(2)
   local radStep = 1/((1.5*x.rad)+(1.5*z.rad)/2)
   for angle = 1, math.pi+radStep, radStep do
     local pX = math.round(math.cos(angle)*x.rad)
     local pZ = math.round(math.sin(angle)*z.rad)
-    qPoints[pX][pZ] = true
-  end
-  local fPoints = class.layer.new(2)
-  for pX,tZ in pairs(qPoints) do
-    for pZ in pairs(tZ) do
-      for i=-1,1,2 do
-        for j=-1,1,2 do
-          local pX = x.center + i*pX
-          local pZ = z.center + j*pZ
-          fPoints[pX][pZ] = color
-         end
+    for i=-1,1,2 do
+      for j=-1,1,2 do
+        points[x.center + i*pX][z.center + j*pZ] = color
       end
     end
   end
-  return fPoints
+  return points
 end
 
 local tool = {
