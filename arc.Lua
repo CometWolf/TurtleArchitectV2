@@ -107,6 +107,7 @@ tFile.mainMenuFolder = tFile.menuFolder.."/mainMenus" --main menus folder
 tFile.toolFolder = tFile.folder.."/Tools" --tools folder
 tFile.cTurtle = "/cTurtle" --cTurtle API,downloaded automatically if missing on a turtle.
 tFile.settings = tFile.folder.."/settings.Lua" --settings file
+tFile.installer = tFile.folder.."/installer.Lua" --github installer, used for updates
 
 tPaste = {
 --pastebin codes and functions

@@ -10,7 +10,10 @@ menu = {
           return
         end
       end
-      fs.delete(tFile.folder)
+      fs.delete(tFile.menuFolder)
+      fs.delete(tFile.classFolder)
+      fs.delete(tFile.toolFolder)
+      fs.delete(tFile.settings)
       fs.delete(tFile.program)
       term.clear()
       term.setCursorPos(1,1)
