@@ -40,7 +40,7 @@ local tool = {
         s.eX = false
         s.eZ = false
       elseif s.eX then --button 2
-        tBlueprint[tTerm.scroll.layer]:paste(s.l,math.min(s.sX,s.eX)-1,math.min(s.sZ,s.eZ)-1)
+        tBlueprint[tTerm.scroll.layer]:paste(s.l,math.min(s.sX,s.eX)-1,math.min(s.sZ,s.eZ)-1,tMode.overwrite)
         renderArea(s.sX,s.sZ,s.eX,s.eZ,true)
         tTool.shape = {}
         renderToolOverlay()

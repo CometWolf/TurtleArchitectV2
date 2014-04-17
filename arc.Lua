@@ -180,21 +180,34 @@ string = setmetatable(
 http = setmetatable(
   {
     paste = {
-      get = function(code,file,blueprint)
+      get = function(code,file)
+        local paste
         local response = http.get("http://pastebin.com/raw.php?i="..code)
         if response then
         --sucesss
-          local paste = response.readAll()
-          response.close()
-          if file then
+          if file == true then
+            --save to table
+            local tLines = {}
+            local line = response.readLine()
+            while line do
+              tLines[#tLines+1] = line
+              line = response.readLine()
+            end
+            return tLines
+          elseif file then
             --save to file
+            local paste = response.readAll()
+            response.close()
             local file = fs.open(file,"w")
             file.write(paste)
             file.close()
             return true
+          else
+            --save to variable
+            local paste = response.readAll()
+            response.close()
+            return paste
           end
-          --save to variable
-          return paste
         else
           --failure
           return false
@@ -209,18 +222,7 @@ http = setmetatable(
           file.close()
         elseif type(file) == "table" then
         --blueprint
-          upload = "Blueprint file for CometWolf's Turtle Architect. Pastebin: "..tPaste.program
-          for layer=1,#tBlueprint do
-            upload = upload.."\nLayer "..layer.." :"
-            for x=1,#tBlueprint[layer] do
-              local line = "X"..x..string.rep(" ",#string.format(#tBlueprint[layer])-#string.format(x))..": "
-              for z=1,#tBlueprint[layer][x] do
-                local block = tBlueprint[layer][x][z] or "0"
-                line = line..block..string.rep(" ",3-#string.format(block))
-              end
-              upload = upload.."\n"..line
-            end
-          end
+          upload = file:save(true)
         end
         local key = tPaste.key
         local response = http.post(
@@ -690,10 +692,10 @@ function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the 
   end
 end
 
-function drawPoint(x,z,color,skipScroll) --renders the point on screen as well as adding it to the blueprint
+function drawPoint(x,z,color,skipScroll,ignoreOverwrite) --renders the point on screen as well as adding it to the blueprint
   local layer = tBlueprint[tTerm.scroll.layer]
   color = tMode.builtDraw and color:upper() or color
-  if not tMode.overwrite and color ~= " " and layer[x+tTerm.scroll.x][z+tTerm.scroll.z] ~= " " then
+  if not tMode.overwrite and not ignoreOverwrite and color ~= " " and layer[x+tTerm.scroll.x][z+tTerm.scroll.z] ~= " " then
     return
   end
   layer[x+(not skipScroll and tTerm.scroll.x or 0)][z+(not skipScroll and tTerm.scroll.z or 0)] = (color ~= " " and color) or nil
@@ -891,7 +893,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     end
     local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
     screen:setCursorPos(field.sX,field.y)
-    screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString)))
+    screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
     screen:setCursorPos(field.sX+field.cX,field.y)
   end
   while true do

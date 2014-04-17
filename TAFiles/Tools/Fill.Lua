@@ -17,7 +17,7 @@ local tool = {
       }
     }
     while #tAffectedPoints > 0 do
-      if loops%50 == 0 then
+      if loops%200 == 0 then
         sleep(0.05)
       end
       for i=-1,1,2 do
@@ -26,7 +26,7 @@ local tool = {
         if tBlueprint[layer][x][z] == replaceColor
         and x >= tTerm.viewable.sX and x <= tTerm.viewable.eX 
         and z >= tTerm.viewable.sZ and z <= tTerm.viewable.eZ then
-          drawPoint(x,z,color,true)
+          drawPoint(x,z,color,true,true)
           table.insert(tAffectedPoints,{["x"] = x,["z"] = z})
         end
         x = tAffectedPoints[1]["x"]
@@ -34,7 +34,7 @@ local tool = {
         if tBlueprint[layer][x][z] == replaceColor
         and x >= tTerm.viewable.sX and x <= tTerm.viewable.eX 
         and z >= tTerm.viewable.sZ and z <= tTerm.viewable.eZ then
-          drawPoint(x,z,color,true)
+          drawPoint(x,z,color,true,true)
           table.insert(tAffectedPoints,{["x"] = x,["z"] = z})
         end
       end

@@ -68,13 +68,20 @@ layer = { --layer class
     end
     return copy
   end,
-  paste = function(layer,clipboard,pX,pZ)
+  paste = function(layer,clipboard,pX,pZ,merge)
     --combines layers, with an optional offset
     pX = pX or 0
     pZ = pZ or 0
     for nX,vX in pairs(clipboard) do
       for nZ,vZ in pairs(vX) do
-        layer[nX+pX][nZ+pZ] = vZ
+        if merge then
+          if not tMode.overwrite
+          or layer[nX+pX][nZ+pZ] == " " then
+            layer[nX+pX][nZ+pZ] = vZ
+          end
+        else
+          layer[nX+pX][nZ+pZ] = vZ
+        end
       end
     end
   end,

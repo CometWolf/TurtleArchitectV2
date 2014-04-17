@@ -52,21 +52,28 @@ menu = {
     end
   },
   [3] = {
-    name = "Scan layer(WIP)",
-    func = function()
-      
-    end
-  },
-  [4] = {
     name = "Build blueprint...",
     func = function()
       build(tBlueprint)
     end
   },
-  [5] = {
-    name = "Create new...",
+  [4] = {
+    name = "Break mode",
     func = function()
-      
+      local button = input(
+        [[
+Break mode means the turtle will break any obstructions in it's path, provided it has a pickaxe.
+Break mode: ]]..(tMode.break and "ON" or "OFF"),
+        {
+          "Cancel",
+          (tMode.break and "Break mode OFF" or "Break mode ON"),
+        }
+      )
+      if button == "Break mode ON" then
+        tMode.break = true
+      elseif button == "Break mode OFF" then
+        tMode.break = false
+      end
     end
   },
 }

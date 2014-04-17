@@ -42,7 +42,8 @@ menu = {
         "Load blueprint file",
         {
           "Cancel",
-          "Ok"
+          "Ok",
+          "Pastebin"
         },
         {
           {
@@ -56,17 +57,41 @@ menu = {
       )
       while button ~= "Cancel" do
         local fileName = tRes["File name"]
-        local blueprint = tBlueprint.load(fileName)
-        if not fs.exists(fileName..".TAb") then
-          button,tRes,reInput = reInput(fileName.." does not exist!")
-        elseif not blueprint then
-          button,tRes,reInput = reInput(fileName.." is not a blueprint file!")
-        elseif button == "Ok" then
-          tFile.blueprint = fileName
-          tBlueprint = blueprint
-          scroll()
-          input("Successfully loaded "..fileName..".TAb.")
-          return
+        if button == "Pastebin" then
+          if not fileName then
+            button,tRes,reInput = reInput("Missing pastebin code parameter!")
+          else
+            fileName = fileName:match"[^/]+"
+            local paste = http.paste.get(fileName,true)
+            if not paste then
+              button,tRes,reInput = reInput("Pastebin download of "..fileName.." failed!")
+            else
+              local blueprint = tBlueprint.load(paste)
+              if not blueprint then
+                button,tRes,reInput = reInput(fileName.." was not a Turtle Architect file!")
+              else
+                tBlueprint = blueprint
+                scroll()
+                input("Successfully downloaded "..fileName.."!")
+                return
+              end
+            end
+          end
+        else
+          local blueprint = tBlueprint.load(fileName)
+          if not fileName then
+            button,tRes,reInput = reInput("Missing blueprint file name parameter!")
+          elseif not fs.exists(fileName..".TAb") then
+            button,tRes,reInput = reInput(fileName.." does not exist!")
+          elseif not blueprint then
+            button,tRes,reInput = reInput(fileName.." is not a blueprint file!")
+          elseif button == "Ok" then
+            tFile.blueprint = fileName
+            tBlueprint = blueprint
+            scroll()
+            input("Successfully loaded "..fileName..".TAb.")
+            return
+          end
         end
       end
     end
@@ -115,7 +140,8 @@ menu = {
         "Save current blueprint as",
         {
           "Cancel",
-          "Ok"
+          "Ok",
+          "Pastebin"
         },
         {
           {
@@ -126,9 +152,17 @@ menu = {
         }
       )
       while button ~= "Cancel" do
-        fileName = fileName or tRes["File name"]
+        local fileName = fileName or tRes["File name"]
         if not fileName then
           button,tRes,reInput = reInput("Invalid file name!")
+        elseif button == "Pastebin" then
+          local response,code = http.paste.put(tBlueprint,fileName)
+          if not code then
+            button,tRes,reInput = reInput("Pastebin upload failed!")
+          else
+            input("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..code.." \nURL: "..response)
+            return
+          end
         elseif fs.exists(fileName..".TAb") then
           button,tRes,reInput = reInput(fileName.." already exists!")
         else

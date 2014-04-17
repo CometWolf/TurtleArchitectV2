@@ -59,5 +59,8 @@ fileTable = { --file table class, this is used to simplify file handling
     --returns the last line, or optionally the specified lineNum
     return tTable[lineNum or #tTable]
   end,
+  readAll = function(tTable) --returns all lines as a single string, with newline characters.
+    return table.concat(tTable,"\n")
+  end
 }
 return fileTable

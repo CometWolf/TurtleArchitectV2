@@ -35,7 +35,8 @@ menu = {
         "Import layers from another blueprint",
         {
           "Cancel",
-          "Ok"
+          "Ok",
+          "Pastebin"
         },
         {
           {
@@ -63,46 +64,62 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        local iBlueprint = loadBlueprint(tRes.Blueprint)
-        if not fs.exists(tRes.Blueprint) then
-          button,tRes,reInput = reinput(tRes.Blueprint.." does not exist!")
-        elseif not iBlueprint then
-          button,tRes,reInput = reInput(tRes.Blueprint.." is not a blueprint file!")
-        elseif not iBlueprint[tRes.From] then
-          button,tRes,reInput = reInput("The layer "..tRes.From.." does not exist in the blueprint "..tRes.Blueprint.."!")
-        elseif not iBlueprint[tRes.To] then
-          button,tRes,reInput = reInput("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
-        elseif tBlueprint[tRes.Into] then
-          local button2 = input(
-            "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).." in the current blueprint!",
-            {
-              "Cancel",
-              "Overwrite",
-              "Insert"
-            }
-          )
-          button = (button2 == "cancel") and "Reinput" or button2
-        elseif button == "Ok"
-        or button == "Overwrite" then
-          while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+        local iBlueprint
+        if not tRes.Blueprint then
+          if button == "Pastebin" then
+            button,tRes,reInput = reinput("Pastebin code parameter missing!")
+          else
+            button,tRes,reInput = reinput("Import blueprint parameter missing!")
           end
-          for i=tRes.From,tRes.To do
-            local layer = tRes.Into+i-tRes.From
-            tBlueprint[layer] = iBlueprint[i]:copy()
+        else
+          iBlueprint = button == "Pastebin" and tBlueprint.load(http.get(fileName,true)) or loadBlueprint(tRes.Blueprint)
+          if button ~= "Pastebin" and not fs.exists(tRes.Blueprint) then
+            button,tRes,reInput = reinput(tRes.Blueprint.." does not exist!")
+          elseif not iBlueprint then
+            button,tRes,reInput = reInput(tRes.Blueprint.." is not a blueprint file!")
+          elseif not tRes.From then
+            button,tRes,reInput = reinput("From layer parameter missing!")
+          elseif not iBlueprint[tRes.From] then
+            button,tRes,reInput = reInput("The layer "..tRes.From.." does not exist in the blueprint "..tRes.Blueprint.."!")
+          elseif not tRes.To then
+            button,tRes,reInput = reinput("To layer parameter missing!")
+          elseif not iBlueprint[tRes.To] then
+            button,tRes,reInput = reInput("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
+          elseif not tRes.Into then
+            button,tRes,reInput = reinput("Into layer parameter missing!")
+          elseif tBlueprint[tRes.Into] then
+            local button2 = input(
+              "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).." in the current blueprint!",
+              {
+                "Cancel",
+                "Overwrite",
+                "Insert"
+              }
+            )
+            button = (button2 == "cancel") and "Reinput" or button2
+          elseif button == "Ok"
+          or button == "Overwrite"
+          or button == "Pastebin" then
+            while #tBlueprint < tRes.Into do
+              tBlueprint[#tBlueprint+1] = class.layer:new()
+            end
+            for i=tRes.From,tRes.To do
+              local layer = tRes.Into+i-tRes.From
+              tBlueprint[layer] = iBlueprint[i]:copy()
+            end
+            scroll()
+            return
+          elseif button == "Insert" then
+            while #tBlueprint < tRes.Into do
+              tBlueprint[#tBlueprint+1] = class.layer:new()
+            end
+            for i=tRes.From,tRes.To do
+              local layer = tRes.Into+i-tRes.From
+              table.insert(tBlueprint,iBlueprint[i]:copy(),layer)
+            end
+            scroll()
+            return
           end
-          scroll()
-          return
-        elseif button == "Insert" then
-          while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
-          end
-          for i=tRes.From,tRes.To do
-            local layer = tRes.Into+i-tRes.From
-            table.insert(tBlueprint,iBlueprint[i]:copy(),layer)
-          end
-          scroll()
-          return
         end
       end
     end

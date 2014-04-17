@@ -48,16 +48,33 @@ blueprint = { --blueprint class
     end
     file:write"END"
     file:write(textutils.serialize(blueprint.colorSlots))
+    if path == true then
+      return file:readAll()
+    end
     file:save(path..".TAb")
   end,
   load = function(path)
   --loads the blueprint from the specified path
-    path = path..".TAb"
-    if not fs.exists(path) then
-      return false
+    local file
+    if type(path) == "table" then
+      local curLine = 1
+      file = {
+        readLine = function()
+          curLine = curLine+1
+          return path[curLine-1]
+        end,
+        close = function()
+          path = nil
+        end
+      }
+    else
+      path = path..".TAb"
+      if not fs.exists(path) then
+        return false
+      end
+      file = fs.open(path,"r")
     end
-    local file = fs.open(path,"r")
-    local read = file.readLine
+    read = file.readLine
     if read() ~= "Blueprint file for CometWolf's Turtle Architect. Pastebin code: "..tPaste.program then
       file.close()
       return false
@@ -80,6 +97,7 @@ blueprint = { --blueprint class
       end
     end
     blueprint.colorSlots = class.matrix.new(2,textutils.unserialize(read()))
+    file.close()
     return blueprint
   end,
   size = function(t)
