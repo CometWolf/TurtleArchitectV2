@@ -3,7 +3,21 @@ menu = {
   [1] = {
     name = "Update",
     func = function()
-      
+      if not fs.exists(tFile.installer) then
+        local res = http.paste.get(tPaste.program,tFile.installer)
+        if not res then
+          input"Failed to download installer script from pastebin!"
+          return
+        end
+      end
+      fs.delete(tFile.folder)
+      fs.delete(tFile.program)
+      term.clear()
+      term.setCursorPos(1,1)
+      term.setTextColor(colors.white)
+      term.setBackgroundColor(colors.white)
+      shell.run(tFile.installer,tFile.program:match"^(.+/).-$")
+      return
     end
   },
   [2] = {
