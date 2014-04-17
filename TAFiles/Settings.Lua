@@ -133,5 +133,6 @@ tMode = { -- default modes
   overwrite = true,
   grid = false,
   backgroundLayer = false,
-  overwrite = true
+  overwrite = true,
+  breaker = false
 }

@@ -75,8 +75,7 @@ layer = { --layer class
     for nX,vX in pairs(clipboard) do
       for nZ,vZ in pairs(vX) do
         if merge then
-          if not tMode.overwrite
-          or layer[nX+pX][nZ+pZ] == " " then
+          if layer[nX+pX][nZ+pZ] == " " then
             layer[nX+pX][nZ+pZ] = vZ
           end
         else
