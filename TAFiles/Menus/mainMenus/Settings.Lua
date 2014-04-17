@@ -10,6 +10,16 @@ menu = {
           return
         end
       end
+      local button = input(
+        "All un-saved progress will be lost, continue?",
+        {
+          "No",
+          "Yes"
+        }
+      )
+      if button == "No" then
+        return
+      end
       fs.delete(tFile.menuFolder)
       fs.delete(tFile.classFolder)
       fs.delete(tFile.toolFolder)
@@ -18,7 +28,7 @@ menu = {
       term.clear()
       term.setCursorPos(1,1)
       term.setTextColor(colors.white)
-      term.setBackgroundColor(colors.white)
+      term.setBackgroundColor(colors.black)
       shell.run(tFile.installer,tFile.program:match"^(.+/).-$")
       return
     end
