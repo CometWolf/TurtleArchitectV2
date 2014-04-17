@@ -86,11 +86,22 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
   for kC,vC in pairs(colors) do
     if vC == vK then
       colorKeyNames[kC] = kK
-      keyColor[kK] = kC
+      keyColor[kK] = kC:gsub( --capitalize first letter, add space between first and second word and decap second word
+        "^(.).-%l(%u)",
+        function(l)
+          return (
+            l:match"%u" 
+            and l:match " "..l:lower()
+          ) or (
+            l:upper()
+          )
+        end
+      )
       break
     end
   end
 end
+keyColor.X = "Break"
 
 for k,v in pairs(colorKeyNames) do
   colorKey[k] = v
@@ -118,7 +129,7 @@ tTool = { --Default equipped tools and colors
 
 tMode = { -- default modes
   builtDraw = false,
-  builtRender = false,
+  builtRender = true,
   overwrite = true,
   grid = false,
   backgroundLayer = false,

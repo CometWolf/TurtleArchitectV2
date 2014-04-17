@@ -3,7 +3,7 @@ menu = {
   [1] = {
     name = "Create new...",
     func = function()
-      local button, tRes = input(
+      local button, tRes, reInput = input(
         "Create new blueprint file...",
         {
           "Cancel",
@@ -15,14 +15,23 @@ menu = {
             value = "/",
             accepted = "."
           }
-        }
+        },
+        false,
+        true
       )
       while button ~= "Cancel" do
-        tBlueprint = class.blueprint.new()
-        tFile.blueprint = tRes["File name"]
-        tTerm.scroll.layer = 1
-        scroll()
-        return
+        local fileName = tRes["File name"]
+        if not fileName then
+          button,tRes,reInput = reInput("Invalid file name!")
+        elseif fs.exists(fileName..".TAb") then
+          button,tRes,reInput = reInput(fileName.." already exists!")
+        else
+          tBlueprint = class.blueprint.new()
+          tFile.blueprint = fileName
+          scroll(1)
+          input("Successfully created "..fileName..".TAb.")
+          return
+        end
       end
     end
   },
@@ -56,6 +65,7 @@ menu = {
           tFile.blueprint = fileName
           tBlueprint = blueprint
           scroll()
+          input("Successfully loaded "..fileName..".TAb.")
           return
         end
       end
@@ -82,13 +92,20 @@ menu = {
           }
         )
       end
-      while button ~= "Cancel" do
+      while button and button ~= "Cancel" do
         fileName = fileName or tRes["File name"]
-        tBlueprint:save(fileName)
-        tFile.blueprint = fileName
-        input("Sucessfully saved "..fileName..".TAb")
-        return
+        if not fileName then
+          button,tRes,reInput = reInput("Invalid file name!")
+        elseif fs.exists(fileName..".TAb") then
+          button,tRes,reInput = reInput(fileName.." already exists!")
+        else
+          break
+        end
       end
+      tBlueprint:save(fileName)
+      tFile.blueprint = fileName
+      scroll()
+      input("Successfully saved "..fileName..".TAb.")
     end
   },
   [4] = {
@@ -110,10 +127,17 @@ menu = {
       )
       while button ~= "Cancel" do
         fileName = fileName or tRes["File name"]
-        tBlueprint:save(fileName)
-        tFile.blueprint = fileName
-        input("Sucessfully saved "..fileName..".TAb")
-        return
+        if not fileName then
+          button,tRes,reInput = reInput("Invalid file name!")
+        elseif fs.exists(fileName..".TAb") then
+          button,tRes,reInput = reInput(fileName.." already exists!")
+        else
+          tBlueprint:save(fileName)
+          tFile.blueprint = fileName
+          scroll()
+          input("Successfully saved "..fileName..".TAb.")
+          return
+        end
       end
     end
   },
@@ -138,9 +162,9 @@ menu = {
     end
   },
   [6] = {
-    name = "Edit slot data...(WIP)",
-    func = function()
-      
+    name = "Edit slot data...",
+    func = function(button)
+      assignColorSlots(tTool[button].color)
     end
   },
   [7] = {
@@ -182,9 +206,46 @@ menu = {
     end
   },
   [9] = {
-    name = "Check usage(WIP)",
+    name = "Check usage",
     func = function()
-      
+      local button, tRes = input(
+        "Check material requirements for the layer range",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "From",
+            value = 1,
+            accepted = "%d"
+          },
+          {
+            name = "To",
+            value = #tBlueprint,
+            accepted = "%d"
+          },
+        }
+      )
+      while button ~= "Cancel" do
+        if not tRes.From then
+          button,tRes,reInput = reInput("Missing parameter From!")
+        elseif not tRes.To then
+          button,tRes,reInput = reInput("Missing parameter To!")
+        elseif not tBlueprint[tRes.From]
+        or not tBlueprint[tRes.To] then
+          button,tRes,reInput = reInput("Invalid slot range "..tRes.From.."-"..tRes.To)
+        else
+          local tLines = {
+            [1] = "Materials required to build current blueprint"
+          }
+          for k,v in pairs(checkUsage(tBlueprint,tRes.From,tRes.To)) do
+            tLines[#tLines+1] = (keyColor[k] or k)..": "..v
+          end
+          input(tLines)
+          return
+        end
+      end
     end
   },
 }

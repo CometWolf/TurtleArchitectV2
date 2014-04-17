@@ -125,6 +125,9 @@ menu = {
       local c = tTool.clipboard
       if t.eX then
         tBlueprint[tTerm.scroll.layer]:markUnbuilt(t.sX,t.sZ,t.eX,t.eZ)
+        if tMode.renderBuilt then
+          renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
+        end
       else
         c.l:markUnbuilt(1,1,c.lX,c.lZ)
         renderToolOverlay()

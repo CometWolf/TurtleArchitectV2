@@ -330,6 +330,64 @@ menu = {
     end
   },
   [8] = {
+    name = "Stretch copy...",
+    func = function()
+      local button, tRes, reInput = input(
+        "Stretch copy current layer("..tTerm.scroll.layer..") across",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "From",
+            value = tTerm.scroll.layer,
+            accepted = "%d"
+          },
+          {
+            name = "To",
+            value = #tBlueprint,
+            accepted = "%d"
+          },
+        },
+        false,
+        true
+      )
+      while button ~= "Cancel" do
+        if tBlueprint[tRes.From] and button == "Ok" then
+          local button2 = input(
+            "Layers already exist in the range "..tRes.From.."-"..tRes.To.."!",
+            {
+              "Cancel",
+              "Overwrite",
+              "Insert"
+            }
+          )
+          button = (button2 == "Cancel") and "Reinput" or button2
+        elseif button == "Ok"
+        or button == "Overwrite" then
+          while #tBlueprint < tRes.From do
+            tBlueprint[#tBlueprint+1] = class.layer:new()
+          end
+          for i=tRes.From,tRes.To do
+            tBlueprint[i] = tBlueprint[tTerm.scroll.layer]:copy()
+          end
+          scroll()
+          return
+        elseif button == "Insert" then
+          while #tBlueprint < tRes.From do
+            tBlueprint[#tBlueprint+1] = class.layer:new()
+          end
+          for i=tRes.From,tRes.To do
+            table.insert(tBlueprint,tBlueprint[tTerm.scroll.layer]:copy(),i)
+          end
+          scroll()
+          return
+        end
+      end
+    end
+  },
+  [9] = {
     name = "Copy range...",
     func = function()
       local button, tRes, reInput = input(
@@ -386,7 +444,7 @@ menu = {
           end
           for i=tRes.From,tRes.To do
             local layer = tRes.Into+i-tRes.From
-            table.insert(tBlueprint,iBlueprint[i]:copy(),layer)
+            table.insert(tBlueprint,tBlueprint[i]:copy(),layer)
           end
           scroll()
           return
@@ -394,7 +452,7 @@ menu = {
       end
     end
   },
-  [9] = {
+  [10] = {
     name = "Merge...",
     func = function()
       local button, tRes, reInput = input(
@@ -428,7 +486,7 @@ menu = {
       end
     end
   },
-  [10] = {
+  [11] = {
     name = "Flip...",
     func = function()
       local curLayer = tTerm.scroll.layer
@@ -449,7 +507,7 @@ menu = {
       end
     end
   },
-  [11] = {
+  [12] = {
     name = "Mark built",
     func = function()
       local curLayer = tTerm.scroll.layer
@@ -468,7 +526,7 @@ menu = {
       end
     end
   },
-  [12] = {
+  [13] = {
     name = "Mark unbuilt",
     func = function()
       local curLayer = tTerm.scroll.layer
@@ -487,7 +545,7 @@ menu = {
       end
     end
   },
-  [13] = {
+  [14] = {
     name = "Goto...",
     func = function()
       local button, tRes = input(
@@ -526,8 +584,7 @@ menu = {
           end
           newLayer = tRes.Layer
         end
-        tTerm.scroll.layer = newLayer
-        scroll()
+        scroll(newLayer,false,false,true)
       end
     end
   },

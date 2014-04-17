@@ -1,8 +1,9 @@
 local matrix
 matrix = {
-  new = function(dimensions)
+  new = function(dimensions,tTable)
     return setmetatable(
-      {
+      tTable
+      or {
         
       },
       {

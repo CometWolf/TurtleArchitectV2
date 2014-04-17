@@ -11,7 +11,7 @@ blueprint = { --blueprint class
       }
     )
   end,
-  save = function(blueprint,path)
+  save = function(blueprint,path,disableTrimming)
   --saves the blueprint to the specified path
     local file = class.fileTable.new()
     file:write("Blueprint file for CometWolf's Turtle Architect. Pastebin code: "..tPaste.program)
@@ -33,13 +33,13 @@ blueprint = { --blueprint class
             blankLayer = false
           end
         end
-        if blankX then
+        if blankX and not disableTrimming then
           blueprint[nL][nX] = nil
         else
           fX:write(sX,nX)
         end
       end
-      if blankLayer then
+      if blankLayer and not disableTrimming then
         file:delete()
         blueprint[nL] = nil
       else
@@ -47,6 +47,7 @@ blueprint = { --blueprint class
       end
     end
     file:write"END"
+    file:write(textutils.serialize(blueprint.colorSlots))
     file:save(path..".TAb")
   end,
   load = function(path)
@@ -78,6 +79,7 @@ blueprint = { --blueprint class
         line = read()
       end
     end
+    blueprint.colorSlots = class.matrix.new(2,textutils.unserialize(read()))
     return blueprint
   end,
   size = function(t)
@@ -100,9 +102,9 @@ blueprint = { --blueprint class
       z.min = math.min(z1,z2)
     end
     local copy = blueprint:new()
-    for nL,vL in pairs(blueprint) do
-      copy[nL] = vL:new()
-      for nX,vX in pairs(vL) do
+    for i=1,#blueprint do
+      copy[nL] = blueprint[i]:new()
+      for nX,vX in pairs(blueprint[i]) do
         if nX >= x.min and nX <= x.max then
           copy[nL][nX] = vX:new()
           for nZ,vZ in pairs(vX) do
@@ -117,26 +119,26 @@ blueprint = { --blueprint class
   end,
   markBuilt = function(blueprint,x1,z1,x2,z2)
     --marks the blueprint as built, optionally just one area
-    for k,v in pairs(blueprint) do
-      v:markBuilt(x1,z1,x2,z2)
+    for i=1,#blueprint do
+      blueprint[i]:markBuilt(x1,z1,x2,z2)
     end
   end,
   markUnbuilt = function(blueprint,x1,z1,x2,z2)
     --marks the blueprint as unbuilt, optionally just one area
-    for k,v in pairs(blueprint) do
-      v:markUnbuilt(x1,z1,x2,z2)
+    for i=1,#blueprint do
+      blueprint[i]:markUnbuilt(x1,z1,x2,z2)
     end
   end,
   flipX = function(blueprint,x1,z1,x2,z2)
   --flips blueprint on the x-axis, optionally just one area
-    for k,v in pairs(blueprint) do
-      blueprint[k] = v:flipX(x1,z1,x2,z2)
+    for i=1,#blueprint do
+      blueprint[i] = blueprint[i]:flipX(x1,z1,x2,z2)
     end
   end,
   flipZ = function(blueprint,x1,z1,x2,z2)
   --flips blueprint on the Z-axis, optionally just one area
-    for k,v in pairs(blueprint) do
-      blueprint[k] = v:flipZ(x1,z1,x2,z2)
+    for i=1,#blueprint do
+      blueprint[i] = blueprint[i]:flipZ(x1,z1,x2,z2)
     end
   end,
 }

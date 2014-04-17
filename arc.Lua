@@ -302,14 +302,14 @@ tTerm.screen.xMid = math.ceil(tTerm.screen.x/2)
 tTerm.screen.yMid = math.ceil(tTerm.screen.y/2)
 tTerm.canvas.sX = 1
 tTerm.canvas.eX = tTerm.screen.x-2
-tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX
+tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
 tTerm.canvas.sZ = 1
 tTerm.canvas.eZ = tTerm.screen.y-1
-tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ
+tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
 tTerm.viewable.sX = 1
-tTerm.viewable.eX = tTerm.canvas.tX+1
+tTerm.viewable.eX = tTerm.canvas.tX
 tTerm.viewable.sZ = 1
-tTerm.viewable.eZ = tTerm.canvas.tZ+1
+tTerm.viewable.eZ = tTerm.canvas.tZ
 tTerm.viewable.mX = 0
 tTerm.viewable.mZ = 0
 tTerm.scroll.x = 0
@@ -372,7 +372,7 @@ function renderBottomBar() --renders bottom bar and updates info
   local cursX,cursY = screen:getCursorPos()
   local coordString = "X:"..tTerm.scroll.x.." Y:"..tTerm.scroll.layer.." Z:"..tTerm.scroll.z
   local screenX = tTerm.screen.y > 8+#tMenu.main and tTerm.screen.x-2 or tTerm.screen.x-3
-  screen:write(string.rep(" ",screenX-#coordString-cursX+1)..coordString)
+  screen:write(string.rep(" ",math.max(screenX-#coordString-cursX+1,0))..coordString)
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function()
       local button, tRes, reInput = input(
@@ -405,7 +405,7 @@ function renderBottomBar() --renders bottom bar and updates info
         if not tBlueprint[tRes.Y] then
           button, tRes, reInput = reInput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
         else
-          scroll(tRes.layer,tRes.X,tRes.Z,true)
+          scroll(tRes.Y,tRes.X,tRes.Z,true)
           return
         end
       end
@@ -559,25 +559,26 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
   end
 end
 
-function scroll(layer,x,z,absolute) --scrolls the canvas x and z on layer, if absolute is given, it will scroll to those coordinates
+function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on layer, if absolute is given, it will scroll to those coordinates
   if not (layer or x or z) then
     --re-renders current view if no args are given
     tTerm.scroll.layer = math.min(#tBlueprint,math.max(tTerm.scroll.layer,1))
     tBlueprint[tTerm.scroll.layer]:render()
     renderToolOverlay()
+    return
   end
   local oldX,oldZ = tTerm.scroll.x,tTerm.scroll.z
   x = x or 0
   z = z or 0
   layer = layer or tTerm.scroll.layer
   if absolute then
-    tTerm.scroll.x = x
-    tTerm.scroll.z = z
+    tTerm.scroll.x = math.max(x,0)
+    tTerm.scroll.z = math.max(z,0)
   else
     tTerm.scroll.x = math.max(tTerm.scroll.x+x,0)
     tTerm.scroll.z = math.max(tTerm.scroll.z+z,0)
   end
-  if oldX ~= tTerm.scroll.x or oldZ ~= tTerm.scroll.z or layer ~= tTerm.scroll.layer then
+  if oldX ~= tTerm.scroll.x or oldZ ~= tTerm.scroll.z or layer ~= tTerm.scroll.layer or forceRefresh then
     local view = tTerm.viewable
     tTerm.scroll.layer = layer
     view.sX = tTerm.scroll.x+1
@@ -706,6 +707,7 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   name = "", --text on the side of the field
   accepted = ".", --accepted input pattern
   value = "", --value already inputted
+  charLimit = math.huge, --amount of characters allowed
   backgroundColor = tColors.inputBar,
   textColor = tColors.inputText,
   nameColor = tColors.inputBoxText
@@ -717,7 +719,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   local lineLength = tTerm.screen.x-2 --max line length
   local tLine = {}
   if type(text) == "table" then --converts text to string if it's a table
-    text = table.concat(text,"[\n]")
+    text = table.concat(text,"\n")
   end
   while #text > 0 do  --splits text into a table containing each line
     local line = text:sub(1,lineLength)
@@ -784,7 +786,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     --closes input box and returns event and the values in the input fields
     local tRes = {}
     for iR=1,#tInputs do
-      tRes[tInputs[iR].name] = tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
+      tRes[tInputs[iR].name] = tInputs[iR].value ~= "-" and tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
     end
     screen:setCursorBlink(false)
     if reInput then
@@ -925,7 +927,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       end
     elseif tEvent[1] == "char" and tInputs.enabled then
       local field = tInputs[tInputs.enabled]
-      if tEvent[2]:match(field.accepted) then -- check for accepted character
+      if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
         field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
         field.cX = field.cX+1
         refreshField(tInputs.enabled)
@@ -985,38 +987,39 @@ Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--
 function saveProgress(fileName)
   local file = class.fileTable.new()
-  file:write("sLayer: "..(tOngoing.sLayer or 1))
-  file:write("eLayer: "..(tOngoing.eLayer or #tBlueprint))
-  file:write("X: "..(tOngoing.x or 0))
-  file:write("Y: "..(tOngoing.y or 0))
-  file:write("Z: "..(tOngoing.z or 0))
-  file:write("dir X: "..(tOngoing.dir.x or "+"))
-  file:write("dir Y: "..(tOngoing.dir.y or "+"))
-  file:write("dir Z: "..(tOngoing.dir.z or "+"))
-  file:write("Ender chest: "..(tOngoing.enderChest or 0))
-  file:save(fileName..".TAO")
+  file:write("sLayer: "..tOngoing.sLayer)
+  file:write("eLayer: "..tOngoing.eLayer)
+  file:write("X: "..tOngoing.x)
+  file:write("Y: "..tOngoing.y)
+  file:write("Z: "..tOngoing.z)
+  file:write("dir X: "..tOngoing.dir.x)
+  file:write("dir Y: "..tOngoing.dir.y)
+  file:write("dir Z: "..tOngoing.dir.z)
+  file:write("Enderchest: "..(tOngoing.enderChest or "disabled"))
+  file:save(fileName..".TAo")
 end
 
 function loadProgress(fileName)
   local tOngoing = {}
-  local file = fs.open(fileName..".TAO","r")
-  local read = file.read
+  local file = fs.open(fileName..".TAo","r")
+  local read = file.readLine
   local line = read()
   tOngoing.sLayer = tonumber(line:match"sLayer: (%d+)" or 1)
   line = read()
   tOngoing.eLayer = tonumber(line:match"eLayer: (%d+)" or #tBlueprint)
   line = read()
-  tOngoing.x = tonumber(line:match"X: (%d+)" or 0)
+  tOngoing.x = tonumber(line:match"X: ([%d-]+)" or 0)
   line = read()
-  tOngoing.y = tonumber(line:match"Y: (%d+)" or 0)
+  tOngoing.y = tonumber(line:match"Y: ([%d-]+)" or 0)
   line = read()
-  tOngoing.z = tonumber(line:match"Z: (%d+)" or 0)
+  tOngoing.z = tonumber(line:match"Z: ([%d-]+)" or 0)
   tOngoing.dir = {}
-  tOngoing.dir.x = line:match"dir Y: ([+-])" or "+"
+  line = read()
+  tOngoing.dir.x = line:match"dir X: ([+-])" or "+"
   line = read()
   tOngoing.dir.y = line:match"dir Y: ([+-])" or "+"
   line = read()
-  tOngoing.dir.z = line:match"dir Y: ([+-])" or "+"
+  tOngoing.dir.z = line:match"dir Z: ([+-])" or "+"
   line = read()
   tOngoing.enderChest = tonumber(line:match"EnderChest: (%d+)") or false
   file.close()
@@ -1075,12 +1078,13 @@ function checkUsage(blueprint,sLayer,eLayer)
   }
   for i = sLayer,eLayer do
     for nX,vX in pairs(blueprint[i]) do
-      tUsage.fuel = math.abs(nX-tPos.x)+tUsage.fuel
-      tPos.x = nX
       for nZ,block in pairs(vX) do
-        tUsage.fuel = math.abs(nZ-tPos.z)+tUsage.fuel
-        tPos.z = nZ
-        tUsage[block] = (tUsage[block] or 0)+1
+        if block:match"[%lX]" then
+          tUsage.fuel = math.abs(nX-tPos.x+math.abs(nZ-tPos.z))+tUsage.fuel
+          tPos.z = nZ
+          tPos.x = nX
+          tUsage[block] = (tUsage[block] or 0)+1
+        end
       end
     end
     tUsage.fuel = math.abs(i-tPos.y)+tUsage.fuel
@@ -1091,7 +1095,7 @@ end
 
 function assignColorSlots(color)
   local button, tRes, reInput = input(
-    "Input slot range to use for "..keyColor[color],
+    "Input slot range for "..keyColor[color],
     {
       "Cancel",
       "Ok",
@@ -1100,12 +1104,14 @@ function assignColorSlots(color)
       {
         name = "From",
         value = tBlueprint.colorSlots[color][1] or 1,
-        accepted = "%d"
+        accepted = "%d",
+        charLimit = 2
       },
       {
         name = "To",
         value = tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]] or 16,
-        accepted = "%d"
+        accepted = "%d",
+        charLimit = 2
       },
     },
     false,
@@ -1130,12 +1136,9 @@ function assignColorSlots(color)
   return false
 end
 
-
-function build(blueprint,sLayer,eLayer)
+function build(blueprint,sLayer,eLayer,auto)
   --builds the given blueprint layers
   blueprint = blueprint or tBlueprint
-  tOngoing.sLayer = sLayer or 1 --start layer
-  tOngoing.eLayer = eLayer or #blueprint --end layer
   if not tFile.blueprint then
     local button, tRes = input(
       "Blueprint must be saved locally prior to building",
@@ -1160,19 +1163,83 @@ function build(blueprint,sLayer,eLayer)
       input("Construction cancelled.")
       return
     end
-  elseif fs.exists(tFile.blueprint..".TAO") then
-    local button = input(
-      "In-progress build of current blueprint found. Load?",
-      {
-        "Yes",
-        "No"
-      }
-    )
-    if button ~= "No" then
+  end
+  if fs.exists(tFile.blueprint..".TAo") then
+    if auto then
       tOngoing = loadProgress(tFile.blueprint)
+    else
+      local loadedOngoing = loadProgress(tFile.blueprint)
+      local button = input(
+        [[In-progress build of current blueprint found.
+layers ]]..loadedOngoing.sLayer..[[-]]..loadedOngoing.eLayer..[[ 
+X: ]]..loadedOngoing.x..[[ "]]..loadedOngoing.dir.x..[["
+Y: ]]..loadedOngoing.y..[[ "]]..loadedOngoing.dir.y..[["
+Z: ]]..loadedOngoing.z..[[ "]]..loadedOngoing.dir.z..[["
+Load?]],
+        {
+          "Yes",
+          "No"
+        }
+      )
+      if button ~= "No" then
+        tOngoing = loadProgress(tFile.blueprint)
+      else
+        tOngoing = {
+          dir = {}
+        }
+      end
+    end
+  else
+    tOngoing = {
+      dir = {}
+    }
+  end
+  if not (
+    (
+      tOngoing.sLayer 
+      and tOngoing.eLayer
+    ) or (
+      sLayer 
+      and eLayer
+    )
+  ) then
+    local button, tRes, reInput = input(
+      "Input layer range to build",
+      {
+        "Cancel",
+        "Ok",
+      },
+      {
+        {
+          name = "Start",
+          value = 1,
+          accepted = "%d"
+        },
+        {
+          name = "End",
+          value = #blueprint,
+          accepted = "%d"
+        },
+      },
+      false,
+      true
+    )
+    while true do
+      if button == "Cancel" then
+        input("Construction cancelled.")
+        return
+      elseif not tRes.Start then
+        button,tRes,reInput = reInput("Missing start layer!")
+      elseif not tRes.End then
+        button,tRes,reInput = reInput("Missing end layer!")
+      elseif button == "Ok" then
+        tOngoing.sLayer = tRes.Start
+        tOngoing.eLayer = tRes.End
+        break
+      end
     end
   end
-  local tUsage = checkUsage(blueprint,sLayer,eLayer)
+  local tUsage = checkUsage(blueprint,tOngoing.sLayer,tOngoing.eLayer)
   local fuelUsage = tUsage.fuel
   tUsage.fuel = nil
   for k,v in pairs(tUsage) do
@@ -1183,6 +1250,7 @@ function build(blueprint,sLayer,eLayer)
       end
     end
   end
+  blueprint:save(tFile.blueprint)
   if not tOngoing.x then
     local button, tRes, reInput = input(
       "Input build coordinates",
@@ -1195,24 +1263,27 @@ function build(blueprint,sLayer,eLayer)
         {
           name = "X",
           value = cTurtle.tPos.x,
-          accepted = "[+-%d]"
+          accepted = "[+%d-]"
         },
         {
           name = "Y",
           value = cTurtle.tPos.y,
-          accepted = "[+-%d]"
+          accepted = "[%d+-]"
         },
         {
           name = "Z",
           value = cTurtle.tPos.z,
-          accepted = "[+-%d]"
+          accepted = "[%d+-]"
         },
       },
       false,
       true
     )
-    while button ~= "Cancel" do
-      if button == "Cur pos" then
+    while true do
+      if button == "Cancel" then
+        input("Construction cancelled.")
+        return
+      elseif button == "Cur pos" then
         tRes.X = cTurtle.tPos.x
         tRes.Y = cTurtle.tPos.y
         tRes.Z = cTurtle.tPos.z
@@ -1242,30 +1313,36 @@ function build(blueprint,sLayer,eLayer)
         {
           name = "X",
           value = "+",
-          accepted = "[+-]"
+          accepted = "[+-]",
+          charLimit = 1
         },
         {
           name = "Y",
           value = "+",
-          accepted = "[+-]"
+          accepted = "[+-]",
+          charLimit = 1
         },
         {
           name = "Z",
           value = "+",
-          accepted = "[+-]"
+          accepted = "[+-]",
+          charLimit = 1
         },
       },
       false,
       true
     )
-    while button ~= "Cancel" do
-      if not tRes.X then
-        button,tRes,reInput = reInput("Missing parameter X!")
+    while true do
+      if button == "Cancel" then
+        input("Construction cancelled.")
+        return
+      elseif not tRes.X then
+        button,tRes,reInput = reInput("Missing X direction!")
       elseif not tRes.Y then
-        button,tRes,reInput = reInput("Missing parameter Y!")
+        button,tRes,reInput = reInput("Missing Y direction!")
       elseif not tRes.Z then
-        button,tRes,reInput = reInput("Missing parameter Z!")
-      elseif button == "Ok" or button == "Locate" then
+        button,tRes,reInput = reInput("Missing Z direction!")
+      elseif button == "Ok" then
         tOngoing.dir.x = tRes.X
         tOngoing.dir.y = tRes.Y
         tOngoing.dir.z = tRes.Z
@@ -1273,11 +1350,11 @@ function build(blueprint,sLayer,eLayer)
       end
     end
   end
-  if not tOngoing.enderChest then
+  if not tOngoing.enderChest and not auto then
     local button, tRes, reInput = input(
       "Enable ender chest?",
       {
-        "Cancel",
+        "No",
         "Ok",
         "Permanent"
       },
@@ -1285,13 +1362,14 @@ function build(blueprint,sLayer,eLayer)
         {
           name = "Slot",
           value = "",
-          accepted = "[+-%d]"
+          accepted = "%d",
+          charLimit = 2
         },
       },
       false,
       true
     )
-    while button ~= "Cancel" do
+    while button ~= "No" do
       if tRes.Slot and (tRes.Slot > 16 or tRes.slot < 1 ) then
         button,tRes,reInput = reInput("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
@@ -1306,31 +1384,71 @@ function build(blueprint,sLayer,eLayer)
     end
   end
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
-  for i = sLayer,eLayer do
-    for nX,vX in pairs(blueprint[i]) do
-      for nZ,block in pairs(vX) do
-        if block:match"%l" then
-          cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX),"X")
-          cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ),"Z")
-          if not selectColor(block,1) then
-            input("Construction cancelled.")
-            return
+  saveProgress(tFile.blueprint)
+  screen:refresh()
+  for iL = tOngoing.sLayer,tOngoing.eLayer do
+    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..iL-1),"Y")
+    for nX,vX in pairs(blueprint[iL]) do
+      local xLine = {} --local table copy, so next doesn't error.
+      for k,v in pairs(vX) do
+        xLine[k] = v
+      end
+      for nZ,block in pairs(xLine) do
+        local nX = nX
+        while block do
+          if block:match"%l" then --unbuilt block
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X")
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z")
+            if not selectColor(block,1) then
+              input("Construction cancelled.")
+              return
+            end
+            cTurtle.replace("-Y"..tOngoing.dir.y)
+            blueprint[iL][nX][nZ] = block:upper()
+            blueprint:save(tFile.blueprint,true)
+            scroll(iL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+            screen:refresh()
+          elseif block == "X" then --break block
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X")
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z")
+            selectColor(block,-1)
+            cTurtle.drop("Y-",false,64)
+            cTurtle.dig("-Y"..tOngoing.dir.y)
+            cTurtle.drop("Y-",false,64)
+            blueprint[iL][nX][nZ] = nil
+            blueprint:save(tFile.blueprint,true)
+            scroll(iL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+            screen:refresh()
           end
-          cTurtle.replace("-Y"..tOngoing.dir.y)
-          vX[nZ] = block:upper()
-        elseif block == "X" then
-          cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX),"X")
-          cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ),"Z")
-          selectColor(block,-1)
-          cTurtle.drop("Y-",64)
-          cTurtle.dig("-Y"..tOngoing.dir.y)
-          cTurtle.drop("Y-",64)
-          vX[nZ] = nil
+          block = nil
+          local nextBlock = {}
+          for i=-1,1 do --scan for blocks in vicinity
+            for j=-1,1 do
+              if blueprint[iL][nX+i][nZ+j]:match"[X%l]" then
+                nextBlock = {
+                  b = blueprint[iL][nX+i][nZ+j],
+                  nX = nX+i,
+                  nZ = nZ+j
+                }
+                if j == 0
+                or i == 0 then --1 block away, diagonal blocks are second priority
+                  block = nextBlock.b
+                  break
+                end
+              end
+              if block then
+                break
+              end
+            end
+            if block then
+              break
+            end
+          end
+          block = block or nextBlock.b
+          nX = nextBlock.nX
+          nZ = nextBlock.nZ
         end
       end
-    end
-    if i < eLayer then
-      cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..i),"Y")
     end
   end
 end

@@ -60,28 +60,7 @@ menu = {
   [4] = {
     name = "Build blueprint...",
     func = function()
-      local button, tRes = input(
-        "Input layer range to build",
-        {
-          "Cancel",
-          "Ok"
-        },
-        {
-          {
-            name = "Start",
-            value = 1,
-            accepted = "%d"
-          },
-          {
-            name = "End",
-            value = #tBlueprint,
-            accepted = "%d"
-          }
-        }
-      )
-      if button == "Ok" then
-        build(tBlueprint,tRes.Start,tRes.End)
-      end
+      build(tBlueprint)
     end
   },
   [5] = {
