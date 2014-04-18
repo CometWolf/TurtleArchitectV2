@@ -1657,14 +1657,17 @@ Other functions
 --[[----------------------------------------------------------------------------------------------------------
 Non-color program
 ----------------------------------------------------------------------------------------------------------]]--
+local execution
 if not tTerm.color then
-  while true do
-    local tEvent = {os.pullEvent()}
-    if tEvent[1] == "key" then
-      if tEvent[2] == 203 then
-        
-      elseif tEvent[2] == 205 then
-        
+  execution = function()
+    while true do
+      local tEvent = {os.pullEvent()}
+      if tEvent[1] == "key" then
+        if tEvent[2] == 203 then
+          
+        elseif tEvent[2] == 205 then
+          
+        end
       end
     end
   end
@@ -1672,53 +1675,125 @@ else
 --[[----------------------------------------------------------------------------------------------------------
 Color program
 ----------------------------------------------------------------------------------------------------------]]--
-  tBlueprint[1] = tBlueprint[1] or class.layer.new()
-  tTimers.blink.start()
-  tTimers.blink.toggle = true
-  renderBottomBar()
-  renderSideBar()
-  tBlueprint[1]:render()
-  while true do
-    local tEvent = {os.pullEvent()}
-    if tEvent[1] == "mouse_click"
-    or tEvent[1] == "mouse_drag" then
-      local button,x,y = tEvent[2],tEvent[3],tEvent[4]
-      if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
-        tBar.touchMap[x][y](button)
-      elseif tMenu.open and tMenu.touchMap[x][y] then
-        if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
-          tMenu.touchMap[x][y](button)
+  execution = function()
+    tBlueprint[1] = tBlueprint[1] or class.layer.new()
+    tTimers.blink.start()
+    tTimers.blink.toggle = true
+    renderBottomBar()
+    renderSideBar()
+    tBlueprint[1]:render()
+    while true do
+      local tEvent = {os.pullEvent()}
+      if tEvent[1] == "mouse_click"
+      or tEvent[1] == "mouse_drag" then
+        local button,x,y = tEvent[2],tEvent[3],tEvent[4]
+        if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
+          tBar.touchMap[x][y](button)
+        elseif tMenu.open and tMenu.touchMap[x][y] then
+          if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
+            tMenu.touchMap[x][y](button)
+          end
+        elseif y <= tTerm.canvas.eZ
+        and y >= tTerm.canvas.sZ 
+        and x <= tTerm.canvas.eX
+        and x >= tTerm.canvas.sX then --canvas click
+          x,y = x-tTerm.viewable.mX,y-tTerm.viewable.mZ
+          if tMenu.open then
+            renderMenu() --closes open menu
+          elseif tMenu.rightClick.open then
+            scroll()
+            renderBottomBar()
+            renderSideBar()
+          elseif button ~= 3 then
+            --executes tool function
+            local tool = tTool[button].tool
+            local color = tTool[button].color
+            tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
+          end
         end
-      elseif y <= tTerm.canvas.eZ
-      and y >= tTerm.canvas.sZ 
-      and x <= tTerm.canvas.eX
-      and x >= tTerm.canvas.sX then --canvas click
-        x,y = x-tTerm.viewable.mX,y-tTerm.viewable.mZ
-        if tMenu.open then
-          renderMenu() --closes open menu
-        elseif tMenu.rightClick.open then
-          scroll()
-          renderBottomBar()
-          renderSideBar()
-        elseif button ~= 3 then
-          --executes tool function
-          local tool = tTool[button].tool
-          local color = tTool[button].color
-          tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
+      elseif tEvent[1] == "key" then
+        if tEvent[2] == 203 then --left arrow
+          scroll(false,-1,0)
+        elseif tEvent[2] == 205 then --right arrow
+          scroll(false,1,0)
+        elseif tEvent[2] == 208 then --down arrow
+          scroll(false,0,1)
+        elseif tEvent[2] == 200 then --up arrow
+          scroll(false,0,-1)
         end
+      elseif tEvent[1] == "mouse_scroll" then
+        scroll(false,0,tEvent[2])
       end
-    elseif tEvent[1] == "key" then
-      if tEvent[2] == 203 then --left arrow
-        scroll(false,-1,0)
-      elseif tEvent[2] == 205 then --right arrow
-        scroll(false,1,0)
-      elseif tEvent[2] == 208 then --down arrow
-        scroll(false,0,1)
-      elseif tEvent[2] == 200 then --up arrow
-        scroll(false,0,-1)
-      end
-    elseif tEvent[1] == "mouse_scroll" then
-      scroll(false,0,tEvent[2])
     end
   end
 end
+--[[----------------------------------------------------------------------------------------------------------
+Error handling
+----------------------------------------------------------------------------------------------------------]]--
+while true do
+  local tRes = {pcall(execution)}
+  if not tRes[1] then
+    if tRes[2] == "Exit"
+    or tRes[2] == "Terminated" then
+      term.setTextColor(colors.white)
+      term.setBackgroundColor(colors.black)
+      term.clear()
+      term.setCursorPos(1,1)
+      print"Thank you for using Turtle Architect, by CometWolf."
+      return
+    elseif tTerm.color then --color supported crash
+      local button = input(
+        "Turtle Architect has encountered an unexpected error:\n"..tRes[2].."\n\nPlease report this to CometWolf immediately!",
+        {
+          "Ignore",
+          "Save & quit",
+          "Quit"
+        }
+      )
+      if button == "Quit" then
+        return
+      elseif button == "Save & quit" then
+        local fileName = tFile.blueprint
+        local button,tRes,reInput
+        if not fileName then
+          button, tRes, reInput = input(
+            "No file name for current blueprint,",
+            {
+              "Cancel",
+              "Ok"
+            },
+            {
+              {
+                name = "File name",
+                value = "/",
+                accepted = "."
+              },
+            },
+            false,
+            true
+          )
+        end
+        while button and button ~= "Cancel" do
+          fileName = fileName or tRes["File name"]
+          if not fileName then
+            button,tRes,reInput = reInput("Invalid file name!")
+          elseif fs.exists(fileName..".TAb") then
+            button,tRes,reInput = reInput(fileName.." already exists!")
+          else
+            break
+          end
+        end
+        tBlueprint:save(fileName)
+        tFile.blueprint = fileName
+        scroll()
+        input("Successfully saved "..fileName..".TAb.")
+        return
+      end
+    else --non color supported crash
+    
+    end
+  else
+    return tRes[2]
+  end
+end
+    

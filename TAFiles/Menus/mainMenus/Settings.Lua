@@ -192,11 +192,7 @@ Developed by CometWolf.
     name = "Quit",
     enabled = true,
     func = function()
-      term.setTextColor(colors.white)
-      term.setBackgroundColor(colors.black)
-      term.clear()
-      term.setCursorPos(1,1)
-      error()
+      error("Exit",0)
     end
   },
 }
