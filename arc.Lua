@@ -41,9 +41,37 @@ local API mods
 ----------------------------------------------------------------------------------------------------------]]--
 os = setmetatable(
   {
-    pullEvent = function(sFilter) --refreshes the screen every time pullEvent is used
-      screen:refresh()
-      return _G.os.pullEvent(sFilter)
+    pullEvent = function(sFilter) --refreshes the screen every time pullEvent is used, and execute rednet and timer functions
+      local tEvent
+      while true do
+        screen:refresh()
+        tEvent = {_G.os.pullEvent(sFilter)}
+        if tEvent[1] == "timer" then
+          local timerID = tEvent[2]
+          if timerID == tTimers.blink.id then
+            local toggle = tTimers.blink.toggle
+            tTimers.blink.toggle = not toggle
+            if toggle then
+              renderToolOverlay()
+            else
+              screen:delLayer(screen.layers.toolsOverlay)
+            end
+            tTimers.blink.start()
+          elseif tTimers.modemRes.ids[timerID] then
+            local func = tTransmissions.failure[timerID]
+            if func then
+              func()
+            end
+          else
+            break
+          end
+        elseif tEvent[1] == "modem_message" then
+          rednet.received(tEvent)
+        else
+          break
+        end
+      end
+      return unpack(tEvent)
     end,
     sleepTime = 0,
     sleep = function(time)
@@ -54,7 +82,8 @@ os = setmetatable(
         os.sleepTime = 0
       end
       G.sleep(time)
-    end
+    end,
+    id = _G.os.getComputerID()
   },
   {
     __index = _G.os
@@ -172,6 +201,100 @@ http = setmetatable(
   }
 )
 
+rednet = {
+  received = function(tEvent)
+    if tEvent[3] == modemChannel
+    and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
+    and (
+      tEvent[5].rID == os.id
+      or tEvent[5].rID == "all"
+    ) then
+      local event = tEvent[5].event
+      local senderId = tEvent[5].sID
+      if event == "Success" then
+        local type = tEvent[5].type
+        local func = tTransmissions.success[type][senderId]()
+        if func then
+          func()
+        end
+        tTransmissions.success[type][senderId] = false
+      elseif event == "Init connection" then
+        rednet.send(senderId,"Success",{type = event})
+      elseif event == "Blueprint transmission" then
+        local timeoutId = tTimers.inputTimeout.start()
+        local blueprint = class.blueprint.new(tEvent[5].blueprint)
+        local button, tRes, reInput = input(
+          "Received blueprint "..tEvent[5].blueprintName.." from computer ID "..senderId,
+          {
+            "Ignore",
+            "Save",
+            "Load"
+          },
+          {
+            {
+              name = "File name",
+              value = "/",
+              accepted = "."
+            },
+          },
+          function(tEvent)
+            if tEvent[1] == "timer" and
+            tEvent[2] == timeoutId then
+              return "Ignore"
+            end
+          end,
+          true
+        )
+        while button ~= "Ignore" do
+          fileName = tRes["File name"]
+          if button == "Load" then
+            tBlueprint = blueprint:copy()
+            tFile.blueprint = nil
+            scroll(1,0,0,true,true)
+            return
+          elseif not fileName then
+            button,tRes,reInput = reInput("Invalid file name!")
+          elseif fs.exists(fileName..".TAb") then
+            button,tRes,reInput = reInput(fileName.." already exists!")
+          else
+            blueprint:save(fileName)
+            input("Successfully saved "..fileName..".TAb.")
+            return
+          end
+        end
+      end
+    end
+  end,
+  send = function(rID,event,content,success,failure)
+    content = content or {}
+    content.rID = rID
+    content.sID = os.id
+    content.event = event
+    if failure then
+      local timerId = tTimers.modemRes.start()
+      if success then
+        tTransmissions.success[event][rID] = function()
+          tTimers.modemRes.ids[timerId] = false
+          success()
+        end
+      end
+      tTransmissions.failure[timerId] = failure --lmao
+    elseif success then
+      tTransmissions.success[event][rID] = success
+    end
+    modem.transmit(
+      modemChannel,
+      modemChannel,
+      content
+    )
+  end
+}
+setmetatable(
+  rednet,
+  {
+    __index = _G.rednet
+  }
+)
 --[[----------------------------------------------------------------------------------------------------------
 Debug functions
 ----------------------------------------------------------------------------------------------------------]]--
@@ -212,7 +335,7 @@ debug = {
           tLines[#tLines+1] = k..": "..tostring(v)
         end
       else
-        tLines[#tLines+1] = type(var).." "..(var == true and "true" or var == false and "false")
+        tLines[#tLines+1] = type(var).." "..tostring(var)
       end
     end
     local lines = tTerm.screen.y-2
@@ -277,51 +400,6 @@ for _k,file in pairs(fs.list(tFile.classFolder)) do
   class[file:match"(.+)%.Lua"] = loadFile(tFile.classFolder.."/"..file,progEnv)
 end
 
---load settings
-loadFile(tFile.settings)
-
-if turtle then
-  if not fs.exists(tFile.cTurtle) then
-    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
-  end
-  os.loadAPI(tFile.cTurtle)
-  cTurtle.tSettings.renderMove = false
-  if modem then --cTurtle handles modem wrapping on turtles
-    modem.open(modemChannel)
-  end
-elseif term.isColor() then
-  for k,side in pairs(peripheral.getNames()) do
-    local pType = peripheral.getType(side)
-    if pType == "modem"
-    and not modem
-    and peripheral.call(side,isWireless) then
-      modem = peripheral.wrap(side)
-      modem.open(modemChannel)
-    elseif pType == "Whatever the bridge is called" then
-      glasses = peripheral.wrap(side)
-    end
-    if glasses and modem then
-      break
-    end
-  end
-else
-  error("Turtle Architect is incompatible with regular computers!")
-end
-
-if tArg[1] then --attempt to load argument blueprint
-  tBlueprint = tBlueprint.load(tArg[1] or "") 
-  tFile.blueprint = tArg[1]
-end
-
---load menus
---tools are loaded within the Tools menu file
-tMenu = {}
-for _k,file in pairs(fs.list(tFile.menuFolder)) do
-  if not fs.isDir(tFile.menuFolder.."/"..file) then
-    tMenu[file:match"(.+)%.Lua"] = loadFile(tFile.menuFolder.."/"..file,progEnv)
-  end
-end
-
 --[[----------------------------------------------------------------------------------------------------------
 Assorted variables
 ----------------------------------------------------------------------------------------------------------]]--
@@ -351,8 +429,6 @@ tTerm.scroll.z = 0
 tTerm.scroll.layer = 1
 tTerm.color = term.isColor()
 
-tBlueprint = tBlueprint or class.blueprint.new() --stores current blueprint file
-
 tOngoing = { --stores ongoing build info
   dir = {}, --stores build directions
   breakMode = false --whether turtle will break obstructions automatically.
@@ -376,6 +452,58 @@ tBar = { --menu bar variables
   },
   touchMap = class.matrix.new(2) --used for clicks on the side and bottom bar
 }
+
+tTransmissions = { --stores reaction functions to modem transmissions
+  success = class.matrix.new(2), --received a success response, stored by event type and sender id
+  failure = class.matrix.new(2) --timed out, stored by timer id
+}
+
+--load settings
+loadFile(tFile.settings)
+
+if turtle then
+  if not fs.exists(tFile.cTurtle) then
+    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
+  end
+  os.loadAPI(tFile.cTurtle)
+  cTurtle.tSettings.renderMove = false
+  if modem then --cTurtle handles modem wrapping on turtles
+    modem.open(modemChannel)
+  end
+elseif term.isColor() then
+  for k,side in pairs(peripheral.getNames()) do
+    local pType = peripheral.getType(side)
+    if pType == "modem"
+    and not modem
+    and peripheral.call(side,"isWireless") then
+      modem = peripheral.wrap(side)
+      modem.open(modemChannel)
+    elseif pType == "Whatever the bridge is called" then
+      glasses = peripheral.wrap(side)
+    end
+    if glasses and modem then
+      break
+    end
+  end
+else
+  error("Turtle Architect is incompatible with regular computers!",0)
+end
+
+if tArg[1] then --attempt to load argument blueprint
+  tBlueprint = tBlueprint.load(tArg[1] or "") 
+  tFile.blueprint = tArg[1]
+else
+  tBlueprint = class.blueprint.new()
+end
+
+--load menus
+--tools are loaded within the Tools menu file
+tMenu = {}
+for _k,file in pairs(fs.list(tFile.menuFolder)) do
+  if not fs.isDir(tFile.menuFolder.."/"..file) then
+    tMenu[file:match"(.+)%.Lua"] = loadFile(tFile.menuFolder.."/"..file,progEnv)
+  end
+end
 
 --[[----------------------------------------------------------------------------------------------------------
 Rendering functions
@@ -946,19 +1074,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         return endExecution(button)
       end
     end
-    if tEvent[1] == "timer" then
-      local timerID = tEvent[2]
-      if timerID == tTimers.blink.id then
-        local toggle = tTimers.blink.toggle
-        tTimers.blink.toggle = not toggle
-        if toggle then
-          renderToolOverlay()
-        else
-          screen:delLayer(screen.layers.toolsOverlay)
-        end
-        tTimers.blink.id = os.startTimer(tTimers.blink.time)
-      end
-    elseif tEvent[1] == "mouse_click" then
+    if tEvent[1] == "mouse_click" then
       local x,y = tEvent[3],tEvent[4]
       if inputTouchMap[x][y] then --input bar clicked
         tInputs.enabled = inputTouchMap[x][y]
@@ -1556,27 +1672,15 @@ else
 --[[----------------------------------------------------------------------------------------------------------
 Color program
 ----------------------------------------------------------------------------------------------------------]]--
-  tBlueprint[1] = tBlueprint[1] or class.layer:new()
-  tTimers.blink.id = os.startTimer(tTimers.blink.time)
+  tBlueprint[1] = tBlueprint[1] or class.layer.new()
+  tTimers.blink.start()
   tTimers.blink.toggle = true
   renderBottomBar()
   renderSideBar()
   tBlueprint[1]:render()
   while true do
     local tEvent = {os.pullEvent()}
-    if tEvent[1] == "timer" then
-      local timerID = tEvent[2]
-      if timerID == tTimers.blink.id then
-        local toggle = tTimers.blink.toggle
-        tTimers.blink.toggle = not toggle
-        if toggle then
-          renderToolOverlay()
-        else
-          screen:delLayer(screen.layers.toolsOverlay)
-        end
-        tTimers.blink.id = os.startTimer(tTimers.blink.time)
-      end
-    elseif tEvent[1] == "mouse_click"
+    if tEvent[1] == "mouse_click"
     or tEvent[1] == "mouse_drag" then
       local button,x,y = tEvent[2],tEvent[3],tEvent[4]
       if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click

@@ -105,7 +105,7 @@ menu = {
       local fileName = tFile.blueprint
       local button,tRes
       if not fileName then
-        button, tRes = input(
+        button, tRes, reInput = input(
           "No file name for current blueprint,",
           {
             "Cancel",
@@ -117,7 +117,9 @@ menu = {
               value = "/",
               accepted = "."
             },
-          }
+          },
+          false,
+          true
         )
       end
       while button and button ~= "Cancel" do
@@ -140,7 +142,7 @@ menu = {
     name = "Save as...",
     enabled = true,
     func = function()
-      local button, tRes = input(
+      local button, tRes, reInput = input(
         "Save current blueprint as",
         {
           "Cancel",
@@ -153,7 +155,9 @@ menu = {
             value = tFile.blueprint or "/",
             accepted = "."
           },
-        }
+        },
+        false,
+        true
       )
       while button ~= "Cancel" do
         local fileName = fileName or tRes["File name"]
@@ -183,7 +187,48 @@ menu = {
     name = "Send...",
     enabled = true and modem,
     func = function()
-      
+      local button, tRes, reInput = input(
+      "Transfer current blueprint via rednet",
+        {
+          "Cancel",
+          "Ok",
+          "All"
+        },
+        {
+          {
+            name = "Computer ID",
+            value = os.getComputerID(),
+            accepted = "%d",
+            charLimit = 5
+          },
+        },
+        false,
+        true
+      )
+      while button ~= "Cancel" do
+        local id = button ~= "All" and tRes["Computer ID"] or "All"
+        if not id then
+          button,tRes,reInput = reInput"Missing receiver ID!"
+        elseif button == "Ok"
+        or button == "All" then
+          rednet.send(id,"Init connection",
+            {},
+            function()
+              rednet.send(id,"Blueprint transmission",
+                {
+                  blueprint = tBlueprint,
+                  blueprintName = tFile.blueprint or "Untitled"
+                }
+              )
+              input("Successfully sent the current blueprint to computer ID "..id)
+            end,
+            function()
+              input("Failed to connect to computer ID "..id)
+            end
+          )
+          return
+        end
+      end
     end
   },
   [6] = {

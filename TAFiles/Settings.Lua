@@ -41,18 +41,35 @@ tColors = setmetatable(
 tTimers = setmetatable( -- timer settings
   {
     restockRetry = { --wait before re-attempting failed restock
-      time = 20
+      time = 20,
     },
-    blink = { --how often to blink clipboard contents and selection marker
+    blink = { --how often to tool overlays
       time = 1
+    },
+    modemRes = { --how long to wait for a modem response
+      time = 3,
+    },
+    inputTimeout = { --Time to wait for on time sensitive dialogue boxes, eg accept blueprint transmission
+      time = 50
     }
   },
   {
     __index = function(t,k)
-      error("The timer "..k.." is not defined!")
+      error("The timer "..k.." is not defined!",2)
     end
   }
 )
+for k,v in pairs(tTimers) do
+  v.ids = {}
+  v.start = function()
+    v.id = os.startTimer(v.time)
+    v.ids[v.id] = true
+    return v.id
+  end
+  v.stop = function()
+    v.id = nil
+  end
+end
 
 colorKey = setmetatable(
   { --what character correlates to what color in the blueprint

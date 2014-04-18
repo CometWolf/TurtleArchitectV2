@@ -1,15 +1,13 @@
 local layer
 layer = { --layer class
-  new = function()
+  new = function(data)
     return setmetatable(
-      {
-      
-      },
+      data or {},
       {
         __index = function(t,k)
           if not layer[k] then
             if type(k) == "number" then
-              t[k] = class.x:new()
+              t[k] = class.x.new()
               return t[k]
             else
               error("Attempt to access invalid x-axis "..tostring(k),2)
@@ -29,7 +27,7 @@ layer = { --layer class
   end,
   copy = function(layer,x1,z1,x2,z2,clipboard)
   --returns a layer copy, optional coordinates
-    local copy = layer:new()
+    local copy = layer.new()
     local x,z = {},{}
     if not (x1 and x2) then
       x.min,x.max = 1,#layer
@@ -47,7 +45,7 @@ layer = { --layer class
     for nX = x.min,x.max do
       local vX = layer[nX]
       nX = nX-x.min+1
-      copy[nX] = vX:new()
+      copy[nX] = vX.new()
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
           copy[nX][nZ-z.min+1] = vZ
@@ -149,11 +147,11 @@ layer = { --layer class
       z.max = math.max(z1,z2)
       z.min = math.min(z1,z2)
     end
-    local flipped = layer:new()
+    local flipped = layer.new()
     for nX = x.min,x.max do
       local vX = layer[nX]
       nX = x.size-nX
-      flipped[nX] = vX:new()
+      flipped[nX] = vX.new()
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
           flipped[nX][nZ] = vZ
@@ -183,10 +181,10 @@ layer = { --layer class
       z.min = math.min(z1,z2)
       z.size = z.max+1
     end
-    local flipped = layer:new()
+    local flipped = layer.new()
     for nX = x.min,x.max do
       local vX = layer[nX]
-      flipped[nX] = vX:new()
+      flipped[nX] = vX.new()
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
           flipped[nX][z.size-nZ] = vZ

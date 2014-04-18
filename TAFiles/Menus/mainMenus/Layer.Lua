@@ -21,7 +21,7 @@ menu = {
       while button ~= "Cancel" do
         local newLayer = tRes["New layer"]
         while #tBlueprint < newLayer do
-          tBlueprint[#tBlueprint+1] = class.layer:new()
+          tBlueprint[#tBlueprint+1] = class.layer.new()
         end
         tTerm.scroll.layer = newLayer
         scroll()
@@ -103,7 +103,7 @@ menu = {
           or button == "Overwrite"
           or button == "Pastebin" then
             while #tBlueprint < tRes.Into do
-              tBlueprint[#tBlueprint+1] = class.layer:new()
+              tBlueprint[#tBlueprint+1] = class.layer.new()
             end
             for i=tRes.From,tRes.To do
               local layer = tRes.Into+i-tRes.From
@@ -113,7 +113,7 @@ menu = {
             return
           elseif button == "Insert" then
             while #tBlueprint < tRes.Into do
-              tBlueprint[#tBlueprint+1] = class.layer:new()
+              tBlueprint[#tBlueprint+1] = class.layer.new()
             end
             for i=tRes.From,tRes.To do
               local layer = tRes.Into+i-tRes.From
@@ -140,7 +140,7 @@ menu = {
       )
       while button ~= "Cancel" do
         if delLayer == 1 and #tBlueprint == 1 then
-          tBlueprint[1] = tBlueprint[1]:new()
+          tBlueprint[1] = tBlueprint[1].new()
         else
           table.remove(tBlueprint,delLayer)
         end
@@ -218,7 +218,7 @@ menu = {
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.To do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
           tBlueprint[curLayer] = class.layer.new()
@@ -226,7 +226,7 @@ menu = {
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.To do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           table.insert(tBlueprint, tBlueprint[curLayer]:copy(), tRes.To)
           tBlueprint[curLayer] = class.layer.new()
@@ -280,7 +280,7 @@ menu = {
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             local layer = tRes.Into+i-tRes.From
@@ -291,7 +291,7 @@ menu = {
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             local layer = tRes.Into+i-tRes.From
@@ -339,13 +339,13 @@ menu = {
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.To-1 do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.To-1 do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           table.insert(tBlueprint, tBlueprint[curLayer]:copy(), tRes.To)
           return
@@ -392,7 +392,7 @@ menu = {
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.From do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             tBlueprint[i] = tBlueprint[tTerm.scroll.layer]:copy()
@@ -401,7 +401,7 @@ menu = {
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.From do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             table.insert(tBlueprint,tBlueprint[tTerm.scroll.layer]:copy(),i)
@@ -456,7 +456,7 @@ menu = {
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             local layer = tRes.Into+i-tRes.From
@@ -466,7 +466,7 @@ menu = {
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.Into do
-            tBlueprint[#tBlueprint+1] = class.layer:new()
+            tBlueprint[#tBlueprint+1] = class.layer.new()
           end
           for i=tRes.From,tRes.To do
             local layer = tRes.Into+i-tRes.From

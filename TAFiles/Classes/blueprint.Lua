@@ -1,11 +1,11 @@
 local blueprint
 blueprint = { --blueprint class
-  new = function()
+  new = function(data)
+    data = data or {}
+    data[1] = class.layer.new(data[1])
+    data.colorSlots = data.colorSlots or class.matrix.new(2)
     return setmetatable(
-      {
-        [1] = class.layer.new(),
-        colorSlots = class.matrix.new(2)
-      },
+      data,
       {
         __index = blueprint
       }
@@ -108,23 +108,23 @@ blueprint = { --blueprint class
   --returns a blueprint copy, optional coordinates
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = math.huge,math.huge
+      x.min,x.max = 1,math.huge
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
     end
     if not (z1 and z2) then
-      z.min,z.max = math.huge,math.huge
+      z.min,z.max = 1,math.huge
     else
       z.max = math.max(z1,z2)
       z.min = math.min(z1,z2)
     end
-    local copy = blueprint:new()
-    for i=1,#blueprint do
-      copy[nL] = blueprint[i]:new()
-      for nX,vX in pairs(blueprint[i]) do
+    local copy = blueprint.new()
+    for nL=1,#blueprint do
+      copy[nL] = class.layer.new()
+      for nX,vX in pairs(blueprint[nL]) do
         if nX >= x.min and nX <= x.max then
-          copy[nL][nX] = vX:new()
+          copy[nL][nX] = class.x.new()
           for nZ,vZ in pairs(vX) do
             if nZ >= z.min and nZ <= z.max then
               copy[nL][nX][nZ] = vZ
