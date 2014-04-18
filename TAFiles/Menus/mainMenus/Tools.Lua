@@ -21,6 +21,7 @@ for _k,file in pairs(fs.list(tFile.toolFolder)) do
   tTool[file:match"(.+)%.Lua"] = tool.renderFunc
   menu[tool.menuOrder] = {
     name = file:match"(.+)%.Lua",
+    enabled = true,
     func = function(button)
       tool.selectFunc(button)
       renderBottomBar()

@@ -2,6 +2,7 @@ local menu
 menu = {
   [1] = {
     name = "Create new...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Create new blueprint file...",
@@ -37,6 +38,7 @@ menu = {
   },
   [2] = {
     name = "Load...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Load blueprint file",
@@ -98,6 +100,7 @@ menu = {
   },
   [3] = {
     name = "Save",
+    enabled = true,
     func = function()
       local fileName = tFile.blueprint
       local button,tRes
@@ -135,6 +138,7 @@ menu = {
   },
   [4] = {
     name = "Save as...",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Save current blueprint as",
@@ -176,7 +180,15 @@ menu = {
     end
   },
   [5] = {
+    name = "Send...",
+    enabled = true and modem,
+    func = function()
+      
+    end
+  },
+  [6] = {
     name = "Flip...",
+    enabled = true,
     func = function()
       local button = input(
         "Flip the entire blueprint",
@@ -195,14 +207,16 @@ menu = {
       end
     end
   },
-  [6] = {
+  [7] = {
     name = "Edit slot data...",
+    enabled = true,
     func = function(button)
       assignColorSlots(tTool[button].color)
     end
   },
-  [7] = {
+  [8] = {
     name = "Mark built",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -220,8 +234,9 @@ menu = {
       end
     end
   },
-  [8] = {
+  [9] = {
     name = "Mark unbuilt",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -239,8 +254,9 @@ menu = {
       end
     end
   },
-  [9] = {
+  [10] = {
     name = "Check usage",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Check material requirements for the layer range",

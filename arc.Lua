@@ -3,9 +3,8 @@
 |                                              Turtle Architect                                              |
 |                                                by CometWolf                                                |
 --------------------------------------------------------------------------------------------------------------
-
 --------------------------------------------------------------------------------------------------------------
-Program init
+environment init
 ----------------------------------------------------------------------------------------------------------]]--
 local env = {  --new environment
   tFile = {
@@ -18,118 +17,6 @@ env.progEnv = setmetatable(env, {__index = getfenv()}) --inherit global
 setfenv(1, env)    --set it, now all variables are local to this script.
 tArg = {...} --store program arguments
 
-if turtle then
-  if not fs.exists(tFile.cTurtle) then
-    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
-  end
-  os.loadAPI"cTurtle"
-  cTurtle.tSettings.renderMove = false
-  if modem then --cTurtle handles modem wrapping on turtles
-    modem.open(modemChannel)
-  end
-elseif term.isColor() then
-  for k,side in pairs(peripheral.find()) do
-    local pType = peripheral.getType(side)
-    if pType == "modem"
-    and not modem
-    and peripheral.call(side,isWireless) then
-      modem = peripheral.wrap(side)
-      modem.open(modemChannel)
-    elseif pType == "Whatever the bridge is called" then
-      glasses = peripheral.wrap(side)
-    end
-    if glasses and modem then
-      break
-    end
-  end
-else
-  error("Turtle Architect is incompatible with regular computers!")
-end
-
-if tArg[1] then --attempt to load argument blueprint
-  tBlueprint = tBlueprint.load(tArg[1] or "") 
-  tFile.blueprint = tArg[1]
-end
-
---[[----------------------------------------------------------------------------------------------------------
-Debug functions
-----------------------------------------------------------------------------------------------------------]]--
-debug = {
-  times = 0,
-  tExecutionTime = {
-    program = os.clock()
-  },
-  prep = function()
-    term.setBackgroundColor(colors.black)
-    term.clear()
-    term.setCursorPos(1,1)
-    term.setTextColor(colors.white)
-  end,
-  pause = function()
-    while true do
-      local tEvent = {os.pullEventRaw()}
-      if tEvent[1] == "key" then
-        if tEvent[2] == 14 then
-          error()
-        else
-          return
-        end
-      elseif tEvent[2] == "timer" then
-        os.queueEvent(unpack(tEvent))
-      end
-    end
-  end,
-  variables = function(...)
-    debug.times = debug.times+1
-    local tLines = {}
-    for i=1,#arg do
-      local var = arg[i]
-      if not var then
-        tLines[#tLines+1] = "nil"
-      elseif type(var) == "table" then
-        for k,v in pairs(var) do
-          tLines[#tLines+1] = k..": "..tostring(v)
-        end
-      else
-        tLines[#tLines+1] = type(var).." "..(var == true and "true" or var == false and "false")
-      end
-    end
-    local lines = tTerm.screen.y-2
-    local pages = math.ceil(#tLines/lines)
-    for page = 1,pages do
-      debug.prep()
-      print("Page "..page.."/"..pages.." Debug call #"..debug.times.." on "..tFile.program)
-      for line = lines*(page-1)+1,lines*page do
-        if not tLines[line] then
-          break
-        else
-          print(tLines[line])
-        end
-      end
-      debug.pause()
-    end
-  end,
-  timedStart = function(key)
-    debug.tExecutionTime[k] = os.clock()
-  end,
-  timedEnd = function(key)
-    local endTime = os.clock()
-    debug.prep()
-    assert(debug.tExecutionTime[key],"Attempt to check non-defined execution time "..key)
-    print("Initiated at "..debug.tExecutionTime[key])
-    print("Completed at "..endTime)
-    print("Total run time: "..endTime-debug.tExecutionTime[key])
-    debug.pause()
-  end
-}
-setmetatable(debug,
-  {
-    __call = function(t,...)
-      return debug.variables(...)
-    end
-  }
-)
-  
 --[[----------------------------------------------------------------------------------------------------------
 File paths
 ----------------------------------------------------------------------------------------------------------]]--
@@ -150,7 +37,7 @@ tPaste = {
 }
 
 --[[----------------------------------------------------------------------------------------------------------
-API mods
+local API mods
 ----------------------------------------------------------------------------------------------------------]]--
 os = setmetatable(
   {
@@ -286,7 +173,86 @@ http = setmetatable(
 )
 
 --[[----------------------------------------------------------------------------------------------------------
-Program files loading
+Debug functions
+----------------------------------------------------------------------------------------------------------]]--
+debug = {
+  times = 0,
+  tExecutionTime = {
+    program = os.clock()
+  },
+  prep = function()
+    term.setBackgroundColor(colors.black)
+    term.clear()
+    term.setCursorPos(1,1)
+    term.setTextColor(colors.white)
+  end,
+  pause = function()
+    while true do
+      local tEvent = {os.pullEventRaw()}
+      if tEvent[1] == "key" then
+        if tEvent[2] == 14 then
+          error()
+        else
+          return
+        end
+      elseif tEvent[2] == "timer" then
+        os.queueEvent(unpack(tEvent))
+      end
+    end
+  end,
+  variables = function(...)
+    debug.times = debug.times+1
+    local tLines = {}
+    for i=1,#arg do
+      local var = arg[i]
+      if not var then
+        tLines[#tLines+1] = "nil"
+      elseif type(var) == "table" then
+        for k,v in pairs(var) do
+          tLines[#tLines+1] = k..": "..tostring(v)
+        end
+      else
+        tLines[#tLines+1] = type(var).." "..(var == true and "true" or var == false and "false")
+      end
+    end
+    local lines = tTerm.screen.y-2
+    local pages = math.ceil(#tLines/lines)
+    for page = 1,pages do
+      debug.prep()
+      print("Page "..page.."/"..pages.." Debug call #"..debug.times.." on "..tFile.program)
+      for line = lines*(page-1)+1,lines*page do
+        if not tLines[line] then
+          break
+        else
+          print(tLines[line])
+        end
+      end
+      debug.pause()
+    end
+  end,
+  timedStart = function(key)
+    debug.tExecutionTime[k] = os.clock()
+  end,
+  timedEnd = function(key)
+    local endTime = os.clock()
+    debug.prep()
+    assert(debug.tExecutionTime[key],"Attempt to check non-defined execution time "..key)
+    print("Initiated at "..debug.tExecutionTime[key])
+    print("Completed at "..endTime)
+    print("Total run time: "..endTime-debug.tExecutionTime[key])
+    debug.pause()
+  end
+}
+setmetatable(debug,
+  {
+    __call = function(t,...)
+      return debug.variables(...)
+    end
+  }
+)
+
+--[[----------------------------------------------------------------------------------------------------------
+Program init
 ----------------------------------------------------------------------------------------------------------]]--
 function loadFile(path,env) --custom file loader, sets environment, handles errors and runs file and returns results
   if not path then
@@ -305,16 +271,49 @@ function loadFile(path,env) --custom file loader, sets environment, handles erro
   return unpack(tRes,2)
 end
 
---class files
+--load class files
 class = {}
 for _k,file in pairs(fs.list(tFile.classFolder)) do
   class[file:match"(.+)%.Lua"] = loadFile(tFile.classFolder.."/"..file,progEnv)
 end
 
---settings
+--load settings
 loadFile(tFile.settings)
 
---menuTables
+if turtle then
+  if not fs.exists(tFile.cTurtle) then
+    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
+  end
+  os.loadAPI(tFile.cTurtle)
+  cTurtle.tSettings.renderMove = false
+  if modem then --cTurtle handles modem wrapping on turtles
+    modem.open(modemChannel)
+  end
+elseif term.isColor() then
+  for k,side in pairs(peripheral.getNames()) do
+    local pType = peripheral.getType(side)
+    if pType == "modem"
+    and not modem
+    and peripheral.call(side,isWireless) then
+      modem = peripheral.wrap(side)
+      modem.open(modemChannel)
+    elseif pType == "Whatever the bridge is called" then
+      glasses = peripheral.wrap(side)
+    end
+    if glasses and modem then
+      break
+    end
+  end
+else
+  error("Turtle Architect is incompatible with regular computers!")
+end
+
+if tArg[1] then --attempt to load argument blueprint
+  tBlueprint = tBlueprint.load(tArg[1] or "") 
+  tFile.blueprint = tArg[1]
+end
+
+--load menus
 --tools are loaded within the Tools menu file
 tMenu = {}
 for _k,file in pairs(fs.list(tFile.menuFolder)) do
@@ -326,7 +325,6 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Assorted variables
 ----------------------------------------------------------------------------------------------------------]]--
-
 tTerm = { --screen size and viewing area
   screen = {}, --screen size
   canvas = {}, --canvas size
@@ -468,7 +466,7 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
   menu = tMenu.main[menu]
   screen:setLayer(screen.layers.menus)
   screen:setBackgroundColor(tColors.menuTop)
-  screen:setTextColor(tColors.menuText)
+  screen:setTextColor(tColors.enabledMenuText)
   screen:setCursorPos(menu.sX,menu.sY)
   local extraSpaces = string.rep(" ",math.ceil((menu.eX-menu.sX-#menu.string)/2))
   local menuString = extraSpaces..menu.string..extraSpaces
@@ -490,13 +488,21 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
       local iMenu = nextMenu
       local sY = menu.sY+i
       screen:setBackgroundColor(i%2 == 0 and tColors.menuPri or tColors.menuSec)
+      screen:setTextColor(menu.items[iMenu].enabled and tColors.enabledMenuText or tColors.disabledMenuText)
       screen:setCursorPos(sX,sY)
       screen:write(menu.items[iMenu].string)
       for iX = sX,sX+menu.lX do
-        tMenu.touchMap[iX][sY] = function(button)
-          renderMenu()
-          menu.items[iMenu].func(button)
-        end
+        tMenu.touchMap[iX][sY] = (
+          (
+            menu.items[iMenu].enabled 
+            and function(button)
+              renderMenu()
+              menu.items[iMenu].func(button)
+            end
+          ) or (
+            true --true prevents the touchmap func from closing the menu
+          )
+        )
       end
     end
   end

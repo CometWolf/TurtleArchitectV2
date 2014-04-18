@@ -2,6 +2,7 @@ local menu
 menu = {
   [1] = {
     name = "Create new...",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Create new layer...",
@@ -30,6 +31,7 @@ menu = {
   },
   [2] = {
     name = "Import...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Import layers from another blueprint",
@@ -126,6 +128,7 @@ menu = {
   },
   [3] = {
     name = "Delete current",
+    enabled = true,
     func = function()
       local delLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -149,6 +152,7 @@ menu = {
   },
   [4] = {
     name = "Delete range...",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Delete layer range",
@@ -181,6 +185,7 @@ menu = {
   },
   [5] = {
     name = "Move to...",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes, reInput = input(
@@ -233,6 +238,7 @@ menu = {
   },
   [6] = {
     name = "Move range...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Move layer range",
@@ -300,6 +306,7 @@ menu = {
   },
   [7] = {
     name = "Copy to...",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes, reInput = input(
@@ -348,6 +355,7 @@ menu = {
   },
   [8] = {
     name = "Stretch copy...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Stretch copy current layer("..tTerm.scroll.layer..") across",
@@ -406,6 +414,7 @@ menu = {
   },
   [9] = {
     name = "Copy range...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Copy layer range",
@@ -471,6 +480,7 @@ menu = {
   },
   [10] = {
     name = "Merge...",
+    enabled = true,
     func = function()
       local button, tRes, reInput = input(
         "Merge layer range",
@@ -505,6 +515,7 @@ menu = {
   },
   [11] = {
     name = "Flip...",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button = input(
@@ -526,6 +537,7 @@ menu = {
   },
   [12] = {
     name = "Mark built",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -545,6 +557,7 @@ menu = {
   },
   [13] = {
     name = "Mark unbuilt",
+    enabled = true,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -564,6 +577,7 @@ menu = {
   },
   [14] = {
     name = "Goto...",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Goto layer number...",

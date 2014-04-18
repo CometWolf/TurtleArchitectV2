@@ -2,6 +2,7 @@ local menu
 menu = {
   [1] = {
     name = "Update",
+    enabled = _G.http and true,
     func = function()
       if not fs.exists(tFile.installer) then
         local res = http.paste.get(tPaste.program,tFile.installer)
@@ -35,6 +36,7 @@ menu = {
   },
   [2] = {
     name = "Built mode",
+    enabled = true,
     func = function()
       local button = input(
         [[Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them.
@@ -61,6 +63,7 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
   },
   [3] = {
     name = "Grid mode",
+    enabled = true,
     func = function()
       local button = input(
         [[Grid mode renders a grid line ontop of your blueprint, for ease of visualization
@@ -126,6 +129,7 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
   },
   [4] = {
     name = "Background layer",
+    enabled = true,
     func = function()
       local button,tRes = input(
         [[BGL mode renders the specified layer underneath the layer you are currently viewing. This makes comparisons a breeze.
@@ -156,6 +160,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
   },
   [5] = {
     name = "Overwrite mode",
+    enabled = true,
     func = function()
       local button = input(
         [[Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white).
@@ -174,6 +179,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
   },
   [6] = {
     name = "About",
+    enabled = true,
     func = function()
       input([[Turtle Architect 2.0.
 This software lets you draw your Minecraft constructions on your computer, and have your turtle build it wherever you desire. Files may easily be saved or even uploaded to Pastebin, for later use.
@@ -184,6 +190,7 @@ Developed by CometWolf.
   },
   [7] = {
     name = "Quit",
+    enabled = true,
     func = function()
       term.setTextColor(colors.white)
       term.setBackgroundColor(colors.black)

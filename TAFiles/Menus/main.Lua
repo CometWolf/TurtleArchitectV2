@@ -1,9 +1,9 @@
-local main = {
-  [1] = "Blueprint",
-  [2] = "Layer",
+local main = { --note that the menus are numbered from the bottom and up
+  [5] = "Blueprint",
+  [4] = "Layer",
   [3] = "Tools",
-  [4] = "Turtle",
-  [5] = "Settings",
+  [2] = "Turtle",
+  [1] = "Settings",
 }
 if not turtle then --disable turtle menu on computers
   for i=1,#main do

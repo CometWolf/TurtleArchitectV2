@@ -1,4 +1,4 @@
-modemChannel = 66790 --Channel used to communicate with other computers/turtles running Turtle Architect
+modemChannel = 62700 --Channel used to communicate with other computers/turtles running Turtle Architect
 
 tColors = setmetatable(
   { -- color settings
@@ -10,7 +10,8 @@ tColors = setmetatable(
     menuTop = colors.blue, --menu header color
     menuPri = colors.black, --Menu color alteration primary 
     menuSec = colors.gray, --Menu color alteration secondary
-    menuText = colors.yellow, --Menu text
+    enabledMenuText = colors.yellow, --Enabled Menus text
+    disabledMenuText = colors.lightGray, --disabled menus text
     inputBox = colors.gray, -- popup boxes background
     inputBoxBorder = colors.lightGray, --popup boxes border
     inputBoxText = colors.yellow, --popup boxes text

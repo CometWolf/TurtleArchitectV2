@@ -2,6 +2,7 @@ local menu
 menu = {
   [1] = {
     name = "Move to...",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Move to coordinates...",
@@ -34,6 +35,7 @@ menu = {
   },
   [2] = {
     name = "Turn",
+    enabled = true,
     func = function()
       local button, tRes = input(
         "Turn to...",
@@ -53,12 +55,14 @@ menu = {
   },
   [3] = {
     name = "Build blueprint...",
+    enabled = true,
     func = function()
       build(tBlueprint)
     end
   },
   [4] = {
     name = "Break mode",
+    enabled = true,
     func = function()
       local button = input(
         [[Break mode means the turtle will break any obstructions in it's path, provided it has a pickaxe.
