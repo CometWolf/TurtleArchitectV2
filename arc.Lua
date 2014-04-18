@@ -18,6 +18,39 @@ env.progEnv = setmetatable(env, {__index = getfenv()}) --inherit global
 setfenv(1, env)    --set it, now all variables are local to this script.
 tArg = {...} --store program arguments
 
+if turtle then
+  if not fs.exists(tFile.cTurtle) then
+    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
+  end
+  os.loadAPI"cTurtle"
+  cTurtle.tSettings.renderMove = false
+  if modem then --cTurtle handles modem wrapping on turtles
+    modem.open(modemChannel)
+  end
+elseif term.isColor() then
+  for k,side in pairs(peripheral.find()) do
+    local pType = peripheral.getType(side)
+    if pType == "modem"
+    and not modem
+    and peripheral.call(side,isWireless) then
+      modem = peripheral.wrap(side)
+      modem.open(modemChannel)
+    elseif pType == "Whatever the bridge is called" then
+      glasses = peripheral.wrap(side)
+    end
+    if glasses and modem then
+      break
+    end
+  end
+else
+  error("Turtle Architect is incompatible with regular computers!")
+end
+
+if tArg[1] then --attempt to load argument blueprint
+  tBlueprint = tBlueprint.load(tArg[1] or "") 
+  tFile.blueprint = tArg[1]
+end
+
 --[[----------------------------------------------------------------------------------------------------------
 Debug functions
 ----------------------------------------------------------------------------------------------------------]]--
@@ -320,10 +353,11 @@ tTerm.scroll.z = 0
 tTerm.scroll.layer = 1
 tTerm.color = term.isColor()
 
-tBlueprint = class.blueprint.new() --stores current blueprint file
+tBlueprint = tBlueprint or class.blueprint.new() --stores current blueprint file
 
 tOngoing = { --stores ongoing build info
-  dir = {}
+  dir = {}, --stores build directions
+  breakMode = false --whether turtle will break obstructions automatically.
 }
 
 screen = class.screenBuffer.new() --screen buffer, supports layers and uses custom methods, no silly redirect here.
@@ -998,7 +1032,8 @@ function saveProgress(fileName)
   file:write("dir X: "..tOngoing.dir.x)
   file:write("dir Y: "..tOngoing.dir.y)
   file:write("dir Z: "..tOngoing.dir.z)
-  file:write("Enderchest: "..(tOngoing.enderChest or "disabled"))
+  file:write("Enderchest: "..(tOngoing.enderChest or "Disabled"))
+  file:write("Break mode: "..(tOngoing.breakMode and "Enabled" or "Disabled"))
   file:save(fileName..".TAo")
 end
 
@@ -1025,6 +1060,8 @@ function loadProgress(fileName)
   tOngoing.dir.z = line:match"dir Z: ([+-])" or "+"
   line = read()
   tOngoing.enderChest = tonumber(line:match"EnderChest: (%d+)") or false
+  line = read()
+  tOngoing.breakMode = (line:match"Break mode: (.+)" == "Enabled")
   file.close()
   return tOngoing
 end
@@ -1212,6 +1249,7 @@ layers ]]..loadedOngoing.sLayer..[[-]]..loadedOngoing.eLayer..[[
 X: ]]..loadedOngoing.x..[[ "]]..loadedOngoing.dir.x..[["
 Y: ]]..loadedOngoing.y..[[ "]]..loadedOngoing.dir.y..[["
 Z: ]]..loadedOngoing.z..[[ "]]..loadedOngoing.dir.z..[["
+Break mode: ]]..(loadedOngoing.breakMode and "ON" or "OFF")..[[ 
 Load?]],
         {
           "Yes",
@@ -1426,7 +1464,7 @@ Load?]],
   local digSlot = blueprint.colorSlots.X[1]
   local threshold = digSlot and 1 or 2
   for nL = tOngoing.sLayer,tOngoing.eLayer do
-    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",breaker)
+    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
     local layerCopy = tBlueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
       for nZ in pairs(vX) do
@@ -1434,8 +1472,8 @@ Load?]],
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
-            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",breaker)
-            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",breaker)
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
             if not selectColor(block,threshold) then
               input("Construction cancelled.")
               return
@@ -1446,9 +1484,9 @@ Load?]],
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "X" then --break block
-            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",breaker)
-            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",breaker)
-            selectColor(block,-1)
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
+            selectColor(block)
             cTurtle.drop("Y-",false,64)
             cTurtle.dig("-Y"..tOngoing.dir.y)
             cTurtle.drop("Y-",false,64)
@@ -1494,26 +1532,10 @@ end
 Other functions
 ----------------------------------------------------------------------------------------------------------]]--
 
-
---[[----------------------------------------------------------------------------------------------------------
-Program execution begins
-----------------------------------------------------------------------------------------------------------]]--
-tBlueprint = tBlueprint.load(tArg[1] or "") or tBlueprint
-tFile.blueprint = tBlueprint[1] and tArg[1]
-if turtle then
-  if not fs.exists(tFile.cTurtle) then
-    assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
-  end
-  os.loadAPI"cTurtle"
-  cTurtle.tSettings.renderMove = false
-end
 --[[----------------------------------------------------------------------------------------------------------
 Non-color program
 ----------------------------------------------------------------------------------------------------------]]--
 if not tTerm.color then
-  if not turtle then
-    error("This software is incompatible with regular computers!")
-  end
   while true do
     local tEvent = {os.pullEvent()}
     if tEvent[1] == "key" then

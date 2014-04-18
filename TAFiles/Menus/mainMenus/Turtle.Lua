@@ -62,16 +62,16 @@ menu = {
     func = function()
       local button = input(
         [[Break mode means the turtle will break any obstructions in it's path, provided it has a pickaxe.
-Break mode: ]]..breaker and "ON" or "OFF",
+Break mode: ]]..tOngoing.breakMode and "ON" or "OFF",
         {
           "Cancel",
-          (breaker and "Break mode OFF" or "Break mode ON"),
+          (tOngoing.breakMode and "Break mode OFF" or "Break mode ON"),
         }
       )
       if button == "Break mode ON" then
-        breaker = true
+        tOngoing.breakMode = true
       elseif button == "Break mode OFF" then
-        breaker = false
+        tOngoing.breakMode = false
       end
     end
   },

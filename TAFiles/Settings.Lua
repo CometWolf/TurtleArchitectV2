@@ -1,3 +1,5 @@
+modemChannel = 66790 --Channel used to communicate with other computers/turtles running Turtle Architect
+
 tColors = setmetatable(
   { -- color settings
     canvasColor = colors.white, --changing this can cause some derps
@@ -54,20 +56,20 @@ tTimers = setmetatable( -- timer settings
 colorKey = setmetatable(
   { --what character correlates to what color in the blueprint
     [" "] = tColors.canvasColor,
-    a = 2 ^ 1,
-    b = 2 ^ 2,
-    c = 2 ^ 3,
-    d = 2 ^ 4,
-    e = 2 ^ 5,
-    f = 2 ^ 6,
-    g = 2 ^ 7,
-    h = 2 ^ 8,
-    i = 2 ^ 9,
-    j = 2 ^ 10,
-    k = 2 ^ 11,
-    l = 2 ^ 12,
-    m = 2 ^ 13,
-    n = 2 ^ 14,
+    a = 2 ^ 1, --orange
+    b = 2 ^ 2, --purple
+    c = 2 ^ 3, --light blue
+    d = 2 ^ 4, --yellow
+    e = 2 ^ 5, --lime
+    f = 2 ^ 6, --pink
+    g = 2 ^ 7, --gray
+    h = 2 ^ 8, --light gray
+    i = 2 ^ 9, --blue
+    j = 2 ^ 10, --purple
+    k = 2 ^ 11, --blue
+    l = 2 ^ 12, --brown
+    m = 2 ^ 13, --green
+    n = 2 ^ 14, --red
     o = 2 ^ 15,  --black
     X = colors.red --break block marker
   },
@@ -134,5 +136,4 @@ tMode = { -- default modes
   grid = false,
   backgroundLayer = false,
   overwrite = true,
-  breaker = false
 }
