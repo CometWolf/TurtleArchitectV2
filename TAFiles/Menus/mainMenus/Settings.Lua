@@ -37,8 +37,7 @@ menu = {
     name = "Built mode",
     func = function()
       local button = input(
-        [[
-Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them.
+        [[Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them.
 Built render mode: ]]..(tMode.builtRender and "ON" or "OFF")..[[ 
 Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
         {
@@ -64,8 +63,7 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
     name = "Grid mode",
     func = function()
       local button = input(
-        [[
-Grid mode renders a grid line ontop of your blueprint, for ease of visualization
+        [[Grid mode renders a grid line ontop of your blueprint, for ease of visualization
 Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
         {
           "Cancel",
@@ -130,8 +128,7 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
     name = "Background layer",
     func = function()
       local button,tRes = input(
-        [[
-BGL mode renders the specified layer underneath the layer you are currently viewing. This makes comparisons a breeze.
+        [[BGL mode renders the specified layer underneath the layer you are currently viewing. This makes comparisons a breeze.
 BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
         {
           "Cancel",
@@ -161,8 +158,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
     name = "Overwrite mode",
     func = function()
       local button = input(
-        [[
-Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white).
+        [[Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white).
 Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
         {
           "Cancel",
@@ -179,8 +175,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
   [6] = {
     name = "About",
     func = function()
-      input([[
-Turtle Architect 2.0.
+      input([[Turtle Architect 2.0.
 This software lets you draw your Minecraft constructions on your computer, and have your turtle build it wherever you desire. Files may easily be saved or even uploaded to Pastebin, for later use.
 Developed by CometWolf.
 ]]

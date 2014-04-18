@@ -8,6 +8,9 @@ matrix = {
       },
       {
         __index = function(t,k)
+          if k == nil then
+            error("Attempt to index nil value",2)
+          end
           local dimension = dimensions-1
           if dimension <= 0 then
             return nil

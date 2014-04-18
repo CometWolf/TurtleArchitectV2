@@ -1076,22 +1076,56 @@ function checkUsage(blueprint,sLayer,eLayer)
   }
   local tPos = {
     x = 0,
-    y = 0,
+    y = 1,
     z = 0
   }
-  for i = sLayer,eLayer do
-    for nX,vX in pairs(blueprint[i]) do
+  local placed = class.matrix.new(3)
+  for nL = sLayer,eLayer do
+    for nX,vX in pairs(blueprint[nL]) do
       for nZ,block in pairs(vX) do
-        if block:match"[%lX]" then
-          tUsage.fuel = math.abs(nX-tPos.x+math.abs(nZ-tPos.z))+tUsage.fuel
-          tPos.z = nZ
-          tPos.x = nX
-          tUsage[block] = (tUsage[block] or 0)+1
+        local nX = nX
+        while block do
+          if block:match"[%lX]"
+          and not placed[nL][nX][nZ] then
+            tUsage.fuel = math.abs(nX-tPos.x+math.abs(nZ-tPos.z))+tUsage.fuel
+            tPos.z = nZ
+            tPos.x = nX
+            tUsage[block] = (tUsage[block] or 0)+1
+            placed[nL][nX][nZ] = true
+          end
+          block = nil
+          local nextBlock = {}
+          for i=-1,1 do --scan for blocks in vicinity
+            for j=-1,1 do
+              if blueprint[nL][nX+i][nZ+j]:match"[X%l]"
+              and not placed[nL][nX+i][nZ+j] then
+                nextBlock = {
+                  b = blueprint[nL][nX+i][nZ+j],
+                  nX = nX+i,
+                  nZ = nZ+j
+                }
+                if j == 0
+                or i == 0 then --1 block away, diagonal blocks are second priority
+                  block = nextBlock.b
+                  break
+                end
+              end
+              if block then
+                break
+              end
+            end
+            if block then
+              break
+            end
+          end
+          block = block or nextBlock.b
+          nX = nextBlock.nX
+          nZ = nextBlock.nZ
         end
       end
     end
-    tUsage.fuel = math.abs(i-tPos.y)+tUsage.fuel
-    tPos.y = i
+    tUsage.fuel = math.abs(nL-tPos.y)+tUsage.fuel
+    tPos.y = nL
   end
   return tUsage
 end
@@ -1389,47 +1423,47 @@ Load?]],
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   saveProgress(tFile.blueprint)
   screen:refresh()
-  for iL = tOngoing.sLayer,tOngoing.eLayer do
-    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..iL-1),"Y")
-    for nX,vX in pairs(blueprint[iL]) do
-      local xLine = {} --local table copy, so next doesn't error.
-      for k,v in pairs(vX) do
-        xLine[k] = v
-      end
-      for nZ,block in pairs(xLine) do
+  local digSlot = blueprint.colorSlots.X[1]
+  local threshold = digSlot and 1 or 2
+  for nL = tOngoing.sLayer,tOngoing.eLayer do
+    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",breaker)
+    local layerCopy = tBlueprint[nL]:copy() --table copy because fuck you next
+    for nX,vX in pairs(layerCopy) do
+      for nZ in pairs(vX) do
+        local block = tBlueprint[nL][nX][nZ]
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
-            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X")
-            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z")
-            if not selectColor(block,1) then
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",breaker)
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",breaker)
+            if not selectColor(block,threshold) then
               input("Construction cancelled.")
               return
             end
-            cTurtle.replace("-Y"..tOngoing.dir.y)
-            blueprint[iL][nX][nZ] = block:upper()
+            cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
+            blueprint[nL][nX][nZ] = block:upper()
             blueprint:save(tFile.blueprint,true)
-            scroll(iL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+            scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "X" then --break block
-            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X")
-            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z")
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",breaker)
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",breaker)
             selectColor(block,-1)
             cTurtle.drop("Y-",false,64)
             cTurtle.dig("-Y"..tOngoing.dir.y)
             cTurtle.drop("Y-",false,64)
-            blueprint[iL][nX][nZ] = nil
+            blueprint[nL][nX][nZ] = nil
             blueprint:save(tFile.blueprint,true)
-            scroll(iL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+            scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           end
           block = nil
           local nextBlock = {}
           for i=-1,1 do --scan for blocks in vicinity
             for j=-1,1 do
-              if blueprint[iL][nX+i][nZ+j]:match"[X%l]" then
+              if blueprint[nL][nX+i][nZ+j]:match"[X%l]" then
                 nextBlock = {
-                  b = blueprint[iL][nX+i][nZ+j],
+                  b = blueprint[nL][nX+i][nZ+j],
                   nX = nX+i,
                   nZ = nZ+j
                 }
