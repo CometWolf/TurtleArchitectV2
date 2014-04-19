@@ -209,20 +209,70 @@ rednet = {
       tEvent[5].rID == os.id
       or tEvent[5].rID == "all"
     ) then
-      local event = tEvent[5].event
-      local senderId = tEvent[5].sID
+      local data = tEvent[5]
+      local event = data.event
+      local senderId = data.sID
+      local type = data.type
       if event == "Success" then
-        local type = tEvent[5].type
-        local func = tTransmissions.success[type][senderId]()
+        local func = tTransmissions.success[type][senderId]
         if func then
-          func()
+          func(data)
         end
-        tTransmissions.success[type][senderId] = false
+      elseif event == "Failure" then
+        local func = tTransmissions.failure[type][senderId]
+        if func then
+          func(data)
+        end
       elseif event == "Init connection" then
         rednet.send(senderId,"Success",{type = event})
+      elseif event == "Sync connect" then
+        local timeoutId = tTimers.inputTimeout.start()
+        local button, tRes = input(
+          "Computer ID "..senderId.." wants to initiate sync mode.",
+          {
+            "Deny",
+            "Accept"
+          },
+          false,
+          function(tEvent)
+            if tEvent[1] == "timer" and
+            tEvent[2] == timeoutId then
+              return "Deny"
+            end
+          end
+        )
+        if button == "Accept" then
+          rednet.send(senderId,"Success",{type = event})
+          tMode.sync = senderId
+        else
+          rednet.send(senderId,"Failure",{type = event})
+        end
+      elseif event == "Sync edit"
+      and tMode.sync == senderId then
+        if type == "Paste" then --this is used for most tools
+          local layer = tBlueprint[data.layer]
+          layer:paste(data.l,data.sX,data.sZ,data.merge)
+          renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+        elseif type == "Point" then --probably brush
+          local layer = tBlueprint[data.layer]
+          layer[data.x][data.z] = data.color
+          renderPoint(data.x,data.z,true)
+        elseif type == "Layer add" then
+        
+        elseif type == "Layer delete" then
+        
+        elseif type == "Blueprint load" then
+          tBlueprint = class.blueprint.copy(data.blueprint)
+          tFile.blueprint = nil
+          scroll(1,0,0,true,true)
+        end
+        rednet.send(senderId,"Success",{type = event})
+      elseif event == "Sync OFF"
+      and senderId == tMode.sync then
+        tMode.sync = false
+        input("Sync partner "..senderId.." has ended the current sync session")
       elseif event == "Blueprint transmission" then
         local timeoutId = tTimers.inputTimeout.start()
-        local blueprint = class.blueprint.new(tEvent[5].blueprint)
         local button, tRes, reInput = input(
           "Received blueprint "..tEvent[5].blueprintName.." from computer ID "..senderId,
           {
@@ -246,9 +296,10 @@ rednet = {
           true
         )
         while button ~= "Ignore" do
+          timeoutId = false
           fileName = tRes["File name"]
           if button == "Load" then
-            tBlueprint = blueprint:copy()
+            tBlueprint = class.blueprint.copy(data.blueprint)
             tFile.blueprint = nil
             scroll(1,0,0,true,true)
             return
@@ -257,7 +308,7 @@ rednet = {
           elseif fs.exists(fileName..".TAb") then
             button,tRes,reInput = reInput(fileName.." already exists!")
           else
-            blueprint:save(fileName)
+            class.blueprint.save(data.blueprint,fileName)
             input("Successfully saved "..fileName..".TAb.")
             return
           end
@@ -265,28 +316,86 @@ rednet = {
       end
     end
   end,
-  send = function(rID,event,content,success,failure)
+  send = function(rID,event,content,success,timeout,time,failure)
     content = content or {}
     content.rID = rID
     content.sID = os.id
     content.event = event
-    if failure then
-      local timerId = tTimers.modemRes.start()
-      if success then
-        tTransmissions.success[event][rID] = function()
-          tTimers.modemRes.ids[timerId] = false
-          success()
-        end
+    local clear
+    if timeout then
+      local timerId
+      timerId = tTimers.modemRes.start(time) --if not time, the default modemRes time is used
+      clear = function()
+        tTimers.modemRes.ids[timerId] = false
+        tTransmissions.failure.timeout[timerId] = false
+        tTransmissions.failure[event][rID] = false
+        tTransmissions.success[event][rID] = false
       end
-      tTransmissions.failure[timerId] = failure --lmao
-    elseif success then
-      tTransmissions.success[event][rID] = success
     end
+    clear = clear or function() --different clear if there is no timeout function
+      tTransmissions.failure[event][rID] = false
+      tTransmissions.success[event][rID] = false
+    end
+    tTransmissions.success[event][rID] = (
+      success 
+      and function(data)
+        clear()
+        success(data)
+      end
+      or clear
+    )
+    tTransmissions.failure[event][rID] = (
+      failure
+      and function(data)
+        clear()
+        failure(data)
+      end
+      or clear
+    )
     modem.transmit(
       modemChannel,
       modemChannel,
       content
     )
+  end,
+  syncObject = function(object)
+    if tMode.sync then
+      local syncId = tMode.sync
+      object.type = "Paste"
+      object.merge = not tMode.overwrite
+      object.layer = tTerm.scroll.layer
+      rednet.send(
+        syncId,
+        "Sync edit",
+        object,
+        false,
+        function()
+          tMode.sync = false
+          input("Connection to sync partner "..syncId.." was lost.")
+        end
+      )
+    end
+  end,
+  syncPoint = function(x,z,color,layer)
+    if tMode.sync then
+      local syncId = tMode.sync
+      rednet.send(
+        syncId,
+        "Sync edit",
+        {
+        type = "Point",
+          layer = layer or tTerm.scroll.layer,
+          x = x,
+          z = z,
+          color = color
+        },
+        false,
+        function()
+          tMode.sync = false
+          input("Connection to sync partner "..syncId.." was lost.")
+        end
+      )
+    end
   end
 }
 setmetatable(
@@ -410,8 +519,8 @@ tTerm = { --screen size and viewing area
   viewable = {} --currently visible canvas area
 }
 tTerm.screen.x,tTerm.screen.y = term.getSize()
-tTerm.screen.xMid = math.ceil(tTerm.screen.x/2)
-tTerm.screen.yMid = math.ceil(tTerm.screen.y/2)
+tTerm.screen.xMid = tTerm.screen.x/2
+tTerm.screen.yMid = tTerm.screen.y/2
 tTerm.canvas.sX = 1
 tTerm.canvas.eX = tTerm.screen.x-2
 tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
@@ -455,7 +564,12 @@ tBar = { --menu bar variables
 
 tTransmissions = { --stores reaction functions to modem transmissions
   success = class.matrix.new(2), --received a success response, stored by event type and sender id
-  failure = class.matrix.new(2) --timed out, stored by timer id
+  failure = class.matrix.new( --received a failure response, stored by event type and sender id
+    2,
+    {
+      timeout = {} --timed out, stored by timer id
+    }
+  )
 }
 
 --load settings
@@ -615,14 +729,16 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
       end
       local iMenu = nextMenu
       local sY = menu.sY+i
+      local enabled = menu.items[iMenu].enabled
+      enabled = (type(enabled) == "function" and enabled() or enabled)
       screen:setBackgroundColor(i%2 == 0 and tColors.menuPri or tColors.menuSec)
-      screen:setTextColor(menu.items[iMenu].enabled and tColors.enabledMenuText or tColors.disabledMenuText)
+      screen:setTextColor(enabled and tColors.enabledMenuText or tColors.disabledMenuText)
       screen:setCursorPos(sX,sY)
       screen:write(menu.items[iMenu].string)
       for iX = sX,sX+menu.lX do
         tMenu.touchMap[iX][sY] = (
           (
-            menu.items[iMenu].enabled 
+            enabled
             and function(button)
               renderMenu()
               menu.items[iMenu].func(button)
@@ -826,7 +942,7 @@ function writePoint(x,z,color) --renders the specified blueprint point at wherev
   screen:write(marker or " ")
 end
 
-function renderPoint(x,z,color,skipScroll) --renders the point on screen, without changing the blueprint
+function renderPoint(x,z,skipScroll) --renders the given point on screen
   local view = tTerm.viewable
   local pX,pZ
   if skipScroll then
@@ -861,19 +977,24 @@ function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the 
   end
 end
 
-function drawPoint(x,z,color,skipScroll,ignoreOverwrite) --renders the point on screen as well as adding it to the blueprint
+function drawPoint(x,z,color,skipScroll,ignoreOverwrite,sync) --renders the point on screen as well as adding it to the blueprint
   local layer = tBlueprint[tTerm.scroll.layer]
   color = tMode.builtDraw and color:upper() or color
+  if not skipScroll then
+    x = x+tTerm.scroll.x
+    z = z+tTerm.scroll.z
+  end
   if not tMode.overwrite and not ignoreOverwrite and color ~= " " and layer[x+tTerm.scroll.x][z+tTerm.scroll.z] ~= " " then
     return
   end
-  layer[x+(not skipScroll and tTerm.scroll.x or 0)][z+(not skipScroll and tTerm.scroll.z or 0)] = (color ~= " " and color) or nil
-  renderPoint(x,z,color,skipScroll)
+  layer[x][z] = (color ~= " " and color) or nil
+  renderPoint(x,z,color,true)
 end
 
 --[[----------------------------------------------------------------------------------------------------------
 Input function
 ----------------------------------------------------------------------------------------------------------]]--
+local activeInputs = 0 --amount of windows open
 local inputDefaults = { --default values for tInputFields tables passed to the input function
   name = "", --text on the side of the field
   accepted = ".", --accepted input pattern
@@ -884,7 +1005,9 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   nameColor = tColors.inputBoxText
 }
 function input(text,tButtonFields,tInputFields,customEvent,reInput)
-  screen:setLayer(screen.layers.dialogue)
+  local screenLayer = screen.layers.dialogue+activeInputs
+  screen:setLayer(screenLayer)
+  activeInputs = activeInputs+1
   tInputFields = tInputFields or {}
   --set up text
   local lineLength = tTerm.screen.x-2 --max line length
@@ -973,7 +1096,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         return input(reText,tButtonFields,tInputFields,customEvent,true)
       end
     end
-    screen:delLayer(screen.layers.dialog)
+    screen:delLayer(screenLayer)
     return event,tRes,reInput
   end
   --render box
@@ -983,15 +1106,15 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       height = #tLine+2+#tInputs,
       width = tTerm.screen.x-2
     }
-    box.top = tTerm.screen.yMid-math.floor(box.height/2)
-    box.bottom = tTerm.screen.yMid+math.ceil(box.height/2)
+    box.top = math.floor(tTerm.screen.yMid-(box.height/2))
+    box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
     screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
     screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
     --write text
     screen:setBackgroundColor(tColors.inputBox)
     screen:setTextColor(tColors.inputBoxText)
     for i=1,#tLine do
-      screen:setCursorPos(tTerm.screen.xMid-math.ceil(#tLine[i]/2),box.top+i)
+      screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#tLine[i]/2))+1,box.top+i)
       screen:write(tLine[i])
     end
     --set up & render buttons
@@ -1004,7 +1127,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       tButtons[i].size = #tButtons[i].name+2
       totalButtonSpace = totalButtonSpace+tButtons[i].size+2
     end
-    local nextButton = tTerm.screen.xMid-math.ceil(totalButtonSpace/2)+2
+    local nextButton = math.ceil(tTerm.screen.xMid-(totalButtonSpace/2)+2)
     screen:setTextColor(tColors.inputButtonText)
     screen:setBackgroundColor(tColors.inputButton)
     for i=1,#tButtons do
@@ -1047,7 +1170,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   end
   local function refreshField(field)
    --updates input fields
-     screen:setLayer(screen.layers.dialouge)
+     screen:setLayer(screenLayer)
     field = tInputs[field]
     if field.cX > field.lX then
       field.scroll = field.scroll+(field.cX-field.lX)
@@ -1730,20 +1853,29 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Error handling
 ----------------------------------------------------------------------------------------------------------]]--
+local function Quit()
+  if tMode.sync then
+    rednet.send(tMode.sync,"Sync OFF")
+  end
+  term.setTextColor(colors.white)
+  term.setBackgroundColor(colors.black)
+  term.clear()
+  term.setCursorPos(1,1)
+  print"Thank you for using Turtle Architect, by CometWolf."
+end
 while true do
   local tRes = {pcall(execution)}
   if not tRes[1] then
     if tRes[2] == "Exit"
     or tRes[2] == "Terminated" then
-      term.setTextColor(colors.white)
-      term.setBackgroundColor(colors.black)
-      term.clear()
-      term.setCursorPos(1,1)
-      print"Thank you for using Turtle Architect, by CometWolf."
-      return
+      return Quit()
     elseif tTerm.color then --color supported crash
+      local errors = ""
+      for i=2,#tRes do
+        errors = errors.." "..tostring(tRes[i])
+      end
       local button = input(
-        "Turtle Architect has encountered an unexpected error:\n"..tRes[2].."\n\nPlease report this to CometWolf immediately!",
+        "Turtle Architect has encountered an unexpected error:\n"..errors.."\n\nPlease report this to CometWolf immediately!",
         {
           "Ignore",
           "Save & quit",
@@ -1751,7 +1883,7 @@ while true do
         }
       )
       if button == "Quit" then
-        return
+        return Quit()
       elseif button == "Save & quit" then
         local fileName = tFile.blueprint
         local button,tRes,reInput
@@ -1787,10 +1919,10 @@ while true do
         tFile.blueprint = fileName
         scroll()
         input("Successfully saved "..fileName..".TAb.")
-        return
+        return Quit()
       end
     else --non color supported crash
-    
+      
     end
   else
     return tRes[2]

@@ -68,8 +68,8 @@ layer = { --layer class
   end,
   paste = function(layer,clipboard,pX,pZ,merge)
     --combines layers, with an optional offset
-    pX = pX or 0
-    pZ = pZ or 0
+    pX = pX and pX-1 or 0
+    pZ = pZ and pZ-1 or 0
     for nX,vX in pairs(clipboard) do
       for nZ,vZ in pairs(vX) do
         if merge then

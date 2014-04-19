@@ -104,7 +104,7 @@ blueprint = { --blueprint class
   --returns the amount of layers in the blueprint
     return #t
   end,
-  copy = function(blueprint,x1,z1,x2,z2)
+  copy = function(cBlueprint,x1,z1,x2,z2)
   --returns a blueprint copy, optional coordinates
     local x,z = {},{}
     if not (x1 and x2) then
@@ -120,9 +120,9 @@ blueprint = { --blueprint class
       z.min = math.min(z1,z2)
     end
     local copy = blueprint.new()
-    for nL=1,#blueprint do
+    for nL=1,#cBlueprint do
       copy[nL] = class.layer.new()
-      for nX,vX in pairs(blueprint[nL]) do
+      for nX,vX in pairs(cBlueprint[nL]) do
         if nX >= x.min and nX <= x.max then
           copy[nL][nX] = class.x.new()
           for nZ,vZ in pairs(vX) do

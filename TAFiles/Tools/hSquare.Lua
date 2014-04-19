@@ -11,7 +11,7 @@ local calcFunc = function(x1,z1,x2,z2,color)
   }
   z.max = z.max-z.min+1
   z.min = 1
-  local points = class.layer.new(2)
+  local points = class.layer.new()
   for iX = x.min,x.max do
     points[iX][z.min] = color
     points[iX][z.max] = color
@@ -40,7 +40,8 @@ local tool = {
         s.eX = false
         s.eZ = false
       elseif s.eX then --button 2
-        tBlueprint[tTerm.scroll.layer]:paste(s.l,math.min(s.sX,s.eX)-1,math.min(s.sZ,s.eZ)-1,not tMode.overwrite)
+        rednet.syncObject(s)
+        tBlueprint[tTerm.scroll.layer]:paste(s.l,math.min(s.sX,s.eX),math.min(s.sZ,s.eZ),not tMode.overwrite)
         renderArea(s.sX,s.sZ,s.eX,s.eZ,true)
         tTool.shape = {}
         renderToolOverlay()

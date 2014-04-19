@@ -5,6 +5,7 @@ local tool = {
   end,
   renderFunc = function(event,button,x,z,color)
     drawPoint(x,z,color)
+    rednet.syncPoint(x,z,color)
   end
 }
 return tool

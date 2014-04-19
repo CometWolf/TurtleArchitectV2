@@ -35,7 +35,8 @@ menu = {
     clipboard = true,
     func = function()
       local c = tTool.clipboard
-      tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX-1,c.sZ-1,tMode.overwrite)
+      rednet.syncObject(c)
+      tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX,c.sZ,tMode.overwrite)
       renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       c.sX = c.sX+1
       c.sZ = c.sZ+1

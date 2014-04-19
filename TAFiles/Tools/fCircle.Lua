@@ -15,7 +15,7 @@ local calcFunc = function(x1,z1,x2,z2,color)
   z.min = 1
   z.rad = math.round((z.max-z.min)/2)
   z.center = z.rad+z.min
-  local points = class.layer.new(2)
+  local points = class.layer.new()
   local radStep = 1/((1.5*x.rad)+(1.5*z.rad)/2)
   for angle = 1, math.pi+radStep, radStep do
     local pX = math.round(math.cos(angle)*x.rad)
@@ -51,7 +51,8 @@ local tool = {
         c.eX = false
         c.eZ = false
       elseif c.eX then --button 2
-        tBlueprint[tTerm.scroll.layer]:paste(c.l,math.min(c.sX,c.eX)-1,math.min(c.sZ,c.eZ)-1,not tMode.overwrite)
+        rednet.syncObject(c)
+        tBlueprint[tTerm.scroll.layer]:paste(c.l,math.min(c.sX,c.eX),math.min(c.sZ,c.eZ),not tMode.overwrite)
         renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
         tTool.shape = {}
         renderToolOverlay()

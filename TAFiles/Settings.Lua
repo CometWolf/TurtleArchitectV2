@@ -49,8 +49,8 @@ tTimers = setmetatable( -- timer settings
     modemRes = { --how long to wait for a modem response
       time = 3,
     },
-    inputTimeout = { --Time to wait for on time sensitive dialogue boxes, eg accept blueprint transmission
-      time = 50
+    inputTimeout = { --Time to wait for time sensitive dialogue boxes, eg accept blueprint transmission or sync mode
+      time = 100
     }
   },
   {
@@ -61,8 +61,8 @@ tTimers = setmetatable( -- timer settings
 )
 for k,v in pairs(tTimers) do
   v.ids = {}
-  v.start = function()
-    v.id = os.startTimer(v.time)
+  v.start = function(time)
+    v.id = os.startTimer(time or v.time)
     v.ids[v.id] = true
     return v.id
   end
@@ -153,5 +153,5 @@ tMode = { -- default modes
   overwrite = true,
   grid = false,
   backgroundLayer = false,
-  overwrite = true,
+  sync = false,
 }

@@ -178,6 +178,77 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
     end
   },
   [6] = {
+    name = "Sync mode",
+    enabled = true,
+    func = function()
+      local button, tRes, reInput= input(
+        [[Sync mode let's another computer/turtle edit the blueprint alongside you. This can also used to track in progress turtle builds, as the turtle edits the blueprint while building.
+Sync mode: ]]..(tMode.sync and tMode.sync or "OFF"),
+        {
+          "Cancel",
+          "Sync ON",
+          (tMode.sync and "Sync OFF" or nil)
+        },
+        {
+          {
+            name = "Sync ID",
+            value = os.id,
+            accepted = "%d",
+            charLimit = 5
+          },
+        },
+        false,
+        true
+      )
+      while button ~= "Cancel" do
+        if button == "Sync ON" then
+          local syncId = tRes["Sync ID"]
+          if not syncId then
+            button,tRes,reInput = reInput"Missing sync partner ID"
+          else
+            tMode.sync = false
+            rednet.send(syncId,"Init connection",false,
+              function()
+                rednet.send(
+                  syncId,
+                  "Sync connect",
+                  false,
+                  function()
+                    tMode.sync = syncId
+                    rednet.send(
+                      syncId,
+                      "Sync edit",
+                      {
+                        type = "Blueprint load",
+                        blueprint = tBlueprint
+                      }
+                    )
+                    input("Successfully initiated sync mode with computer ID "..syncId)
+                  end,
+                  function()
+                    input("Computer ID "..syncId.." did not respond to your request to initiate sync mode.")
+                  end,
+                  100,
+                  function()
+                    input("Computer ID "..syncId.." denied your request to initiate sync mode.")
+                  end
+                )
+              end,
+              function()
+                input("Failed to connect to computer ID "..syncId)
+              end
+            )
+            return
+          end
+        elseif button == "Sync OFF" then
+          rednet.send(tMode.sync,"Sync OFF")
+          tMode.sync = false
+          return
+        end
+      end
+    end
+  },
+  [7] = {
     name = "About",
     enabled = true,
     func = function()
@@ -188,7 +259,7 @@ Developed by CometWolf.
       )
     end
   },
-  [7] = {
+  [8] = {
     name = "Quit",
     enabled = true,
     func = function()
