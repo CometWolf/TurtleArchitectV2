@@ -58,7 +58,7 @@ os = setmetatable(
             end
             tTimers.blink.start()
           elseif tTimers.modemRes.ids[timerID] then
-            local func = tTransmissions.failure[timerID]
+            local func = tTransmissions.failure.timeout[timerID]
             if func then
               func()
             end
@@ -250,17 +250,43 @@ rednet = {
       elseif event == "Sync edit"
       and tMode.sync == senderId then
         if type == "Paste" then --this is used for most tools
-          local layer = tBlueprint[data.layer]
-          layer:paste(data.l,data.sX,data.sZ,data.merge)
+          tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
           renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
         elseif type == "Point" then --probably brush
-          local layer = tBlueprint[data.layer]
-          layer[data.x][data.z] = data.color
+          tBlueprint[data.layer][data.x][data.z] = data.color
           renderPoint(data.x,data.z,true)
+        elseif type == "Delete" then
+          for iX = data.sX,data.eX do
+            for iZ = data.sZ,data.eZ do
+              tBlueprint[data.layer][iX][iZ] = nil
+            end
+          end
+          renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+        elseif type == "Recolor" then
+          tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
+          renderArea(data.sX,data.sZ,data.eX,data.eZ)
+        elseif type == "Mark built" then
+          tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+          renderArea(data.sX,data.sZ,data.eX,data.eZ)
+        elseif type == "Mark unbuilt then
+          tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
+          renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Layer add" then
-        
+          tBlueprint[data.layer] = class.layer.new
         elseif type == "Layer delete" then
-        
+          if data.layer == 1 and #tBlueprint == 1 then
+            tBlueprint[1] = tBlueprint[1].new()
+          else
+            table.remove(tBlueprint,data.layer)
+          end
+          scroll()
+        elseif type == "Flip" then
+          if data.dir == "X" then
+            tBlueprint[data.layer]:flipX(data.sX,data.sZ,data.eX,data.eZ)
+          else
+            tBlueprint[data.layer]:flipZ(data.sX,data.sZ,data.eX,data.eZ)
+          end
+          renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Blueprint load" then
           tBlueprint = class.blueprint.copy(data.blueprint)
           tFile.blueprint = nil
@@ -358,45 +384,6 @@ rednet = {
       content
     )
   end,
-  syncObject = function(object)
-    if tMode.sync then
-      local syncId = tMode.sync
-      object.type = "Paste"
-      object.merge = not tMode.overwrite
-      object.layer = tTerm.scroll.layer
-      rednet.send(
-        syncId,
-        "Sync edit",
-        object,
-        false,
-        function()
-          tMode.sync = false
-          input("Connection to sync partner "..syncId.." was lost.")
-        end
-      )
-    end
-  end,
-  syncPoint = function(x,z,color,layer)
-    if tMode.sync then
-      local syncId = tMode.sync
-      rednet.send(
-        syncId,
-        "Sync edit",
-        {
-        type = "Point",
-          layer = layer or tTerm.scroll.layer,
-          x = x,
-          z = z,
-          color = color
-        },
-        false,
-        function()
-          tMode.sync = false
-          input("Connection to sync partner "..syncId.." was lost.")
-        end
-      )
-    end
-  end
 }
 setmetatable(
   rednet,
@@ -572,6 +559,8 @@ tTransmissions = { --stores reaction functions to modem transmissions
   )
 }
 
+syncQueue = {} --Pending sync messages
+
 --load settings
 loadFile(tFile.settings)
 
@@ -616,6 +605,37 @@ tMenu = {}
 for _k,file in pairs(fs.list(tFile.menuFolder)) do
   if not fs.isDir(tFile.menuFolder.."/"..file) then
     tMenu[file:match"(.+)%.Lua"] = loadFile(tFile.menuFolder.."/"..file,progEnv)
+  end
+end
+
+--[[----------------------------------------------------------------------------------------------------------
+Sync functions
+----------------------------------------------------------------------------------------------------------]]--
+function sync(object,type)
+  if tMode.sync then
+  local syncId = tMode.sync
+  object.type = type
+  local func = function()
+    rednet.send(
+      syncId,
+      "Sync edit",
+      object,
+      function()
+        table.remove(syncQueue,1)
+        if syncQueue[1] then
+          syncQueue[1]()
+        end
+      end,
+      function()
+        tMode.sync = false
+        input("Connection to sync partner "..syncId.." was lost.")
+      end
+    )
+  end
+  if #syncQueue == 0 then
+    func()
+  else
+    syncQueue[#syncQueue+1] = func
   end
 end
 
@@ -898,7 +918,8 @@ function renderToolOverlay() --renders all tool overlays
     end
   end
   t = tTool.select
-  if t.sX then
+  if t.sX
+  and t.layer == tTerm.scroll.layer then
     screen:delLayer(screen.layers.toolsOverlay)
     screen:setLayer(screen.layers.toolsOverlay)
     local x1,z1 = t.sX-tTerm.scroll.x,t.sZ-tTerm.scroll.z

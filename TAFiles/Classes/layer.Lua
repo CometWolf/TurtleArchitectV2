@@ -217,6 +217,14 @@ layer = { --layer class
       end
     end
   end,
+  delete = function(layer,sX,sZ,eX,eZ)
+  --clears the specified area
+    for iX = math.min(sX,eX),math.max(eX,sX) do
+      for iZ = math.min(sZ,eZ),math.max(eZ,sZ) do
+        layer[iX][iZ] = nil
+      end
+    end
+  end,
   render = function(layer)
   --renders the layer on the canvas
     local view = tTerm.viewable

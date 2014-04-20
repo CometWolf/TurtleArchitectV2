@@ -16,6 +16,7 @@ tool = {
         c.eX = c.sX+c.lX-1
         c.eZ = c.sZ+c.lZ-1
       elseif event == "mouse_click" then
+        t.layer = tTerm.scroll.layer
         t.sX = x+tTerm.scroll.x
         t.sZ = z+tTerm.scroll.z
         t.eX = nil

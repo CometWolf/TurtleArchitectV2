@@ -5,7 +5,15 @@ local tool = {
   end,
   renderFunc = function(event,button,x,z,color)
     drawPoint(x,z,color)
-    rednet.syncPoint(x,z,color)
+    sync(
+      {
+        layer = tTerm.scroll.layer,
+        x = x+tTerm.scroll.x,
+        z = z+tTerm.scroll.z,
+        color = color
+      },
+      "Point"
+    )
   end
 }
 return tool

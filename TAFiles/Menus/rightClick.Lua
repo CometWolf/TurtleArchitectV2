@@ -5,12 +5,9 @@ menu = {
     select = true,
     func = function()
       local t = tTool.select
-      tTool.clipboard = tBlueprint[tTerm.scroll.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
-      for iX = math.min(t.sX,t.eX),math.max(t.eX,t.sX) do
-        for iZ = math.min(t.sZ,t.eZ),math.max(t.eZ,t.sZ) do
-          drawPoint(iX,iZ," ")
-        end
-      end
+      tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
+      sync(t,"Delete")
+      tBlueprint[t.layer]:delete(t.sX,t.sZ,t.eX,t.eZ)
       tTool.select = {}
     end
   },
@@ -19,7 +16,7 @@ menu = {
     select = true,
     func = function()
       local t = tTool.select
-      tTool.clipboard = tBlueprint[tTerm.scroll.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
+      tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
       tTool.select = {}
       screen:delLayer(screen.layers.toolsOverlay)
       local c = tTool.clipboard
@@ -35,7 +32,8 @@ menu = {
     clipboard = true,
     func = function()
       local c = tTool.clipboard
-      rednet.syncObject(c)
+      c.layer = tTerm.scroll.layer
+      sync(c,paste)
       tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX,c.sZ,tMode.overwrite)
       renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       c.sX = c.sX+1
@@ -57,8 +55,8 @@ menu = {
         renderToolOverlay()
       else
         local t = tTool.select
-        local layer = tBlueprint[tTerm.scroll.layer]
-        layer:recolor(color,t.sX,t.sZ,t.eX,t.eZ)
+        sync(t,"Recolor")
+        tBlueprint[t.layer]:recolor(color,t.sX,t.sZ,t.eX,t.eZ)
         renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
       end
     end
@@ -70,8 +68,8 @@ menu = {
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
-      local layer = tBlueprint[tTerm.scroll.layer]
       if t.eX then
+        local layer = tBlueprint[t.layer]
         local flip = layer:copy(t.sX,t.sZ,t.eX,t.eZ,true):flipZ(t.sX,t.sZ,t.eX,t.eZ)
         layer:paste(flip,t.sX,t.sZ)
         renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
@@ -88,8 +86,8 @@ menu = {
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
-      local layer = tBlueprint[tTerm.scroll.layer]
       if t.eX then
+        local layer = tBlueprint[t.layer]
         local flip = layer:copy(t.sX,t.sZ,t.eX,t.eZ,true):flipX(t.sX,t.sZ,t.eX,t.eZ)
         layer:paste(flip,t.sX,t.sZ)
         renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
@@ -107,7 +105,8 @@ menu = {
       local t = tTool.select
       local c = tTool.clipboard
       if t.eX then
-        tBlueprint[tTerm.scroll.layer]:markBuilt(t.sX,t.sZ,t.eX,t.eZ)
+        sync(t,"Mark built")
+        tBlueprint[t.layer]:markBuilt(t.sX,t.sZ,t.eX,t.eZ)
         if tMode.renderBuilt then
           renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
         end
@@ -125,7 +124,8 @@ menu = {
       local t = tTool.select
       local c = tTool.clipboard
       if t.eX then
-        tBlueprint[tTerm.scroll.layer]:markUnbuilt(t.sX,t.sZ,t.eX,t.eZ)
+        sync(t,"Mark unbuilt")
+        tBlueprint[t.layer]:markUnbuilt(t.sX,t.sZ,t.eX,t.eZ)
         if tMode.renderBuilt then
           renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
         end
@@ -143,11 +143,9 @@ menu = {
       local t = tTool.select
       local c = tTool.clipboard
       if t.eX then
-        for iX = math.min(t.sX,t.eX),math.max(t.eX,t.sX) do
-          for iZ = math.min(t.sZ,t.eZ),math.max(t.eZ,t.sZ) do
-            drawPoint(iX,iZ," ")
-          end
-        end
+        sync(t,"Delete")
+        tBlueprint[t.layer]:delete(t.sX,t.sZ,t.eX,t.eZ)
+        renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
       else
         tTool.clipboard = false
         screen:delLayer(screen.layers.toolsOverlay)
