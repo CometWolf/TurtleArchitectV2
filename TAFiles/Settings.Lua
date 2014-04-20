@@ -49,6 +49,9 @@ tTimers = setmetatable( -- timer settings
     modemRes = { --how long to wait for a modem response
       time = 3,
     },
+    connectionPing = { --How often to check connection
+      time = 10,
+    },
     inputTimeout = { --Time to wait for time sensitive dialogue boxes, eg accept blueprint transmission or sync mode
       time = 100
     }
@@ -153,5 +156,10 @@ tMode = { -- default modes
   overwrite = true,
   grid = false,
   backgroundLayer = false,
-  sync = false,
+  sync = {
+    amount = 0,
+    ids = {
+    
+    }
+  }
 }

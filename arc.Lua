@@ -41,38 +41,6 @@ local API mods
 ----------------------------------------------------------------------------------------------------------]]--
 os = setmetatable(
   {
-    pullEvent = function(sFilter) --refreshes the screen every time pullEvent is used, and execute rednet and timer functions
-      local tEvent
-      while true do
-        screen:refresh()
-        tEvent = {_G.os.pullEvent(sFilter)}
-        if tEvent[1] == "timer" then
-          local timerID = tEvent[2]
-          if timerID == tTimers.blink.id then
-            local toggle = tTimers.blink.toggle
-            tTimers.blink.toggle = not toggle
-            if toggle then
-              renderToolOverlay()
-            else
-              screen:delLayer(screen.layers.toolsOverlay)
-            end
-            tTimers.blink.start()
-          elseif tTimers.modemRes.ids[timerID] then
-            local func = tTransmissions.failure.timeout[timerID]
-            if func then
-              func()
-            end
-          else
-            break
-          end
-        elseif tEvent[1] == "modem_message" then
-          rednet.received(tEvent)
-        else
-          break
-        end
-      end
-      return unpack(tEvent)
-    end,
     sleepTime = 0,
     sleep = function(time)
     --refreshes screen if more than 1 second of sleep time has elapsed
@@ -202,193 +170,94 @@ http = setmetatable(
 )
 
 rednet = {
-  received = function(tEvent)
-    if tEvent[3] == modemChannel
-    and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
-    and (
-      tEvent[5].rID == os.id
-      or tEvent[5].rID == "all"
-    ) then
-      local data = tEvent[5]
-      local event = data.event
-      local senderId = data.sID
-      local type = data.type
-      if event == "Success" then
-        local func = tTransmissions.success[type][senderId]
-        if func then
-          func(data)
-        end
-      elseif event == "Failure" then
-        local func = tTransmissions.failure[type][senderId]
-        if func then
-          func(data)
-        end
-      elseif event == "Init connection" then
-        rednet.send(senderId,"Success",{type = event})
-      elseif event == "Sync connect" then
-        local timeoutId = tTimers.inputTimeout.start()
-        local button, tRes = input(
-          "Computer ID "..senderId.." wants to initiate sync mode.",
-          {
-            "Deny",
-            "Accept"
-          },
-          false,
-          function(tEvent)
-            if tEvent[1] == "timer" and
-            tEvent[2] == timeoutId then
-              return "Deny"
-            end
-          end
-        )
-        if button == "Accept" then
-          rednet.send(senderId,"Success",{type = event})
-          tMode.sync = senderId
-        else
-          rednet.send(senderId,"Failure",{type = event})
-        end
-      elseif event == "Sync edit"
-      and tMode.sync == senderId then
-        if type == "Paste" then --this is used for most tools
-          tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
-        elseif type == "Point" then --probably brush
-          tBlueprint[data.layer][data.x][data.z] = data.color
-          renderPoint(data.x,data.z,true)
-        elseif type == "Delete" then
-          for iX = data.sX,data.eX do
-            for iZ = data.sZ,data.eZ do
-              tBlueprint[data.layer][iX][iZ] = nil
-            end
-          end
-          renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
-        elseif type == "Recolor" then
-          tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
-        elseif type == "Mark built" then
-          tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
-        elseif type == "Mark unbuilt then
-          tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
-        elseif type == "Layer add" then
-          tBlueprint[data.layer] = class.layer.new
-        elseif type == "Layer delete" then
-          if data.layer == 1 and #tBlueprint == 1 then
-            tBlueprint[1] = tBlueprint[1].new()
-          else
-            table.remove(tBlueprint,data.layer)
-          end
-          scroll()
-        elseif type == "Flip" then
-          if data.dir == "X" then
-            tBlueprint[data.layer]:flipX(data.sX,data.sZ,data.eX,data.eZ)
-          else
-            tBlueprint[data.layer]:flipZ(data.sX,data.sZ,data.eX,data.eZ)
-          end
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
-        elseif type == "Blueprint load" then
-          tBlueprint = class.blueprint.copy(data.blueprint)
-          tFile.blueprint = nil
-          scroll(1,0,0,true,true)
-        end
-        rednet.send(senderId,"Success",{type = event})
-      elseif event == "Sync OFF"
-      and senderId == tMode.sync then
-        tMode.sync = false
-        input("Sync partner "..senderId.." has ended the current sync session")
-      elseif event == "Blueprint transmission" then
-        local timeoutId = tTimers.inputTimeout.start()
-        local button, tRes, reInput = input(
-          "Received blueprint "..tEvent[5].blueprintName.." from computer ID "..senderId,
-          {
-            "Ignore",
-            "Save",
-            "Load"
-          },
-          {
-            {
-              name = "File name",
-              value = "/",
-              accepted = "."
-            },
-          },
-          function(tEvent)
-            if tEvent[1] == "timer" and
-            tEvent[2] == timeoutId then
-              return "Ignore"
-            end
-          end,
-          true
-        )
-        while button ~= "Ignore" do
-          timeoutId = false
-          fileName = tRes["File name"]
-          if button == "Load" then
-            tBlueprint = class.blueprint.copy(data.blueprint)
-            tFile.blueprint = nil
-            scroll(1,0,0,true,true)
-            return
-          elseif not fileName then
-            button,tRes,reInput = reInput("Invalid file name!")
-          elseif fs.exists(fileName..".TAb") then
-            button,tRes,reInput = reInput(fileName.." already exists!")
-          else
-            class.blueprint.save(data.blueprint,fileName)
-            input("Successfully saved "..fileName..".TAb.")
-            return
-          end
-        end
-      end
-    end
-  end,
   send = function(rID,event,content,success,timeout,time,failure)
     content = content or {}
-    content.rID = rID
+    if not rID then
+      error("Missing id!",2)
+    end
+    content.rID = type(rID) == "table" and rID or {[rID] = true}
     content.sID = os.id
     content.event = event
     local clear
-    if timeout then
-      local timerId
-      timerId = tTimers.modemRes.start(time) --if not time, the default modemRes time is used
-      clear = function()
-        tTimers.modemRes.ids[timerId] = false
-        tTransmissions.failure.timeout[timerId] = false
-        tTransmissions.failure[event][rID] = false
-        tTransmissions.success[event][rID] = false
+    for rID in pairs(content.rID) do
+      if timeout then
+        local timerId = tTimers.modemRes.start(time) --if not time, the default modemRes time is used
+        clear = function()
+          tTimers.modemRes.ids[timerId] = nil
+          tTransmissions.failure.timeout[timerId] = nil
+          tTransmissions.failure[event][rID] = nil
+          tTransmissions.success[event][rID] = nil
+        end
+        tTransmissions.failure.timeout[timerId] = function()
+          clear()
+          timeout(rID)
+        end
       end
+      clear = clear or function() --different clear if there is no timeout function
+        tTransmissions.failure[event][rID] = nil
+        tTransmissions.success[event][rID] = nil
+      end
+      tTransmissions.success[event][rID] = (
+        success 
+        and function()
+          clear()
+          success(rID)
+        end
+        or clear
+      )
+      tTransmissions.failure[event][rID] = (
+        failure
+        and function()
+          clear()
+          failure(rID)
+        end
+        or clear
+      )
     end
-    clear = clear or function() --different clear if there is no timeout function
-      tTransmissions.failure[event][rID] = false
-      tTransmissions.success[event][rID] = false
-    end
-    tTransmissions.success[event][rID] = (
-      success 
-      and function(data)
-        clear()
-        success(data)
-      end
-      or clear
-    )
-    tTransmissions.failure[event][rID] = (
-      failure
-      and function(data)
-        clear()
-        failure(data)
-      end
-      or clear
-    )
     modem.transmit(
       modemChannel,
       modemChannel,
       content
     )
   end,
+  connected = { --connected computers
+    amount = 0,
+    ids = {
+      
+    }
+  },
+  connect = function(id,type,time,success)
+    rednet.send(
+      id,
+      "Init connection",
+      {type = type},
+      function(id)
+        rednet.connected.ids[id] = true
+        rednet.connected.amount = rednet.connected.amount+1
+        if success then
+          success(id)
+        end
+      end,
+      function(id)
+        input("Failed to connect to computer ID "..id..".")
+      end,
+      time,
+      function(id)
+        input("Computer ID "..id.." denied your connection request")
+      end
+    )
+    tTimers.connectionPing.start()
+  end,
+  disconnect = function(id)
+    rednet.send(id,"Close connection")
+    rednet.connected.ids[id] = nil
+    rednet.connected.amount = rednet.connected.amount-1
+  end
 }
 setmetatable(
   rednet,
   {
-    __index = _G.rednet
+  __index = _G.rednet
   }
 )
 --[[----------------------------------------------------------------------------------------------------------
@@ -434,7 +303,7 @@ debug = {
         tLines[#tLines+1] = type(var).." "..tostring(var)
       end
     end
-    local lines = tTerm.screen.y-2
+    local lines = tTerm.screen.y-3
     local pages = math.ceil(#tLines/lines)
     for page = 1,pages do
       debug.prep()
@@ -499,7 +368,7 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Assorted variables
 ----------------------------------------------------------------------------------------------------------]]--
-tTerm = { --screen size and viewing area
+tTerm = { --screen size and canvas area
   screen = {}, --screen size
   canvas = {}, --canvas size
   scroll = {}, --canvas scroll amount
@@ -559,8 +428,6 @@ tTransmissions = { --stores reaction functions to modem transmissions
   )
 }
 
-syncQueue = {} --Pending sync messages
-
 --load settings
 loadFile(tFile.settings)
 
@@ -573,6 +440,7 @@ if turtle then
   if modem then --cTurtle handles modem wrapping on turtles
     modem.open(modemChannel)
   end
+  cTurtle.eventHandler["modem_message"] = rednet.received
 elseif term.isColor() then
   for k,side in pairs(peripheral.getNames()) do
     local pType = peripheral.getType(side)
@@ -611,31 +479,15 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Sync functions
 ----------------------------------------------------------------------------------------------------------]]--
+
 function sync(object,type)
-  if tMode.sync then
-  local syncId = tMode.sync
-  object.type = type
-  local func = function()
+  if tMode.sync.amount > 0 then 
+    object.type = type
     rednet.send(
-      syncId,
+      tMode.sync.ids,
       "Sync edit",
-      object,
-      function()
-        table.remove(syncQueue,1)
-        if syncQueue[1] then
-          syncQueue[1]()
-        end
-      end,
-      function()
-        tMode.sync = false
-        input("Connection to sync partner "..syncId.." was lost.")
-      end
+      object
     )
-  end
-  if #syncQueue == 0 then
-    func()
-  else
-    syncQueue[#syncQueue+1] = func
   end
 end
 
@@ -912,7 +764,7 @@ function renderToolOverlay() --renders all tool overlays
       for iZ = math.max(sZ,view.sZ),math.min(eZ,view.eZ) do 
         local block = t.l[iX-sX+1][iZ-sZ+1]
         if block ~= " " then
-          screen:drawPoint(iX-tTerm.scroll.x+tTerm.viewable.mX,iZ-tTerm.scroll.z+tTerm.viewable.mZ,colorKey[block])
+          screen:drawPoint(iX-tTerm.scroll.x+tTerm.viewable.mX,iZ-tTerm.scroll.z+tTerm.viewable.mZ,colorKey[block],block == "X" and block)
         end
       end
     end
@@ -998,7 +850,7 @@ function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the 
   end
 end
 
-function drawPoint(x,z,color,skipScroll,ignoreOverwrite,sync) --renders the point on screen as well as adding it to the blueprint
+function drawPoint(x,z,color,skipScroll,ignoreOverwrite) --renders the point on screen as well as adding it to the blueprint
   local layer = tBlueprint[tTerm.scroll.layer]
   color = tMode.builtDraw and color:upper() or color
   if not skipScroll then
@@ -1097,8 +949,10 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       tButtons[k] = v
     end
   end
+  local oldHandlers = {}--stores currently in use event handlers, prior to switch
   local function endExecution(event)
     --closes input box and returns event and the values in the input fields
+    eventHandler.switch(oldHandlers)
     local tRes = {}
     for iR=1,#tInputs do
       tRes[tInputs[iR].name] = tInputs[iR].value ~= "-" and tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
@@ -1209,16 +1063,8 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
     screen:setCursorPos(field.sX+field.cX,field.y)
   end
-  while true do
-  --user interaction begins
-    local tEvent = {os.pullEvent()}
-    if customEvent then
-      local button = customEvent(tEvent)
-      if button then
-        return endExecution(button)
-      end
-    end
-    if tEvent[1] == "mouse_click" then
+  local eventHandlers = {
+    mouse_click = function(tEvent)
       local x,y = tEvent[3],tEvent[4]
       if inputTouchMap[x][y] then --input bar clicked
         tInputs.enabled = inputTouchMap[x][y]
@@ -1228,14 +1074,18 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       elseif buttonTouchMap[x][y] then
         return endExecution(buttonTouchMap[x][y])
       end
-    elseif tEvent[1] == "char" and tInputs.enabled then
-      local field = tInputs[tInputs.enabled]
-      if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
-        field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
-        field.cX = field.cX+1
-        refreshField(tInputs.enabled)
+    end,
+    char = function(tEvent)
+      if tInputs.enabled then
+        local field = tInputs[tInputs.enabled]
+        if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
+          field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
+          field.cX = field.cX+1
+          refreshField(tInputs.enabled)
+        end
       end
-    elseif tEvent[1] == "key" then
+    end,
+    key = function(tEvent)
       local key = tEvent[2]
       if tInputs.enabled then
         local field = tInputs[tInputs.enabled]
@@ -1281,6 +1131,28 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
           return endExecution("Ok")
         end
       end
+    end
+  }
+  if customEvent then
+    for k,v in pairs(eventHandlers) do
+      eventHandlers[k] = function(tEvent)
+        local button = customEvent(tEvent)
+        if button then
+          return endExecution(button)
+        end
+        return v(tEvent)
+      end
+    end
+  end
+  for k,v in pairs(eventHandler.active) do
+    oldHandlers[k] = not eventHandler.common[k] and v or nil
+  end
+  eventHandler.switch(eventHandlers)
+  while true do
+  --user interaction begins
+    local ret = {eventHandler.pull()}
+    if ret[1] then
+      return unpack(ret)
     end
   end
 end
@@ -1747,6 +1619,15 @@ Load?]],
             cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
             blueprint[nL][nX][nZ] = block:upper()
             blueprint:save(tFile.blueprint,true)
+            sync(
+              {
+                layer = nL,
+                x = nX,
+                z = nZ,
+                color = block:upper()
+              },
+              "Point"
+            )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "X" then --break block
@@ -1758,6 +1639,14 @@ Load?]],
             cTurtle.drop("Y-",false,64)
             blueprint[nL][nX][nZ] = nil
             blueprint:save(tFile.blueprint,true)
+            sync(
+              {
+                layer = nL,
+                x = nX,
+                z = nZ
+              },
+              "Point"
+            )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           end
@@ -1795,88 +1684,301 @@ Load?]],
 end
 
 --[[----------------------------------------------------------------------------------------------------------
-Other functions
+Event handlers
 ----------------------------------------------------------------------------------------------------------]]--
+eventHandler = {
+  active = {}, --current event handlers
+  common = {}, --shared event handlers, these are always active
+  main = {}, --event handlers restricted to main
+  switch = function(tHandlers)
+    eventHandler.active = {}
+    if cTurtle then
+       cTurtle.clearEventHandler()
+    end
+    for k,v in pairs(tHandlers) do
+      eventHandler.active[k] = (
+        eventHandler.common[k]
+        and function(tEvent)
+          eventHandler.common[k](tEvent)
+          return v(tEvent)
+        end
+        or v
+      )
+      if cTurtle then
+        cTurtle.eventHandler[k] = function(tEvent)
+          eventHandler.active[k](tEvent)
+          screen:refresh()
+        end
+      end
+    end
+    for k,v in pairs(eventHandler.common) do
+      eventHandler.active[k] = eventHandler.active[k] or v
+      if cTurtle and not cTurtle.eventHandler[k] then
+        cTurtle.eventHandler[k] = function(tEvent)
+          eventHandler.active[k](tEvent)
+          screen:refresh()
+        end
+      end
+    end
+  end,
+  pull = function(sFilter)
+    screen:refresh()
+    local tEvent = {os.pullEvent(sFilter)}
+    if eventHandler.active[tEvent[1]] then
+      return unpack({eventHandler.active[tEvent[1]](tEvent)})
+    end
+  end
+}
 
---[[----------------------------------------------------------------------------------------------------------
-Non-color program
-----------------------------------------------------------------------------------------------------------]]--
-local execution
-if not tTerm.color then
-  execution = function()
-    while true do
-      local tEvent = {os.pullEvent()}
-      if tEvent[1] == "key" then
-        if tEvent[2] == 203 then
-          
-        elseif tEvent[2] == 205 then
-          
+eventHandler.main.mouse_click = function(tEvent)
+  local button,x,y = tEvent[2],tEvent[3],tEvent[4]
+  if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
+    tBar.touchMap[x][y](button)
+  elseif tMenu.open and tMenu.touchMap[x][y] then
+    if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
+      tMenu.touchMap[x][y](button)
+    end
+  elseif y <= tTerm.canvas.eZ
+  and y >= tTerm.canvas.sZ 
+  and x <= tTerm.canvas.eX
+  and x >= tTerm.canvas.sX then --canvas click
+    x,y = x-tTerm.viewable.mX,y-tTerm.viewable.mZ
+    if tMenu.open then
+      renderMenu() --closes open menu
+    elseif tMenu.rightClick.open then
+      scroll()
+      renderBottomBar()
+      renderSideBar()
+    elseif button ~= 3 then
+      --executes tool function
+      local tool = tTool[button].tool
+      local color = tTool[button].color
+      tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
+    end
+  end
+end
+eventHandler.main.mouse_drag = eventHandler.main.mouse_click
+eventHandler.main.key = function(tEvent)
+  if tEvent[2] == 203 then --left arrow
+    scroll(false,-1,0)
+  elseif tEvent[2] == 205 then --right arrow
+    scroll(false,1,0)
+  elseif tEvent[2] == 208 then --down arrow
+    scroll(false,0,1)
+  elseif tEvent[2] == 200 then --up arrow
+    scroll(false,0,-1)
+  end
+end
+eventHandler.main.mouse_scroll = function(tEvent)
+  scroll(false,0,tEvent[2])
+end
+
+eventHandler.common.timer = function(tEvent)
+  local timerID = tEvent[2]
+  if timerID == tTimers.blink.id then
+    local toggle = tTimers.blink.toggle
+    tTimers.blink.toggle = not toggle
+    if toggle then
+      renderToolOverlay()
+    else
+      screen:delLayer(screen.layers.toolsOverlay)
+    end
+    tTimers.blink.start()
+  elseif timerId == tTimers.connectionPing.id then
+    if rednet.connected.amount > 0 then
+      rednet.send(
+        rednet.connected.ids,
+        "Ping",
+        false,
+        false,
+        function(id)
+          rednet.connected.ids[id] = nil
+          tMode.sync.amount = tMode.sync.ids[id] and tMode.sync.amount-1 or tMode.sync.amount
+          tMode.sync.ids[id] = nil  
+          input("Connection to computer ID "..id.." was lost.")
+        end
+      )
+    end
+    tTimers.connectionPing.start()
+  elseif tTimers.modemRes.ids[timerID] then
+    local func = tTransmissions.failure.timeout[timerID]
+    if func then
+      return func()
+    end
+  end
+end
+
+eventHandler.common.modem_message = function(tEvent)
+  if tEvent[3] == modemChannel
+  and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
+  and tEvent[5].rID[os.id] then
+    local data = tEvent[5]
+    local event = data.event
+    local senderId = data.sID
+    local type = data.type
+    if event == "Success" then
+      local func = tTransmissions.success[type][senderId]
+      if func then
+        func(data)
+      end
+    elseif event == "Failure" then
+      local func = tTransmissions.failure[type][senderId]
+      if func then
+        func(data)
+      end
+    elseif event == "Ping" then
+      rednet.send(senderId,"Success",{type="Ping"})
+    elseif event == "Init connection" then
+      if type == "Sync" then
+        local timeoutId = tTimers.inputTimeout.start()
+        local button, tRes = input(
+          "Computer ID "..senderId.." wants to initiate sync mode.",
+          {
+            "Deny",
+            "Accept"
+          },
+          false,
+          function(tEvent)
+            if tEvent[1] == "timer" and
+            tEvent[2] == timeoutId then
+              return "Deny"
+            end
+          end
+        )
+        if button == "Accept" then
+          rednet.connected.amount = rednet.connected.amount+1
+          rednet.connected.ids[senderId] = true
+          tMode.sync.amount = 1
+          tMode.sync.ids = {[senderId] = true}
+          rednet.send(senderId,"Success",{type = event})
+        else
+          rednet.send(senderId,"Failure",{type = event})
+        end
+      end
+    elseif event == "Sync edit"
+    and tMode.sync.ids[senderId] then
+      if type == "Ids" then
+        tMode.sync = data.sync
+        for k,v in pairs(tMode.sync.ids) do
+          rednet.connected.ids[k] = true
+          rednet.connected.amount = rednet.connected.amount+1
+        end
+      elseif type == "Paste" then --this is used for most tools
+        tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
+        renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+      elseif type == "Point" then --probably brush
+        tBlueprint[data.layer][data.x][data.z] = data.color
+        renderPoint(data.x,data.z,true)
+      elseif type == "Delete" then
+        for iX = data.sX,data.eX do
+          for iZ = data.sZ,data.eZ do
+            tBlueprint[data.layer][iX][iZ] = nil
+          end
+        end
+        renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+      elseif type == "Recolor" then
+        tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
+        renderArea(data.sX,data.sZ,data.eX,data.eZ)
+      elseif type == "Mark built" then
+        tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+        renderArea(data.sX,data.sZ,data.eX,data.eZ)
+      elseif type == "Mark unbuilt" then
+        tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
+        renderArea(data.sX,data.sZ,data.eX,data.eZ)
+      elseif type == "Layer add" then
+        tBlueprint[data.layer] = class.layer.new
+      elseif type == "Layer delete" then
+        if data.layer == 1 and #tBlueprint == 1 then
+          tBlueprint[1] = tBlueprint[1].new()
+        else
+          table.remove(tBlueprint,data.layer)
+        end
+        scroll()
+      elseif type == "Flip" then
+        if data.dir == "X" then
+          tBlueprint[data.layer]:flipX(data.sX,data.sZ,data.eX,data.eZ)
+        else
+          tBlueprint[data.layer]:flipZ(data.sX,data.sZ,data.eX,data.eZ)
+        end
+        renderArea(data.sX,data.sZ,data.eX,data.eZ)
+      elseif type == "Blueprint load" then
+        tBlueprint = class.blueprint.copy(data.blueprint)
+        tFile.blueprint = nil
+        scroll(1,0,0,true,true)
+      end
+    elseif event == "Sync OFF"
+    and tMode.sync.ids[senderId] then
+      if tMode.sync.ids[senderId] then
+        tMode.sync.senderId = nil
+        tMode.sync.amount = tMode.sync.amount-1
+        rednet.connected.ids[senderId] = nil
+        rednet.connected.amount = rednet.connected.amount-1
+        input("Computer ID "..senderId.." has de-synced")
+      end
+    elseif event == "Blueprint transmission" then
+      local timeoutId = tTimers.inputTimeout.start()
+      local button, tRes, reInput = input(
+        "Received blueprint "..tEvent[5].blueprintName.." from computer ID "..senderId,
+        {
+          "Ignore",
+          "Save",
+          "Load"
+        },
+        {
+          {
+            name = "File name",
+            value = "/",
+            accepted = "."
+          },
+        },
+        function(tEvent)
+          if tEvent[1] == "timer" and
+          tEvent[2] == timeoutId then
+            return "Ignore"
+          end
+        end,
+        true
+      )
+      while button ~= "Ignore" do
+        timeoutId = false
+        fileName = tRes["File name"]
+        if button == "Load" then
+          tBlueprint = class.blueprint.copy(data.blueprint)
+          tFile.blueprint = nil
+          scroll(1,0,0,true,true)
+          return
+        elseif not fileName then
+          button,tRes,reInput = reInput("Invalid file name!")
+        elseif fs.exists(fileName..".TAb") then
+          button,tRes,reInput = reInput(fileName.." already exists!")
+        else
+          class.blueprint.save(data.blueprint,fileName)
+          input("Successfully saved "..fileName..".TAb.")
+          return
         end
       end
     end
   end
-else
---[[----------------------------------------------------------------------------------------------------------
-Color program
-----------------------------------------------------------------------------------------------------------]]--
-  execution = function()
-    tBlueprint[1] = tBlueprint[1] or class.layer.new()
-    tTimers.blink.start()
-    tTimers.blink.toggle = true
-    renderBottomBar()
-    renderSideBar()
-    tBlueprint[1]:render()
-    while true do
-      local tEvent = {os.pullEvent()}
-      if tEvent[1] == "mouse_click"
-      or tEvent[1] == "mouse_drag" then
-        local button,x,y = tEvent[2],tEvent[3],tEvent[4]
-        if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
-          tBar.touchMap[x][y](button)
-        elseif tMenu.open and tMenu.touchMap[x][y] then
-          if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
-            tMenu.touchMap[x][y](button)
-          end
-        elseif y <= tTerm.canvas.eZ
-        and y >= tTerm.canvas.sZ 
-        and x <= tTerm.canvas.eX
-        and x >= tTerm.canvas.sX then --canvas click
-          x,y = x-tTerm.viewable.mX,y-tTerm.viewable.mZ
-          if tMenu.open then
-            renderMenu() --closes open menu
-          elseif tMenu.rightClick.open then
-            scroll()
-            renderBottomBar()
-            renderSideBar()
-          elseif button ~= 3 then
-            --executes tool function
-            local tool = tTool[button].tool
-            local color = tTool[button].color
-            tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
-          end
-        end
-      elseif tEvent[1] == "key" then
-        if tEvent[2] == 203 then --left arrow
-          scroll(false,-1,0)
-        elseif tEvent[2] == 205 then --right arrow
-          scroll(false,1,0)
-        elseif tEvent[2] == 208 then --down arrow
-          scroll(false,0,1)
-        elseif tEvent[2] == 200 then --up arrow
-          scroll(false,0,-1)
-        end
-      elseif tEvent[1] == "mouse_scroll" then
-        scroll(false,0,tEvent[2])
-      end
-    end
+end
+
+local execution = function()
+  eventHandler.switch(eventHandler.main)
+  tBlueprint[1] = tBlueprint[1] or class.layer.new()
+  tTimers.blink.start()
+  tTimers.blink.toggle = true
+  renderBottomBar()
+  renderSideBar()
+  tBlueprint[1]:render()
+  while true do
+    eventHandler.pull()
   end
 end
 --[[----------------------------------------------------------------------------------------------------------
 Error handling
 ----------------------------------------------------------------------------------------------------------]]--
 local function Quit()
-  if tMode.sync then
-    rednet.send(tMode.sync,"Sync OFF")
+  if tMode.sync.amount > 0 then
+    rednet.send(tMode.sync.ids,"Sync OFF")
   end
   term.setTextColor(colors.white)
   term.setBackgroundColor(colors.black)
@@ -1892,11 +1994,8 @@ while true do
       return Quit()
     elseif tTerm.color then --color supported crash
       local errors = ""
-      for i=2,#tRes do
-        errors = errors.." "..tostring(tRes[i])
-      end
       local button = input(
-        "Turtle Architect has encountered an unexpected error:\n"..errors.."\n\nPlease report this to CometWolf immediately!",
+        "Turtle Architect has encountered an unexpected error:\n"..tRes[2].."\n\nPlease report this to CometWolf immediately!",
         {
           "Ignore",
           "Save & quit",

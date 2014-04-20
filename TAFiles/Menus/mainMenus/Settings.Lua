@@ -181,68 +181,92 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
     name = "Sync mode",
     enabled = true,
     func = function()
+      local synced = ""
+      for id in pairs(tMode.sync.ids) do
+        synced = synced..id..","
+      end
       local button, tRes, reInput= input(
-        [[Sync mode let's another computer/turtle edit the blueprint alongside you. This can also used to track in progress turtle builds, as the turtle edits the blueprint while building.
-Sync mode: ]]..(tMode.sync and tMode.sync or "OFF"),
+        [[Sync mode syncs the blueprint in real-time across multiple computers.
+Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
         {
           "Cancel",
-          "Sync ON",
-          (tMode.sync and "Sync OFF" or nil)
+          (tMode.sync.amount > 0 and "Resync" or "Sync"),
+          (tMode.sync.amount > 0 and "Desync" or nil)
         },
         {
           {
-            name = "Sync ID",
+            name = "Sync IDs",
             value = os.id,
-            accepted = "%d",
-            charLimit = 5
+            accepted = "[%d,]",
           },
         },
         false,
         true
       )
       while button ~= "Cancel" do
-        if button == "Sync ON" then
-          local syncId = tRes["Sync ID"]
-          if not syncId then
+        if button == "Sync"
+        or button == "Resync" then
+          if not tRes["Sync IDs"] then
             button,tRes,reInput = reInput"Missing sync partner ID"
           else
-            tMode.sync = false
-            rednet.send(syncId,"Init connection",false,
-              function()
-                rednet.send(
-                  syncId,
-                  "Sync connect",
-                  false,
-                  function()
-                    tMode.sync = syncId
+            local syncIds = {}
+            for id in string.gmatch(string.format(tRes["Sync IDs"]),"%d+") do
+              syncIds[tonumber(id)] = true
+            end
+            tMode.sync.amount = 0
+            tMode.sync.ids = {}
+            rednet.send(syncIds,"Ping",false,
+              function(id)
+                rednet.connect(
+                  id,
+                  "Sync",
+                  100,
+                  function(id)
+                    tMode.sync.ids[id] = true
+                    tMode.sync.amount = tMode.sync.amount+1
                     rednet.send(
-                      syncId,
+                      id,
                       "Sync edit",
                       {
                         type = "Blueprint load",
                         blueprint = tBlueprint
                       }
                     )
-                    input("Successfully initiated sync mode with computer ID "..syncId)
-                  end,
-                  function()
-                    input("Computer ID "..syncId.." did not respond to your request to initiate sync mode.")
-                  end,
-                  100,
-                  function()
-                    input("Computer ID "..syncId.." denied your request to initiate sync mode.")
+                    rednet.send(
+                      id,
+                      "Sync edit",
+                      {
+                        type = "Ids",
+                        sync = tMode.sync
+                      }
+                    )
+                    local timerId = os.startTimer(10)
+                    input(
+                      "Successfully synced with computer ID "..id,
+                      false,
+                      false,
+                      function(tEvent)
+                        if tEvent[1] == "timer" and
+                        tEvent[2] == timerId then
+                          return true
+                        end
+                      end
+                    )
                   end
                 )
               end,
-              function()
-                input("Failed to connect to computer ID "..syncId)
+              function(id)
+                input("Failed to connect to computer ID "..id)
               end
             )
             return
           end
-        elseif button == "Sync OFF" then
-          rednet.send(tMode.sync,"Sync OFF")
-          tMode.sync = false
+        elseif button == "Desync" then
+          for id in pairs(tMode.sync.ids) do
+            rednet.send(id,"Sync OFF")
+          end
+          tMode.sync.amount = 0
+          tMode.sync.ids = {}
           return
         end
       end

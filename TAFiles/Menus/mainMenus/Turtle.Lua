@@ -29,6 +29,7 @@ menu = {
         }
       )
       if button == "Ok" then
+        screen:refresh()
         cTurtle.moveToXYZ(tRes.X,tRes.Y,tRes.Z)
       end
     end
