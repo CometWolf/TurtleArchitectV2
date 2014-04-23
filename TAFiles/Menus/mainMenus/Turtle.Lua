@@ -1,5 +1,6 @@
 local menu
 menu = {
+  enabled = turtle and true,
   [1] = {
     name = "Move to...",
     enabled = true,

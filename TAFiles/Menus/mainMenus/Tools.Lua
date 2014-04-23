@@ -13,8 +13,9 @@ tTool.change = function(tool,b1,b2) --tool change function
   end
 end
 
-local menu
-menu = {}
+local menu = {
+  enabled = true
+}
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do
   local tool = loadFile(tFile.toolFolder.."/"..file,progEnv)

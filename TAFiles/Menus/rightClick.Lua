@@ -33,7 +33,7 @@ menu = {
     func = function()
       local c = tTool.clipboard
       c.layer = tTerm.scroll.layer
-      sync(c,paste)
+      sync(c,"Paste")
       tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX,c.sZ,tMode.overwrite)
       renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       c.sX = c.sX+1

@@ -3,7 +3,7 @@ blueprint = { --blueprint class
   new = function(data)
     data = data or {}
     data[1] = class.layer.new(data[1])
-    data.colorSlots = data.colorSlots or class.matrix.new(2)
+    data.colorSlots = class.matrix.new(2,data.colorSlots)
     return setmetatable(
       data,
       {
@@ -39,7 +39,7 @@ blueprint = { --blueprint class
           fX:write(sX,nX)
         end
       end
-      if blankLayer and not disableTrimming then
+      if blankLayer and not disableTrimming and nL > 1 then
         file:delete()
         blueprint[nL] = nil
       else
@@ -100,9 +100,17 @@ blueprint = { --blueprint class
     file.close()
     return blueprint
   end,
-  size = function(t)
-  --returns the amount of layers in the blueprint
-    return #t
+  size = function(blueprint)
+  --returns the amount of layers and the dimensions of the blueprint
+    local x = 0
+    local z = 0
+    for iL=1,#blueprint do
+      x = math.max(blueprint[iL]:size(),x)
+      for nX,vX in pairs(blueprint[iL]) do
+        z = math.max(vX:size(),z)
+      end
+    end
+    return #blueprint,x,z
   end,
   copy = function(cBlueprint,x1,z1,x2,z2)
   --returns a blueprint copy, optional coordinates
@@ -119,7 +127,14 @@ blueprint = { --blueprint class
       z.max = math.max(z1,z2)
       z.min = math.min(z1,z2)
     end
-    local copy = blueprint.new()
+    local colorSlots = {}
+    for k,v in pairs(cBlueprint.colorSlots) do
+      colorSlots[k] = {}
+      for k2,v2 in pairs(v) do
+        colorSlots[k][k2] = v2
+      end
+    end
+    local copy = blueprint.new({colorSlots = colorSlots})
     for nL=1,#cBlueprint do
       copy[nL] = class.layer.new()
       for nX,vX in pairs(cBlueprint[nL]) do

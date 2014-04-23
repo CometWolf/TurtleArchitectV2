@@ -1,24 +1,18 @@
 local main = { --note that the menus are numbered from the bottom and up
-  [5] = "Blueprint",
-  [4] = "Layer",
-  [3] = "Tools",
-  [2] = "Turtle",
+  [6] = "Blueprint",
+  [5] = "Layer",
+  [4] = "Tools",
+  [3] = "Turtle",
+  [2] = "Sync turtle",
   [1] = "Settings",
 }
-if not turtle then --disable turtle menu on computers
-  for i=1,#main do
-    if main[i] == "Turtle" then
-      table.remove(main,i)
-      break
-    end
-  end
-end
 
 for i = 1,#main do
   main[i] = {
     name = main[i],
     items = loadFile(tFile.mainMenuFolder.."/"..main[i]..".Lua",progEnv)
   }
+  main[i].enabled = main[i].items.enabled
   main[main[i].name] = main[i]
 end
 

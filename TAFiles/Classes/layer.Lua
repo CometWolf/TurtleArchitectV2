@@ -208,9 +208,9 @@ layer = { --layer class
       z.max = math.max(z1,z2)
       z.min = math.min(z1,z2)
     end
+    local loopLayer = layer:copy()
     for nX = x.min,x.max do
-      local vX = layer[nX]
-      for nZ,vZ in pairs(vX) do
+      for nZ,vZ in pairs(loopLayer[nX]) do
         if nZ >= z.min and nZ <= z.max then
           layer[nX][nZ] = color
         end

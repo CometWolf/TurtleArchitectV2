@@ -158,6 +158,7 @@ tMode = { -- default modes
   backgroundLayer = false,
   sync = {
     amount = 0,
+    turtles =0,
     ids = {
     
     }

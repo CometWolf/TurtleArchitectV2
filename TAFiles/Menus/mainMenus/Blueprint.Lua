@@ -1,5 +1,6 @@
 local menu
 menu = {
+  enabled = true,
   [1] = {
     name = "Create new...",
     enabled = true,
@@ -103,7 +104,7 @@ menu = {
     enabled = true,
     func = function()
       local fileName = tFile.blueprint
-      local button,tRes
+      local button,tRes,reInput
       if not fileName then
         button, tRes, reInput = input(
           "No file name for current blueprint,",
@@ -123,7 +124,7 @@ menu = {
         )
       end
       while button and button ~= "Cancel" do
-        fileName = fileName or tRes["File name"]
+        fileName = not tFile.blueprint and tRes["File name"] or fileName
         if not fileName then
           button,tRes,reInput = reInput("Invalid file name!")
         elseif fs.exists(fileName..".TAb") then
@@ -160,7 +161,7 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        local fileName = fileName or tRes["File name"]
+        local fileName = tRes["File name"]
         if not fileName then
           button,tRes,reInput = reInput("Invalid file name!")
         elseif button == "Pastebin" then
@@ -176,7 +177,6 @@ menu = {
         else
           tBlueprint:save(fileName)
           tFile.blueprint = fileName
-          scroll()
           input("Successfully saved "..fileName..".TAb.")
           return
         end

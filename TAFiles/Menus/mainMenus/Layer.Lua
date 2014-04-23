@@ -1,5 +1,6 @@
 local menu
 menu = {
+  enabled = true,
   [1] = {
     name = "Create new...",
     enabled = true,

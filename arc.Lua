@@ -179,37 +179,40 @@ rednet = {
     content.sID = os.id
     content.event = event
     local clear
-    for rID in pairs(content.rID) do
+    for id in pairs(content.rID) do
+      local timerId
       if timeout then
-        local timerId = tTimers.modemRes.start(time) --if not time, the default modemRes time is used
-        clear = function()
-          tTimers.modemRes.ids[timerId] = nil
-          tTransmissions.failure.timeout[timerId] = nil
+        timerId = tTimers.modemRes.start(time) --if not time, the default modemRes time is used
+        clear = function(rID,tID)
+          tTimers.modemRes.ids[tID] = nil
+          tTransmissions.failure.timeout[tID] = nil
           tTransmissions.failure[event][rID] = nil
           tTransmissions.success[event][rID] = nil
         end
         tTransmissions.failure.timeout[timerId] = function()
-          clear()
-          timeout(rID)
+          clear(id,timerId)
+          timeout(id)
         end
       end
-      clear = clear or function() --different clear if there is no timeout function
+      clear = clear or function(rID) --different clear if there is no timeout function
         tTransmissions.failure[event][rID] = nil
         tTransmissions.success[event][rID] = nil
       end
-      tTransmissions.success[event][rID] = (
+      tTransmissions.success[event][id] = (
         success 
-        and function()
-          clear()
-          success(rID)
+        and function(data)
+          clear(id,timerId)
+          success(id,data)
         end
-        or clear
+        or function() 
+          clear(id,timerId)
+        end
       )
       tTransmissions.failure[event][rID] = (
         failure
         and function()
-          clear()
-          failure(rID)
+          clear(id,timerId)
+          failure(id)
         end
         or clear
       )
@@ -230,12 +233,16 @@ rednet = {
     rednet.send(
       id,
       "Init connection",
-      {type = type},
-      function(id)
+      {
+        type = type,
+        turtle = turtle and true
+      },
+      function(id,data)
         rednet.connected.ids[id] = true
         rednet.connected.amount = rednet.connected.amount+1
+        --tTimers.connectionPing.start()
         if success then
-          success(id)
+          success(id,data)
         end
       end,
       function(id)
@@ -246,12 +253,24 @@ rednet = {
         input("Computer ID "..id.." denied your connection request")
       end
     )
-    tTimers.connectionPing.start()
   end,
-  disconnect = function(id)
-    rednet.send(id,"Close connection")
-    rednet.connected.ids[id] = nil
-    rednet.connected.amount = rednet.connected.amount-1
+  disconnect = function(ids)
+    ids = type(ids) == "table" and ids or {[ids] = true}
+    rednet.send(ids,"Close connection")
+    local idsLoop = {}
+    for id in pairs(ids) do
+      idsLoop[#idsLoop+1] = id
+    end
+    for i = 1,#idsLoop do
+      local id = idsLoop[i]
+      rednet.connected.ids[id] = nil
+      rednet.connected.amount = rednet.connected.amount-1
+      if tMode.sync.ids[id] then
+        tMode.sync.turtles = tMode.sync.ids == "turtle" and tMode.sync.turtles-1 or tMode.sync.turtles
+        tMode.sync.ids[id] = nil
+        tMode.sync.amount = tMode.sync.amount-1
+      end
+    end
   end
 }
 setmetatable(
@@ -461,7 +480,7 @@ else
 end
 
 if tArg[1] then --attempt to load argument blueprint
-  tBlueprint = tBlueprint.load(tArg[1] or "") 
+  tBlueprint = class.blueprint.load(tArg[1]) or class.blueprint.new()
   tFile.blueprint = tArg[1]
 else
   tBlueprint = class.blueprint.new()
@@ -647,35 +666,38 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
   screen:setBackgroundColor(tColors.sideBar)
   for i=1,#tMenu.main do
     local menu = tMenu.main[i]
-    screen:setCursorPos(tTerm.screen.x-1,posY)
-    screen:write(menu.name:sub(1,2))
-    tBar.touchMap[tTerm.screen.x][posY] = function() 
-      renderMenu(menu.name)
-    end
-    tBar.touchMap[tTerm.screen.x-1][posY] = tBar.touchMap[tTerm.screen.x][posY]
-    menu.sX = tTerm.screen.x-1-#menu.string
-    menu.eX = menu.sX+#menu.string
-    menu.lX = menu.eX-menu.sX
-    menu.sY = math.ceil(posY-(#menu.items/2))
-    menu.eY = math.ceil(posY+(#menu.items/2))
-    menu.lY = menu.eY-menu.sY+1
-    menu.splits = math.ceil(menu.lY/tTerm.screen.y)
-    if menu.splits <= 1 then
-      while menu.sY < 1 do
-        menu.sY = menu.sY+1
-        menu.eY = menu.eY+1
+    if type(menu.enabled) == "function" and menu.enabled() 
+    or menu.enabled == true then
+      screen:setCursorPos(tTerm.screen.x-1,posY)
+      screen:write(menu.name:sub(1,2))
+      tBar.touchMap[tTerm.screen.x][posY] = function() 
+        renderMenu(menu.name)
       end
-      while menu.eY > tTerm.screen.y do
-        menu.sY = menu.sY-1
-        menu.eY = menu.eY-1
+      tBar.touchMap[tTerm.screen.x-1][posY] = tBar.touchMap[tTerm.screen.x][posY]
+      menu.sX = tTerm.screen.x-1-#menu.string
+      menu.eX = menu.sX+#menu.string
+      menu.lX = menu.eX-menu.sX
+      menu.sY = math.ceil(posY-(#menu.items/2))
+      menu.eY = math.ceil(posY+(#menu.items/2))
+      menu.lY = menu.eY-menu.sY+1
+      menu.splits = math.ceil(menu.lY/tTerm.screen.y)
+      if menu.splits <= 1 then
+        while menu.sY < 1 do
+          menu.sY = menu.sY+1
+          menu.eY = menu.eY+1
+        end
+        while menu.eY > tTerm.screen.y do
+          menu.sY = menu.sY-1
+          menu.eY = menu.eY-1
+        end
+      else
+        menu.sY = 1
+        menu.eY = math.ceil(menu.lY/menu.splits)
+        menu.lY = menu.eY
+        menu.sX = menu.sX-(menu.lX*(menu.splits-1))
       end
-    else
-      menu.sY = 1
-      menu.eY = math.ceil(menu.lY/menu.splits)
-      menu.lY = menu.eY
-      menu.sX = menu.sX-(menu.lX*(menu.splits-1))
+      posY = posY-1
     end
-    posY = posY-1
   end
   if posY > 0 then
     screen:drawLine(tTerm.screen.x,1,tTerm.screen.x,posY,tColors.sideBar)
@@ -684,15 +706,14 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       screen:setCursorPos(tTerm.screen.x-1,1)
       screen:write"/\\"
       tBar.touchMap[tTerm.screen.x][1] = function()
-        tTerm.scroll.layer = tTerm.scroll.layer+1
-        scroll()
+        tBlueprint[tTerm.scroll.layer+1] = tBlueprint[tTerm.scroll.layer+1] or class.layer.new()
+        scroll(tTerm.scroll.layer+1)
       end
       tBar.touchMap[tTerm.screen.x-1][1] = tBar.touchMap[tTerm.screen.x][1]
       screen:setCursorPos(tTerm.screen.x-1,2)
       screen:write"\\/"
       tBar.touchMap[tTerm.screen.x][2] = function()
-        tTerm.scroll.layer = tTerm.scroll.layer-1
-        scroll()
+        scroll(tTerm.scroll.layer-1)
       end
       tBar.touchMap[tTerm.screen.x-1][2] = tBar.touchMap[tTerm.screen.x][2]
     end
@@ -739,7 +760,7 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
   end
   if oldX ~= tTerm.scroll.x or oldZ ~= tTerm.scroll.z or layer ~= tTerm.scroll.layer or forceRefresh then
     local view = tTerm.viewable
-    tTerm.scroll.layer = layer
+    tTerm.scroll.layer = math.max(layer,1)
     view.sX = tTerm.scroll.x+1
     view.eX = view.sX+tTerm.canvas.tX
     view.sZ = tTerm.scroll.z+1
@@ -952,7 +973,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   local oldHandlers = {}--stores currently in use event handlers, prior to switch
   local function endExecution(event)
     --closes input box and returns event and the values in the input fields
-    eventHandler.switch(oldHandlers)
+    eventHandler.switch(oldHandlers,true)
     local tRes = {}
     for iR=1,#tInputs do
       tRes[tInputs[iR].name] = tInputs[iR].value ~= "-" and tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
@@ -1145,7 +1166,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     end
   end
   for k,v in pairs(eventHandler.active) do
-    oldHandlers[k] = not eventHandler.common[k] and v or nil
+    oldHandlers[k] = v
   end
   eventHandler.switch(eventHandlers)
   while true do
@@ -1160,18 +1181,18 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--
-function saveProgress(fileName)
+function saveProgress(fileName,tProgress)
   local file = class.fileTable.new()
-  file:write("sLayer: "..tOngoing.sLayer)
-  file:write("eLayer: "..tOngoing.eLayer)
-  file:write("X: "..tOngoing.x)
-  file:write("Y: "..tOngoing.y)
-  file:write("Z: "..tOngoing.z)
-  file:write("dir X: "..tOngoing.dir.x)
-  file:write("dir Y: "..tOngoing.dir.y)
-  file:write("dir Z: "..tOngoing.dir.z)
-  file:write("Enderchest: "..(tOngoing.enderChest or "Disabled"))
-  file:write("Break mode: "..(tOngoing.breakMode and "Enabled" or "Disabled"))
+  file:write("sLayer: "..tProgress.sLayer)
+  file:write("eLayer: "..tProgress.eLayer)
+  file:write("X: "..tProgress.x)
+  file:write("Y: "..tProgress.y)
+  file:write("Z: "..tProgress.z)
+  file:write("dir X: "..tProgress.dir.x)
+  file:write("dir Y: "..tProgress.dir.y)
+  file:write("dir Z: "..tProgress.dir.z)
+  file:write("Enderchest: "..(tProgress.enderChest or "Disabled"))
+  file:write("Break mode: "..(tProgress.breakMode and "Enabled" or "Disabled"))
   file:save(fileName..".TAo")
 end
 
@@ -1197,7 +1218,7 @@ function loadProgress(fileName)
   line = read()
   tOngoing.dir.z = line:match"dir Z: ([+-])" or "+"
   line = read()
-  tOngoing.enderChest = tonumber(line:match"EnderChest: (%d+)") or false
+  tOngoing.enderChest = tonumber(line:match"Enderchest: (%d+)") or false
   line = read()
   tOngoing.breakMode = (line:match"Break mode: (.+)" == "Enabled")
   file.close()
@@ -1348,74 +1369,39 @@ function assignColorSlots(color)
   return false
 end
 
-function build(blueprint,sLayer,eLayer,auto)
-  --builds the given blueprint layers
-  blueprint = blueprint or tBlueprint
-  if not tFile.blueprint then
-    local button, tRes = input(
-      "Blueprint must be saved locally prior to building",
-      {
-        "Cancel",
-        "Ok"
-      },
-      {
-        {
-          name = "File name",
-          value = "/",
-          accepted = "."
-        },
-      }
-    )
-    if button ~= "Cancel" then
-      local fileName = tRes["File name"]
-      tBlueprint:save(fileName)
-      tFile.blueprint = fileName
-      input("Sucessfully saved "..fileName..".TAb")
-    else
-      input("Construction cancelled.")
-      return
-    end
-  end
-  if fs.exists(tFile.blueprint..".TAo") then
+function checkProgress(fileName,tProgress,blueprint,auto)
+  if fileName
+  and fs.exists(fileName..".TAo")
+  and not tProgress then
+    tProgress = loadProgress(fileName)
     if auto then
-      tOngoing = loadProgress(tFile.blueprint)
+      return tProgress
     else
-      local loadedOngoing = loadProgress(tFile.blueprint)
       local button = input(
         [[In-progress build of current blueprint found.
-layers ]]..loadedOngoing.sLayer..[[-]]..loadedOngoing.eLayer..[[ 
-X: ]]..loadedOngoing.x..[[ "]]..loadedOngoing.dir.x..[["
-Y: ]]..loadedOngoing.y..[[ "]]..loadedOngoing.dir.y..[["
-Z: ]]..loadedOngoing.z..[[ "]]..loadedOngoing.dir.z..[["
-Break mode: ]]..(loadedOngoing.breakMode and "ON" or "OFF")..[[ 
+layers ]]..tProgress.sLayer..[[-]]..tProgress.eLayer..[[ 
+X: ]]..tProgress.x..[[ "]]..tProgress.dir.x..[["
+Y: ]]..tProgress.y..[[ "]]..tProgress.dir.y..[["
+Z: ]]..tProgress.z..[[ "]]..tProgress.dir.z..[["
+Break mode: ]]..(tProgress.breakMode and "ON" or "OFF")..[[ 
 Load?]],
         {
           "Yes",
           "No"
         }
       )
-      if button ~= "No" then
-        tOngoing = loadProgress(tFile.blueprint)
-      else
-        tOngoing = {
+      if button == "No" then
+        tProgress = {
           dir = {}
         }
       end
     end
   else
-    tOngoing = {
+    tProgress = {
       dir = {}
     }
   end
-  if not (
-    (
-      tOngoing.sLayer 
-      and tOngoing.eLayer
-    ) or (
-      sLayer 
-      and eLayer
-    )
-  ) then
+  if not (tProgress.sLayer and tProgress.eLayer) then
     local button, tRes, reInput = input(
       "Input layer range to build",
       {
@@ -1446,46 +1432,47 @@ Load?]],
       elseif not tRes.End then
         button,tRes,reInput = reInput("Missing end layer!")
       elseif button == "Ok" then
-        tOngoing.sLayer = tRes.Start
-        tOngoing.eLayer = tRes.End
+        tProgress.sLayer = tRes.Start
+        tProgress.eLayer = tRes.End
         break
       end
     end
   end
-  local tUsage = checkUsage(blueprint,tOngoing.sLayer,tOngoing.eLayer)
+  local blueprint = blueprint or class.blueprint.load(fileName) or tBlueprint
+  local tUsage = checkUsage(blueprint,tProgress.sLayer,tProgress.eLayer)
   local fuelUsage = tUsage.fuel
   tUsage.fuel = nil
   for k,v in pairs(tUsage) do
     if not tBlueprint.colorSlots[k][1] then
       if not assignColorSlots(k) then
         input("Construction cancelled.")
-        return
+        return false
       end
     end
   end
-  blueprint:save(tFile.blueprint)
-  if not tOngoing.x then
+  blueprint:save(fileName or tFile.blueprint)
+  if not tProgress.x then
     local button, tRes, reInput = input(
       "Input build coordinates",
       {
         "Cancel",
         "Ok",
-        "Cur pos"
+        (cTurtle and "Cur pos" or nil)
       },
       {
         {
           name = "X",
-          value = cTurtle.tPos.x,
+          value = cTurtle and cTurtle.tPos.x or "",
           accepted = "[+%d-]"
         },
         {
           name = "Y",
-          value = cTurtle.tPos.y,
+          value = cTurtle and cTurtle.tPos.y or "",
           accepted = "[%d+-]"
         },
         {
           name = "Z",
-          value = cTurtle.tPos.z,
+          value = cTurtle and cTurtle.tPos.z or "",
           accepted = "[%d+-]"
         },
       },
@@ -1508,14 +1495,14 @@ Load?]],
       elseif not tRes.Z then
         button,tRes,reInput = reInput("Missing parameter Z!")
       elseif button == "Ok" or button == "Cur pos" then
-        tOngoing.x = tRes.X
-        tOngoing.y = tRes.Y
-        tOngoing.z = tRes.Z
+        tProgress.x = tRes.X
+        tProgress.y = tRes.Y
+        tProgress.z = tRes.Z
         break
       end
     end
   end
-  if not tOngoing.dir.x then
+  if not tProgress.dir.x then
     local button, tRes, reInput = input(
       "Input build directions",
       {
@@ -1556,20 +1543,20 @@ Load?]],
       elseif not tRes.Z then
         button,tRes,reInput = reInput("Missing Z direction!")
       elseif button == "Ok" then
-        tOngoing.dir.x = tRes.X
-        tOngoing.dir.y = tRes.Y
-        tOngoing.dir.z = tRes.Z
+        tProgress.dir.x = tRes.X
+        tProgress.dir.y = tRes.Y
+        tProgress.dir.z = tRes.Z
         break
       end
     end
   end
-  if not tOngoing.enderChest and not auto then
+  if not tProgress.enderChest and not auto then
     local button, tRes, reInput = input(
       "Enable ender chest?",
       {
         "No",
         "Ok",
-        "Permanent"
+        (cTurtle and "Permanent" or nil)
       },
       {
         {
@@ -1583,21 +1570,58 @@ Load?]],
       true
     )
     while button ~= "No" do
-      if tRes.Slot and (tRes.Slot > 16 or tRes.slot < 1 ) then
+      if not tRes.Slot then
+        break
+      elseif tRes.Slot and (tRes.Slot > 16 or tRes.Slot < 1 ) then
         button,tRes,reInput = reInput("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
-        tOngoing.enderChest = tRes.Slot
+        tProgress.enderChest = tRes.Slot
         break
       elseif button == "Permanent" then
-        tOngoing.enderChest = tRes.Slot
-        cTurtle.tSettings.enderFuel = tOngoing.enderChest
+        tProgress.enderChest = tRes.Slot
+        cTurtle.tSettings.enderFuel = tProgress.enderChest
         cTurtle.saveSettings()
         break
       end
     end
   end
+  saveProgress(fileName,tProgress)
+  return tProgress,fileName
+end
+
+function build(blueprint,auto)
+  --builds the given blueprint layers
+  if not (tFile.blueprint or blueprint) then
+    local button, tRes = input(
+      "Blueprint must be saved locally prior to building",
+      {
+        "Cancel",
+        "Ok"
+      },
+      {
+        {
+          name = "File name",
+          value = "/",
+          accepted = "."
+        },
+      }
+    )
+    if button ~= "Cancel" then
+      local fileName = tRes["File name"]
+      tBlueprint:save(fileName)
+      tFile.blueprint = fileName
+      input("Sucessfully saved "..fileName..".TAb")
+    else
+      input("Construction cancelled.")
+      return false
+    end
+  end
+  blueprint = blueprint or tBlueprint
+  local tOngoing = not auto and checkProgress(tFile.blueprint) or loadProgress(tFile.blueprint)
+  if not tOngoing then
+    return
+  end
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
-  saveProgress(tFile.blueprint)
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
   local threshold = digSlot and 1 or 2
@@ -1690,7 +1714,7 @@ eventHandler = {
   active = {}, --current event handlers
   common = {}, --shared event handlers, these are always active
   main = {}, --event handlers restricted to main
-  switch = function(tHandlers)
+  switch = function(tHandlers,skipCommon)
     eventHandler.active = {}
     if cTurtle then
        cTurtle.clearEventHandler()
@@ -1698,6 +1722,7 @@ eventHandler = {
     for k,v in pairs(tHandlers) do
       eventHandler.active[k] = (
         eventHandler.common[k]
+        and not skipCommon
         and function(tEvent)
           eventHandler.common[k](tEvent)
           return v(tEvent)
@@ -1711,12 +1736,14 @@ eventHandler = {
         end
       end
     end
-    for k,v in pairs(eventHandler.common) do
-      eventHandler.active[k] = eventHandler.active[k] or v
-      if cTurtle and not cTurtle.eventHandler[k] then
-        cTurtle.eventHandler[k] = function(tEvent)
-          eventHandler.active[k](tEvent)
-          screen:refresh()
+    if not skipCommon then
+      for k,v in pairs(eventHandler.common) do
+        eventHandler.active[k] = eventHandler.active[k] or v
+        if cTurtle and not cTurtle.eventHandler[k] then
+          cTurtle.eventHandler[k] = function(tEvent)
+            eventHandler.active[k](tEvent)
+            screen:refresh()
+          end
         end
       end
     end
@@ -1725,7 +1752,7 @@ eventHandler = {
     screen:refresh()
     local tEvent = {os.pullEvent(sFilter)}
     if eventHandler.active[tEvent[1]] then
-      return unpack({eventHandler.active[tEvent[1]](tEvent)})
+      return eventHandler.active[tEvent[1]](tEvent)
     end
   end
 }
@@ -1784,7 +1811,7 @@ eventHandler.common.timer = function(tEvent)
       screen:delLayer(screen.layers.toolsOverlay)
     end
     tTimers.blink.start()
-  elseif timerId == tTimers.connectionPing.id then
+  elseif timerID == tTimers.connectionPing.id then
     if rednet.connected.amount > 0 then
       rednet.send(
         rednet.connected.ids,
@@ -1793,8 +1820,13 @@ eventHandler.common.timer = function(tEvent)
         false,
         function(id)
           rednet.connected.ids[id] = nil
+          local turtle = tMode.sync.ids[id] == "turtle"
+          tMode.sync.turtles = tMode.sync.turtles-(turtle and 1 or 0)
           tMode.sync.amount = tMode.sync.ids[id] and tMode.sync.amount-1 or tMode.sync.amount
-          tMode.sync.ids[id] = nil  
+          tMode.sync.ids[id] = nil 
+          if turtle and tMode.sync.turtles == 0 then
+            renderSideBar()
+          end
           input("Connection to computer ID "..id.." was lost.")
         end
       )
@@ -1846,11 +1878,27 @@ eventHandler.common.modem_message = function(tEvent)
           end
         )
         if button == "Accept" then
+          local reRenderSideBar = tMode.sync.turtles > 0
+          if tMode.sync.amount > 0 then
+            rednet.disconnect(tMode.sync.ids)
+          end
           rednet.connected.amount = rednet.connected.amount+1
           rednet.connected.ids[senderId] = true
           tMode.sync.amount = 1
-          tMode.sync.ids = {[senderId] = true}
-          rednet.send(senderId,"Success",{type = event})
+          if data.turtle then
+            tMode.sync.turtles = 1
+            tMode.sync.ids = {[senderId] = "turtle"}
+            if not reRenderSideBar then
+              renderSideBar()
+            end
+          else
+            tMode.sync.turtles = 0
+            tMode.sync.ids = {[senderId] = "computer"}
+            if reRenderSideBar then
+              renderSideBar()
+            end
+          end
+          rednet.send(senderId,"Success",{type = event,turtle = turtle and true})
         else
           rednet.send(senderId,"Failure",{type = event})
         end
@@ -1859,16 +1907,25 @@ eventHandler.common.modem_message = function(tEvent)
     and tMode.sync.ids[senderId] then
       if type == "Ids" then
         tMode.sync = data.sync
+        tMode.sync.ids[os.id] = nil
+        tMode.sync.ids[senderId] = true
+        if turtle then
+          tMode.sync.turtles = tMode.sync.turtles-1
+        end
         for k,v in pairs(tMode.sync.ids) do
-          rednet.connected.ids[k] = true
-          rednet.connected.amount = rednet.connected.amount+1
+          if not rednet.connected.ids[k] then
+            rednet.connected.ids[k] = true
+            rednet.connected.amount = rednet.connected.amount+1
+          end
         end
       elseif type == "Paste" then --this is used for most tools
         tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
         renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
       elseif type == "Point" then --probably brush
         tBlueprint[data.layer][data.x][data.z] = data.color
-        renderPoint(data.x,data.z,true)
+        if tTerm.scroll.layer == data.layer then
+          renderPoint(data.x,data.z,true)
+        end
       elseif type == "Delete" then
         for iX = data.sX,data.eX do
           for iZ = data.sZ,data.eZ do
@@ -1903,17 +1960,47 @@ eventHandler.common.modem_message = function(tEvent)
         renderArea(data.sX,data.sZ,data.eX,data.eZ)
       elseif type == "Blueprint load" then
         tBlueprint = class.blueprint.copy(data.blueprint)
-        tFile.blueprint = nil
+        tFile.blueprint = data.blueprintName or nil
         scroll(1,0,0,true,true)
+      elseif type == "Blueprint sub" then
+        tBlueprint = tBlueprint:copy(data.sX,data.sZ,data.eX,data.eZ)
+        tBlueprint:save(tFile.blueprint,true)
+        for i=1,#tBlueprint do
+          scroll(i,0,0,true) --i don't fucking know anymore, I GIVE UP
+        end
+        scroll(1,0,0,true,true)
+      elseif type == "Colorslots load" then
+        tBlueprint.colorsSlots = class.matrix.new(2,data.colorSlots)
       end
     elseif event == "Sync OFF"
     and tMode.sync.ids[senderId] then
       if tMode.sync.ids[senderId] then
-        tMode.sync.senderId = nil
+        local turtle = tMode.sync.ids[senderId] == "turtle"
+        tMode.sync.turtles = tMode.sync.turtles-(turtle and 1 or 0)
         tMode.sync.amount = tMode.sync.amount-1
+        tMode.sync.ids[senderId] = nil
         rednet.connected.ids[senderId] = nil
         rednet.connected.amount = rednet.connected.amount-1
-        input("Computer ID "..senderId.." has de-synced")
+        if turtle and tMode.sync.turtles == 0 then
+          renderSideBar()
+        end
+        input((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
+      end
+    elseif event == "Turtle command" then
+      local response = {
+        type = event
+      }
+      if type == "Move" then
+        cTurtle.moveToXYZ(data.x,data.y,data.z)
+      elseif type == "Turn" then
+        cTurtle.turn(data.dir)
+      elseif type == "Get blueprint progress" then
+        response.progress = loadProgress(data.blueprintName)
+        rednet.send(senderId,"Success",response)
+      elseif type == "Save blueprint progress" then
+        saveProgress(data.blueprintName,data.progress)
+      elseif type == "Build" then
+        build(tBlueprint,true)
       end
     elseif event == "Blueprint transmission" then
       local timeoutId = tTimers.inputTimeout.start()
@@ -2042,7 +2129,7 @@ while true do
         return Quit()
       end
     else --non color supported crash
-      
+      error(tRes[2])
     end
   else
     return tRes[2]

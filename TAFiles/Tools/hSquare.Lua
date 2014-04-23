@@ -41,7 +41,7 @@ local tool = {
         s.eZ = false
       elseif s.eX then --button 2
         s.layer = tTerm.scroll.layer
-        sync(s,paste)
+        sync(s,"Paste")
         tBlueprint[tTerm.scroll.layer]:paste(s.l,math.min(s.sX,s.eX),math.min(s.sZ,s.eZ),not tMode.overwrite)
         renderArea(s.sX,s.sZ,s.eX,s.eZ,true)
         tTool.shape = {}
