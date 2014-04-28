@@ -22,8 +22,6 @@ screenBuffer = {
               end
               buffer.layer = k
               return t[k]
-            else
-              error("Attempt to access invalid buffer layer "..k,2)
             end
           end
           return screenBuffer[k]
@@ -216,6 +214,7 @@ screenBuffer = {
         term.write(c.marker)
       end
     end
+    buffer:glassRefresh()
     buffer.changed = class.matrix.new(2)
     if buffer.blink then
       term.setTextColor(buffer.tColor)
@@ -230,6 +229,36 @@ screenBuffer = {
         term.setBackgroundColor(c.bColor)
         term.setTextColor(c.tColor)
         term.write(c.marker)
+      end
+    end
+    buffer:glassRedraw()
+  end,
+  glassInit = function(buffer,bridge)
+    bridge.clear()
+    buffer.glass = class.matrix.new(2)
+    for iX = 1,tTerm.screen.x do
+      for iY = 1,tTerm.screen.y do
+        buffer.glass[iX][iY] = bridge.addBox(iX,iY,1,1)
+      end
+    end
+  end,
+  glassRedraw = function(buffer)
+    if not buffer.glass then
+      return
+    end
+    for iX = 1,tTerm.screen.x do
+      for iY = 1,tTerm.screen.y do
+        buffer.glass[iX][iY].setColor(glasses.colors[buffer[buffer:getTop(iX,iY)][iX][iY].bColor])
+      end
+    end
+  end,
+  glassRefresh = function(buffer)
+    if not buffer.glass then
+      return
+    end
+    for x,vX in pairs(buffer.changed) do
+      for y,layer in pairs(vX) do
+        buffer.glass[x][y].setColor(glasses.colors[buffer[layer][x][y].bColor])
       end
     end
   end

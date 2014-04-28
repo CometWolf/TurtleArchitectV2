@@ -469,10 +469,11 @@ elseif term.isColor() then
     and peripheral.call(side,"isWireless") then
       modem = peripheral.wrap(side)
       modem.open(modemChannel)
-    elseif pType == "Whatever the bridge is called" then
-      glasses = peripheral.wrap(side)
+    elseif pType == "openperipheral_glassesbridge" then
+      glasses.bridge = peripheral.wrap(side)
+      screen:glassInit(glasses.bridge)
     end
-    if glasses and modem then
+    if glasses.bridge and modem then
       break
     end
   end
@@ -1782,7 +1783,7 @@ while true do
     elseif tTerm.color then --color supported crash
       local errors = ""
       local button = input(
-        "Turtle Architect has encountered an unexpected error:\n"..tRes[2].."\n\nPlease report this to CometWolf immediately!",
+        "Turtle Architect has encountered an unexpected error:\n"..tostring(tRes[2]).."\n\nPlease report this to CometWolf immediately!",
         {
           "Ignore",
           "Save & quit",
@@ -1802,4 +1803,3 @@ while true do
     return tRes[2]
   end
 end
-    
