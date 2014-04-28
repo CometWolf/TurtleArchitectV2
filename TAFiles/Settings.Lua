@@ -54,6 +54,9 @@ tTimers = setmetatable( -- timer settings
     },
     inputTimeout = { --Time to wait for time sensitive dialogue boxes, eg accept blueprint transmission or sync mode
       time = 100
+    },
+    ctrl = {
+      time = 1
     }
   },
   {

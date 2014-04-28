@@ -75,6 +75,7 @@ menu = {
               else
                 tBlueprint = blueprint
                 scroll()
+                sync({blueprint = tBlueprint,blueprintName = false},"Blueprint load")
                 input("Successfully downloaded "..fileName.."!")
                 return
               end
@@ -92,6 +93,7 @@ menu = {
             tFile.blueprint = fileName
             tBlueprint = blueprint
             scroll()
+            sync({blueprint = tBlueprint,blueprintName = fileName},"Blueprint load")
             input("Successfully loaded "..fileName..".TAb.")
             return
           end
@@ -103,40 +105,7 @@ menu = {
     name = "Save",
     enabled = true,
     func = function()
-      local fileName = tFile.blueprint
-      local button,tRes,reInput
-      if not fileName then
-        button, tRes, reInput = input(
-          "No file name for current blueprint,",
-          {
-            "Cancel",
-            "Ok"
-          },
-          {
-            {
-              name = "File name",
-              value = "/",
-              accepted = "."
-            },
-          },
-          false,
-          true
-        )
-      end
-      while button and button ~= "Cancel" do
-        fileName = not tFile.blueprint and tRes["File name"] or fileName
-        if not fileName then
-          button,tRes,reInput = reInput("Invalid file name!")
-        elseif fs.exists(fileName..".TAb") then
-          button,tRes,reInput = reInput(fileName.." already exists!")
-        else
-          break
-        end
-      end
-      tBlueprint:save(fileName)
-      tFile.blueprint = fileName
-      scroll()
-      input("Successfully saved "..fileName..".TAb.")
+      dialogue.save()
     end
   },
   [4] = {
@@ -246,9 +215,11 @@ menu = {
       if button == "Horizontal" then
         tBlueprint:flipX()
         scroll()
+        sync({dir = "X",blueprint = true},"Flip")
       elseif button == "Vertical" then
         tBlueprint:flipZ()
         scroll()
+        sync({dir = "Z",blueprint = true},"Flip")
       end
     end
   },
@@ -257,6 +228,7 @@ menu = {
     enabled = true,
     func = function(button)
       assignColorSlots(tTool[button].color)
+      sync({colorSlots = tBlueprint.colorSlots},"Colorslots load")
     end
   },
   [8] = {
@@ -276,6 +248,7 @@ menu = {
         if tMode.builtRender then
           scroll()
         end
+        sync({blueprint = true},"Mark built")
       end
     end
   },
@@ -297,6 +270,7 @@ menu = {
           scroll()
         end
       end
+      sync({blueprint = true},"Mark unbuilt")
     end
   },
   [10] = {

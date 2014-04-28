@@ -157,38 +157,9 @@ menu = {
       return tMode.sync.turtles > 0 and true
     end,
     func = function()
-      if not tFile.blueprint then
-        local button, tRes, reInput = input(
-          "No file name for current blueprint,",
-          {
-            "Cancel",
-            "Ok"
-          },
-          {
-            {
-              name = "File name",
-              value = "/",
-              accepted = "."
-            },
-          },
-          false,
-          true
-        )
-        while button and button ~= "Cancel" do
-          fileName = not tFile.blueprint and tRes["File name"] or fileName
-          if not fileName then
-            button,tRes,reInput = reInput("Invalid file name!")
-          elseif fs.exists(fileName..".TAb") then
-            button,tRes,reInput = reInput(fileName.." already exists!")
-          else
-            tBlueprint:save(fileName)
-            tFile.blueprint = fileName
-            break
-          end
-        end
-        if button == "Cancel" then
-          return
-        end
+      if not dialogue.save"Blueprint must be saved locally prior to building!" then
+        input"Construction cancelled"
+        return
       end
       local turtles = ""
       local turtleIds = {}

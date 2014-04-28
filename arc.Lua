@@ -1180,6 +1180,61 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
 end
 
 --[[----------------------------------------------------------------------------------------------------------
+Common dialogues
+----------------------------------------------------------------------------------------------------------]]--
+dialogue = {
+  save = function(text)
+    local fileName = tFile.blueprint
+    local button,tRes,reInput
+    if not fileName then
+      button, tRes, reInput = input(
+        text or "No file name for current blueprint,",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "File name",
+            value = "/",
+            accepted = "."
+          },
+        },
+        false,
+        true
+      )
+    end
+    while button and button ~= "Cancel" do
+      fileName = not tFile.blueprint and tRes["File name"] or fileName
+      if not fileName then
+        button,tRes,reInput = reInput("Invalid file name!")
+      elseif fs.exists(fileName..".TAb") then
+        button = input(
+          fileName.." already exists!\n Overwrite?",
+          {
+            "Cancel",
+            "Overwrite"
+          }
+        )
+        if button == "Overwrite" then
+          break
+        end
+        button,tRes,reInput = reInput("Overwrite of "..fileName.." cancelled. Input new file name.")
+      else
+        break
+      end
+    end
+    if button == "Cancel" then
+      return false
+    end
+    tBlueprint:save(fileName)
+    tFile.blueprint = fileName
+    scroll()
+    input("Successfully saved "..fileName..".TAb.")
+    return true
+  end
+}
+--[[----------------------------------------------------------------------------------------------------------
 Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--
 function saveProgress(fileName,tProgress)
@@ -1593,28 +1648,9 @@ end
 function build(blueprint,auto)
   --builds the given blueprint layers
   if not (tFile.blueprint or blueprint) then
-    local button, tRes = input(
-      "Blueprint must be saved locally prior to building",
-      {
-        "Cancel",
-        "Ok"
-      },
-      {
-        {
-          name = "File name",
-          value = "/",
-          accepted = "."
-        },
-      }
-    )
-    if button ~= "Cancel" then
-      local fileName = tRes["File name"]
-      tBlueprint:save(fileName)
-      tFile.blueprint = fileName
-      input("Sucessfully saved "..fileName..".TAb")
-    else
-      input("Construction cancelled.")
-      return false
+    if not dialogue.save"Blueprint must be saved locally prior to building" then
+      input"Construction cancelled"
+      return
     end
   end
   blueprint = blueprint or tBlueprint
@@ -1756,40 +1792,7 @@ while true do
       if button == "Quit" then
         return Quit()
       elseif button == "Save & quit" then
-        local fileName = tFile.blueprint
-        local button,tRes,reInput
-        if not fileName then
-          button, tRes, reInput = input(
-            "No file name for current blueprint,",
-            {
-              "Cancel",
-              "Ok"
-            },
-            {
-              {
-                name = "File name",
-                value = "/",
-                accepted = "."
-              },
-            },
-            false,
-            true
-          )
-        end
-        while button and button ~= "Cancel" do
-          fileName = fileName or tRes["File name"]
-          if not fileName then
-            button,tRes,reInput = reInput("Invalid file name!")
-          elseif fs.exists(fileName..".TAb") then
-            button,tRes,reInput = reInput(fileName.." already exists!")
-          else
-            break
-          end
-        end
-        tBlueprint:save(fileName)
-        tFile.blueprint = fileName
-        scroll()
-        input("Successfully saved "..fileName..".TAb.")
+        dialogue.save()
         return Quit()
       end
     else --non color supported crash

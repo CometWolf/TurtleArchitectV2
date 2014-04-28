@@ -28,14 +28,33 @@ main = {
     end
   end,
   key = function(tEvent)
-    if tEvent[2] == 203 then --left arrow
+    local key = tEvent[2]
+    if key == 203 then --left arrow
       scroll(false,-1,0)
-    elseif tEvent[2] == 205 then --right arrow
+    elseif key == 205 then --right arrow
       scroll(false,1,0)
-    elseif tEvent[2] == 208 then --down arrow
+    elseif key == 208 then --down arrow
       scroll(false,0,1)
-    elseif tEvent[2] == 200 then --up arrow
+    elseif key == 200 then --up arrow
       scroll(false,0,-1)
+    elseif key == 209 then --page down
+      scroll(tTerm.scroll.layer-1)
+    elseif key == 201 then --page up
+      scroll(tTerm.scroll.layer+1)
+    elseif key == 29 then --ctrl
+      tTimers.ctrl.pressed = true
+      tTimers.ctrl.start()
+    elseif tTimers.ctrl.pressed then
+      if key == 48 then --B
+        local tool = tTool[1]
+        if tool.tool == "Brush" then
+          tool.tool = tool.prevTool or tool.tool
+        else
+          tool.prevTool = tool.tool
+          tool.tool = "Brush"
+        end
+        renderBottomBar()
+      end
     end
   end,
   mouse_scroll = function(tEvent)

@@ -11,6 +11,8 @@ common = { --common event handlers, these are always active
         screen:delLayer(screen.layers.toolsOverlay)
       end
       tTimers.blink.start()
+    elseif timerID == tTimers.ctrl.id then
+      tTimers.ctrl.pressed = false
     elseif timerID == tTimers.connectionPing.id then
       if rednet.connected.amount > 0 then
         rednet.send(
@@ -136,25 +138,38 @@ common = { --common event handlers, these are always active
           tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
           renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Mark built" then
-          tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+          if data.blueprint then
+            tBlueprint:markBuilt()
+          else
+            tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+          end
           renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Mark unbuilt" then
           tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
           renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Layer add" then
-          tBlueprint[data.layer] = class.layer.new
+          while #tBlueprint < data.layer do
+            tBlueprint[#tBlueprint+1] = class.layer.new()
+          end
         elseif type == "Layer delete" then
-          if data.layer == 1 and #tBlueprint == 1 then
-            tBlueprint[1] = tBlueprint[1].new()
-          else
-            table.remove(tBlueprint,data.layer)
+          if data.layer then
+            data.from = data.layer
+            data.to = data.layer
+          end
+          for i=data.from,data.to do
+            if i == 1 and #tBlueprint == 1 then
+              tBlueprint[1] = tBlueprint[1].new()
+            else
+              table.remove(tBlueprint,i)
+            end
           end
           scroll()
         elseif type == "Flip" then
+          local flip = data.blueprint and tBlueprint or tBlueprint[data.layer]
           if data.dir == "X" then
-            tBlueprint[data.layer]:flipX(data.sX,data.sZ,data.eX,data.eZ)
+            flip:flipX(data.sX,data.sZ,data.eX,data.eZ)
           else
-            tBlueprint[data.layer]:flipZ(data.sX,data.sZ,data.eX,data.eZ)
+            flip:flipZ(data.sX,data.sZ,data.eX,data.eZ)
           end
           renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Blueprint load" then
@@ -199,7 +214,16 @@ common = { --common event handlers, these are always active
         elseif type == "Save blueprint progress" then
           saveProgress(data.blueprintName,data.progress)
         elseif type == "Build" then
+          local oldSync = tMode.sync
+          tMode.sync = {
+            ids = {
+              [senderId] = true
+            },
+            amount = 1,
+            turtles = 0
+          }
           build(tBlueprint,true)
+          tMode.sync = oldSync
         end
       elseif event == "Blueprint transmission" then
         local timeoutId = tTimers.inputTimeout.start()

@@ -5,7 +5,7 @@ menu = {
     name = "Create new...",
     enabled = true,
     func = function()
-      local button, tRes = input(
+      local button, tRes, reInput = input(
         "Create new layer...",
         {
           "Cancel",
@@ -17,15 +17,37 @@ menu = {
             value = string.format(#tBlueprint+1),
             accepted = "%d"
           }
-        }
+        },
+        false,
+        true
       )
       while button ~= "Cancel" do
         local newLayer = tRes["New layer"]
+        if not newLayer then
+          button,tRes,reInput = reInput("Missing layer parameter!")
+        elseif tBlueprint[newLayer] then
+          button = input(
+            "Layer "..newLayer.." already exists!\nOverwrite?",
+            {
+              "Cancel",
+              "Overwrite"
+            }
+          )
+          if button == "Overwrite" then
+            break
+          end
+          button,tRes,reInput = reInput("Overwrite of "..newLayer.." Cancelled. Input new layer number")
+        else
+          break
+        end
+      end
+      if button ~= "Cancel" then
         while #tBlueprint < newLayer do
           tBlueprint[#tBlueprint+1] = class.layer.new()
         end
         tTerm.scroll.layer = newLayer
         scroll()
+        sync({layer = newLayer},"Layer add")
         return
       end
     end
@@ -111,6 +133,7 @@ menu = {
               tBlueprint[layer] = iBlueprint[i]:copy()
             end
             scroll()
+            sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
             return
           elseif button == "Insert" then
             while #tBlueprint < tRes.Into do
@@ -121,6 +144,7 @@ menu = {
               table.insert(tBlueprint,iBlueprint[i]:copy(),layer)
             end
             scroll()
+            sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
             return
           end
         end
@@ -147,6 +171,7 @@ menu = {
         end
         tTerm.scroll.layer = math.max(tTerm.scroll.layer-1,1)
         scroll()
+        sync({layer = delLayer},"Layer delete")
         return
       end
     end
@@ -155,7 +180,7 @@ menu = {
     name = "Delete range...",
     enabled = true,
     func = function()
-      local button, tRes = input(
+      local button, tRes, reInput = input(
         "Delete layer range",
         {
           "Cancel",
@@ -172,15 +197,31 @@ menu = {
             value = #tBlueprint,
             accepted = "%d"
           },
-        }
+        },
+        false,
+        true
       )
       while button ~= "Cancel" do
-        for i=tRes.From,tRes.To do
-          table.remove(tBlueprint,tRes.From)
+        local from,to = tRes.From,tRes.To
+        if not from then
+          button,tRes,reInput = reInput"Missing starting layer parameter!"
+        elseif not to then
+          button,tRes,reInput = reInput"Missing to layer parameter!"
+        elseif from > to
+        or from < 1 then
+          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+        else
+          for i=tRes.From,tRes.To do
+            if i == 1 and #tBlueprint == 1 then
+              tBlueprint[1] = tBlueprint[1].new()
+            else
+              table.remove(tBlueprint,i)
+            end
+          end
+          tTerm.scroll.layer = math.min(tTerm.scroll.layer,#tBlueprint)
+          scroll()
+          return
         end
-        tTerm.scroll.layer = math.min(tTerm.scroll.layer,#tBlueprint)
-        scroll()
-        return
       end
     end
   },
@@ -206,7 +247,11 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if tBlueprint[tRes.To] then
+        if not tRes.To then
+          button,tRes,reInput = reInput"Missing move to layer parameter!"
+        elseif tRes.To < 1 then
+          button,tRes,reInput = reInput("Invalid layer number "..tRes.To)
+        elseif tBlueprint[tRes.To] then
           local button2 = input(
             "The layer "..tRes.To.." already exists!",
             {
@@ -224,6 +269,7 @@ menu = {
           tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
           tBlueprint[curLayer] = class.layer.new()
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.To do
@@ -232,6 +278,7 @@ menu = {
           table.insert(tBlueprint, tBlueprint[curLayer]:copy(), tRes.To)
           tBlueprint[curLayer] = class.layer.new()
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         end
       end
@@ -268,7 +315,19 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if tBlueprint[tRes.Into] then
+        local from,to = tRes.From,tRes.To
+        if not from then
+          button,tRes,reInput = reInput"Missing starting layer parameter!"
+        elseif not to then
+          button,tRes,reInput = reInput"Missing to layer parameter!"
+        elseif from > to
+        or from < 1 then
+          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+        elseif not tRes.Into then
+          button,tRes,reInput = reInput"Missing move into layer parameter!"
+        elseif tRes.Into < 1 then
+          button,tRes,reInput = reInput("Invalid move to layer "..tRes.Into) 
+        elseif tBlueprint[tRes.Into] then
           local button2 = input(
             "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).."!",
             {
@@ -289,6 +348,7 @@ menu = {
             tBlueprint[i] = class.layer.new()
           end
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.Into do
@@ -300,6 +360,7 @@ menu = {
             tBlueprint[i] = class.layer.new()
           end
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         end
       end
@@ -327,7 +388,11 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if tBlueprint[tRes.To] then
+        if not tRes.To then
+          button,tRes,reInput = reInput"Missing copy to layer parameter!"
+        elseif tRes.To < 1 then
+          button,tRes,reInput = reInput("Invalid copy to layer "..tRes.To)
+        elseif tBlueprint[tRes.To] then
           local button2 = input(
             "The layer "..tRes.To.." already exists!",
             {
@@ -339,16 +404,18 @@ menu = {
           button = (button2 == "Cancel") and "Reinput" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
-          while #tBlueprint < tRes.To-1 do
+          tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
+          while #tBlueprint < tRes.To do
             tBlueprint[#tBlueprint+1] = class.layer.new()
           end
-          tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         elseif button == "Insert" then
-          while #tBlueprint < tRes.To-1 do
+          table.insert(tBlueprint, tBlueprint[curLayer]:copy(), tRes.To)
+          while #tBlueprint < tRes.To do
             tBlueprint[#tBlueprint+1] = class.layer.new()
           end
-          table.insert(tBlueprint, tBlueprint[curLayer]:copy(), tRes.To)
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         end
       end
@@ -380,7 +447,15 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if tBlueprint[tRes.From] and button == "Ok" then
+        local from,to = tRes.From,tRes.To
+        if not from then
+          button,tRes,reInput = reInput"Missing starting layer parameter!"
+        elseif not to then
+          button,tRes,reInput = reInput"Missing to layer parameter!"
+        elseif from > to
+        or from < 1 then
+          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+        elseif tBlueprint[tRes.From] and button == "Ok" then
           local button2 = input(
             "Layers already exist in the range "..tRes.From.."-"..tRes.To.."!",
             {
@@ -392,22 +467,24 @@ menu = {
           button = (button2 == "Cancel") and "Reinput" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
-          while #tBlueprint < tRes.From do
-            tBlueprint[#tBlueprint+1] = class.layer.new()
-          end
           for i=tRes.From,tRes.To do
             tBlueprint[i] = tBlueprint[tTerm.scroll.layer]:copy()
           end
-          scroll()
-          return
-        elseif button == "Insert" then
           while #tBlueprint < tRes.From do
             tBlueprint[#tBlueprint+1] = class.layer.new()
           end
+          scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
+          return
+        elseif button == "Insert" then
           for i=tRes.From,tRes.To do
             table.insert(tBlueprint,tBlueprint[tTerm.scroll.layer]:copy(),i)
           end
+          while #tBlueprint < tRes.From do
+            tBlueprint[#tBlueprint+1] = class.layer.new()
+          end
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         end
       end
@@ -444,7 +521,19 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if tBlueprint[tRes.Into] then
+        local from,to = tRes.From,tRes.To
+        if not from then
+          button,tRes,reInput = reInput"Missing starting layer parameter!"
+        elseif not to then
+          button,tRes,reInput = reInput"Missing to layer parameter!"
+        elseif from > to
+        or from < 1 then
+          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+        elseif not tRes.Into then
+          button,tRes,reInput = reInput"Missing copy into layer parameter!"
+        elseif tRes.Into < 1 then
+          button,tRes,reInput = reInput("Invalid copy to layer "..tRes.Into) 
+        elseif tBlueprint[tRes.Into] then
           local button2 = input(
             "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).."!",
             {
@@ -464,6 +553,7 @@ menu = {
             tBlueprint[layer] = tBlueprint[i]:copy()
           end
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         elseif button == "Insert" then
           while #tBlueprint < tRes.Into do
@@ -474,6 +564,7 @@ menu = {
             table.insert(tBlueprint,tBlueprint[i]:copy(),layer)
           end
           scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
           return
         end
       end
@@ -505,12 +596,25 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        for i=tRes.From+1,tRes.To do
-          tBlueprint[tRes.From]:paste(tBlueprint[tRes.From+1])
-          table.remove(tBlueprint,tRes.From+1)
+        local from,to = tRes.From,tRes.To
+        if not from then
+          button,tRes,reInput = reInput"Missing starting layer parameter!"
+        elseif not to then
+          button,tRes,reInput = reInput"Missing to layer parameter!"
+        elseif from > to
+        or from < 1 then
+          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+        elseif not tBlueprint[to] then
+          button,tRes,reInput = reInput("Non-existant layer range "..from.."-"..to..".\nCurrent top layer: "..#tBlueprint)
+        else
+          for i=tRes.From+1,tRes.To do
+            tBlueprint[tRes.From]:paste(tBlueprint[tRes.From+1])
+            table.remove(tBlueprint,tRes.From+1)
+          end
+          scroll()
+          sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
+          return
         end
-        scroll()
-        return
       end
     end
   },
@@ -530,9 +634,11 @@ menu = {
       if button == "Horizontal" then
         tBlueprint[curLayer] = tBlueprint[curLayer]:flipX()
         scroll()
+        sync({dir = "X"},"Flip")
       elseif button == "Vertical" then
         tBlueprint[curLayer] = tBlueprint[curLayer]:flipZ()
         scroll()
+        sync({dir = "Z"},"Flip")
       end
     end
   },
@@ -554,6 +660,7 @@ menu = {
       if tMode.builtRender then
         scroll()
       end
+      sync({layer = curLayer},"Mark built")
     end
   },
   [13] = {
@@ -574,6 +681,7 @@ menu = {
       if tMode.builtRender then
         scroll()
       end
+      sync({layer = curLayer},"Mark unbuilt")
     end
   },
   [14] = {
