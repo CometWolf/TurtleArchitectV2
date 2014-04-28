@@ -1,11 +1,13 @@
 local menu
 menu = {
   enabled = function()
-    return tMode.sync.turtles > 0 and not turtle
+    return tMode.sync.amount > 0 and not turtle and true
   end,
   [1] = {
     name = "Move to...",
-    enabled = true,
+    enabled = function()
+      return tMode.sync.turtles > 0 and true
+    end,
     func = function()
       local turtles = ""
       local id
@@ -19,7 +21,7 @@ menu = {
         end
       end
       local button, tRes, reInput = input(
-        "Move to coordinates..."..(tMode.sync.turtles > 1 and "/nTurtle IDs: "..turtles or ""),
+        "Move to coordinates...".."/nTurtle IDs: "..(turtles or ""),
         {
           "Cancel",
           "Ok"
@@ -63,9 +65,9 @@ menu = {
         elseif not id then
           button,tRes,reInput = reInput"Missing Turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reInput"That ID("..id..") is not connected!"
+          button,tRes,reInput = reInput"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reInput"That ID("..id..") is not a turtle!"
+          button,tRes,reInput = reInput"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             id,
@@ -84,7 +86,9 @@ menu = {
   },
   [2] = {
     name = "Turn",
-    enabled = true,
+    enabled = function()
+      return tMode.sync.turtles > 0 and true
+    end,
     func = function()
       local turtles = ""
       local id
@@ -98,7 +102,7 @@ menu = {
         end
       end
       local button, tRes, reInput = input(
-        "Turn to..."..(tMode.sync.turtles > 1 and "/nTurtle IDs: "..turtles or ""),
+        "Turn to.../nTurtle IDs: "..(turtles or ""),
         {
           "Cancel",
           "Ok"
@@ -112,8 +116,8 @@ menu = {
           (
             not id and {
               name = "ID",
-              value = os.id,
-              accepted = "%d"
+              value = turtles,
+              accepted = "."
             }
             or nil
           )
@@ -130,9 +134,9 @@ menu = {
         elseif not id then
           button,tRes,reInput = reInput"Missing turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reInput"That ID("..id..") is not connected!"
+          button,tRes,reInput = reInput"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reInput"That ID("..id..") is not a turtle!"
+          button,tRes,reInput = reInput"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             tRes.ID,
@@ -149,7 +153,9 @@ menu = {
   },
   [3] = {
     name = "Build blueprint...",
-    enabled = true,
+    enabled = function()
+      return tMode.sync.turtles > 0 and true
+    end,
     func = function()
       if not tFile.blueprint then
         local button, tRes, reInput = input(

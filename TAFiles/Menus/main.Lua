@@ -3,7 +3,7 @@ local main = { --note that the menus are numbered from the bottom and up
   [5] = "Layer",
   [4] = "Tools",
   [3] = "Turtle",
-  [2] = "Sync turtle",
+  [2] = "Sync",
   [1] = "Settings",
 }
 
