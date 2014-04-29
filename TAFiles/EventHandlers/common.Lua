@@ -62,7 +62,7 @@ common = { --common event handlers, these are always active
     end
   end,
   chat_command = function(tEvent)
-    local command = tEvent[2]
+    local command = tEvent[2]:lower()
     local tCommand = {}
     for word in command:gmatch"%S+" do
       local num = tonumber(word)
@@ -72,6 +72,7 @@ common = { --common event handlers, these are always active
         tCommand[#tCommand+1] = word:lower()
       end
     end
+    local menuName = string.upper(string.sub(tCommand[1],1,1))..string.sub(tCommand[1],2)
     if tCommand[1] == "resize" then
       local x,y = tCommand[2],tCommand[3]
       if type(x) == "number" and type(y) == "number" then
@@ -84,6 +85,26 @@ common = { --common event handlers, these are always active
         glasses.minimal = not glasses.minimal
       else
         
+      end
+    elseif tMenu.main[menuName] then
+      if not tCommand[2] then
+        renderMenu(menuName)
+      else
+        local funcName = table.concat(tCommand," ",2)
+        funcName = string.upper(string.sub(funcName,1,1))..string.sub(funcName,2)
+        for i=1,#tMenu.main[menuName].items do
+          if tMenu.main[menuName].items[i].name:match(funcName) then
+            tMenu.main[menuName].items[i].func()
+          end
+        end
+      end
+    elseif tMenu.open then
+      local funcName = table.concat(tCommand," ",2)
+      funcName = string.upper(string.sub(funcName,1,1))..string.sub(funcName,2)
+      for i=1,#tMenu.main[menuName].items do
+        if tMenu.main[menuName].items[i].name:match(funcName) then
+          tMenu.main[menuName].items[i].func()
+        end
       end
     end
   end,
