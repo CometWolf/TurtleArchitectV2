@@ -196,6 +196,9 @@ common = { --common event handlers, these are always active
           elseif tTerm.scroll.layer == data.layer then
             renderPoint(data.x,data.z,true)
           end
+					if data.isBuilding then
+					  rednet.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color]placed.." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
+					end
         elseif type == "Delete" then
           for iX = data.sX,data.eX do
             for iZ = data.sZ,data.eZ do
@@ -296,8 +299,9 @@ common = { --common event handlers, these are always active
         end
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Blocks required" then
+					rednet.log.write("Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots)
           local button = input(
-            "Turtle "..senderId.." requires more blocks to continue building",
+            "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
             {
               "Cancel",
               "Ignore",

@@ -221,6 +221,16 @@ rednet = {
       content
     )
   end,
+	log = {
+	  maxSize = 50, --amount of entries to store in the log
+	  write = function(text)
+	    table.insert(rednet.log,1,text)
+		  rednet.log[rednet.log.maxSize+1] = nil
+			if glasses.log then
+			  glasses.refreshLog()
+		  end
+		end
+	},
   connected = { --connected computers
     amount = 0,
     ids = {
@@ -357,7 +367,7 @@ setmetatable(debug,
 )
 
 --[[----------------------------------------------------------------------------------------------------------
-Program init
+Load class files
 ----------------------------------------------------------------------------------------------------------]]--
 function loadFile(path,env) --custom file loader, sets environment, handles errors and runs file and returns results
   if not path then
@@ -451,6 +461,57 @@ tIgnore = { --ids of turtles to ignore status messages from
 --load settings
 loadFile(tFile.settings)
 
+--[[----------------------------------------------------------------------------------------------------------
+Glass functions
+----------------------------------------------------------------------------------------------------------]]--
+glasses.openLog = function(sX,sY,eX,eY)
+  glasses.log = {
+    background = glasses.bridge.addBox(sX,sY,eX-sX,eY-sY,tColors.glass.log)
+  }
+  for i = sY,eY,10 do
+    glasses.log[#glass.log+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
+	end
+	glasses.lineLength = math.floor((eX-sX))/10)
+end
+
+glass.refreshLog = function()
+  local curLine = 1
+	local curLog = 1
+  while #glasses.log > curLine and rednet.log[curLog] do
+	  local text = rednet.log[curLog]
+		while #text > 0 do  --splits text into lines
+			local line = text:sub(1,glasses.lineLength)
+			local newLine = string.find(line.."","\n") --check for new line character
+			if newLine then
+				line = line:sub(1,newLine-1)
+				text = text:sub(#line+2,#text)
+			elseif #line == glasses.lineLength then
+				local endSpace = line:find"%s$" or line:find"%s%S-$" or glass.lineLength
+				line = line:sub(1,endSpace)
+				text = text:sub(#line+1,#text)
+			else
+				text = ""
+			end
+			glasses.log[curLine].setText(line)
+			curLine = curLine+1
+		end
+		curLog = curLog+1
+	end
+end
+
+glasses.closeLog = function()
+  glasses.log.background.delete()
+	for i=1,#glass.log do
+	  glasses.log[i].setText""
+    glasses.log[i].delete()
+	end
+	glasses.log = nil
+end
+
+--[[----------------------------------------------------------------------------------------------------------
+Program init
+----------------------------------------------------------------------------------------------------------]]--
+
 if turtle then
   if not fs.exists(tFile.cTurtle) then
     assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
@@ -472,6 +533,7 @@ elseif term.isColor() then
     elseif pType == "openperipheral_glassesbridge" then
       glasses.bridge = peripheral.wrap(side)
       screen:glassInit(glasses.bridge,glasses.size.x,glasses.size.y)
+			glasses.openLog(200,200,500,1000)
     end
     if glasses.bridge and modem then
       break
@@ -1217,7 +1279,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
 end
 
 --[[----------------------------------------------------------------------------------------------------------
-Common dialogues
+Common inputs
 ----------------------------------------------------------------------------------------------------------]]--
 dialogue = {
   save = function(text)
@@ -1270,10 +1332,6 @@ dialogue = {
     return true
   end
 }
-
---[[----------------------------------------------------------------------------------------------------------
-Glass functions
-----------------------------------------------------------------------------------------------------------]]--
 
 
 --[[----------------------------------------------------------------------------------------------------------
@@ -1342,7 +1400,7 @@ function selectColor(color,threshold)
     end
     local retry = tTimers.restockRetry.start()
     if tMode.sync.amount > 0 then
-      rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocks required"})
+      rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocks required",color = color, slots = tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]]})
     end
     local button,tRes = input(
       keyColor[color].." blocks required in slots "..tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]],
@@ -1746,7 +1804,8 @@ function build(blueprint,auto)
                 layer = nL,
                 x = nX,
                 z = nZ,
-                color = block:upper()
+                color = block:upper(),
+								isBuilding = true
               },
               "Point"
             )
@@ -1765,7 +1824,8 @@ function build(blueprint,auto)
               {
                 layer = nL,
                 x = nX,
-                z = nZ
+                z = nZ,
+								isBuilding = true
               },
               "Point"
             )

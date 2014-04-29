@@ -38,6 +38,48 @@ tColors = setmetatable(
     end
   }
 )
+tColors.glass = { --glass colors
+	white = 0xFFFFFF,
+	orange = 0xFFA500,
+	magenta = 0xFF00FF,
+	lightBlue = 0xADD8E6,
+	yellow = 0xFFFF00,
+	lime = 0x00FF00,
+	pink = 0xFFC0CB,
+	gray = 0x808080,
+	lightGray = 0xD3D3D3,
+	cyan = 0x00FFFF,
+	purple = 0x800080,
+	blue = 0x0000FF,
+	brown = 0xA52A2A,
+	green = 0x008000,
+	red = 0xFF0000,
+	black = 0x000000,
+}
+glasses = { --openP glass settings
+  size = { --the size of each screen pixel
+    x = 3,
+    y = 5
+  },
+  followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
+  minimal = true, --glasses display mode, false will render the entire computer screen, true will only render messages
+}
+--cc to hex color conversion table
+local colorValueToHex = {}
+for gK,gV in pairs(tColors.glass) do
+  for cK,cV in pairs(colors) do
+    if gK == cK then
+      colorValueToHex[cV] = gV
+      break
+    end
+  end
+end
+for k,v in pairs(colorValueToHex) do
+  glasses.colors[k] = v
+end
+tColors.glass.log = tColors.glass.blue, --message log window color
+tColors.glass.logText = tColors.glass.yellow --message log text color
+
 tTimers = setmetatable( -- timer settings
   {
     restockRetry = { --wait before re-attempting failed restock
@@ -104,6 +146,7 @@ colorKey = setmetatable(
     end
   }
 )
+
 local colorKeyNames = {}
 local colorKeyUpper = {}
 keyColor = {}
@@ -138,46 +181,6 @@ for k,v in pairs(colorKeyUpper) do
   colorKey[k] = v
 end
 colorKeyUpper = nil
-
-glasses = { --openP glass settings
-  size = { --the size of each screen pixel
-    x = 3,
-    y = 5
-  },
-  followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
-  minimal = true, --glasses display mode, false will render the entire computer screen, true will only render messages
-  colors = { --glass colors
-    white = 0xFFFFFF,
-    orange = 0xFFA500,
-    magenta = 0xFF00FF,
-    lightBlue = 0xADD8E6,
-    yellow = 0xFFFF00,
-    lime = 0x00FF00,
-    pink = 0xFFC0CB,
-    gray = 0x808080,
-    lightGray = 0xD3D3D3,
-    cyan = 0x00FFFF,
-    purple = 0x800080,
-    blue = 0x0000FF,
-    brown = 0xA52A2A,
-    green = 0x008000,
-    red = 0xFF0000,
-    black = 0x000000
-  }
-}
---cc to hex color conversion table
-local colorValueToHex = {}
-for gK,gV in pairs(glasses.colors) do
-  for cK,cV in pairs(colors) do
-    if gK == cK then
-      colorValueToHex[cV] = gV
-      break
-    end
-  end
-end
-for k,v in pairs(colorValueToHex) do
-  glasses.colors[k] = v
-end
 
 tTool = { --Default equipped tools and colors
   [1] = { --left mouse button
