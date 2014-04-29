@@ -314,7 +314,7 @@ debug = {
         tLines[#tLines+1] = "nil"
       elseif type(var) == "table" then
         for k,v in pairs(var) do
-          tLines[#tLines+1] = k..": "..tostring(v)
+          tLines[#tLines+1] = k..": "..type(v).." "..tostring(v)
         end
       else
         tLines[#tLines+1] = type(var).." "..tostring(var)
@@ -1154,6 +1154,39 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
           return endExecution("Ok")
         end
       end
+    end,
+    chat_command = function(tEvent)
+      local command = tEvent[2]:lower()
+      for i=1,#tButtons do
+        if tButtons[i].name:lower() == command then
+          return endExecution(tButtons[i].name)
+        end
+      end
+      local tCommand = {}
+      for word in command:gmatch"%S+" do
+        local num = tonumber(word)
+        if num then
+          tCommand[#tCommand+1] = num
+        else
+          tCommand[#tCommand+1] = word:lower()
+        end
+      end
+      if tInputs.enabled then
+        local field
+        if type(tCommand[1]) == "number" then
+          field = math.max(1,math.min(#tInputs,tCommand[1]))
+          tInputs[field].value = table.concat(tCommand," ",2)
+          refreshField(field)
+        else
+          for i=1,#tInputs do
+            if command:match(tInputs[i].name:lower()) then
+              tInputs[i].value = command:match(tInputs[i].name:lower().." (.+)")
+              refreshField(i)
+              break
+            end
+          end
+        end
+      end
     end
   }
   if customEvent then
@@ -1233,11 +1266,16 @@ dialogue = {
     end
     tBlueprint:save(fileName)
     tFile.blueprint = fileName
-    scroll()
     input("Successfully saved "..fileName..".TAb.")
     return true
   end
 }
+
+--[[----------------------------------------------------------------------------------------------------------
+Glass functions
+----------------------------------------------------------------------------------------------------------]]--
+
+
 --[[----------------------------------------------------------------------------------------------------------
 Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--

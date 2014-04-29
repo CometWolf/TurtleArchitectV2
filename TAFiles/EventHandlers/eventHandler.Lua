@@ -11,7 +11,12 @@ eventHandler = {
         eventHandler.common[k]
         and not skipCommon
         and function(tEvent)
-          return eventHandler.common[k](tEvent) or v(tEvent)
+          local tRet = eventHandler.common[k](tEvent)
+          if tRet then
+            return unpack(tRet)
+          else
+            return v(tEvent)
+          end
         end
         or v
       )

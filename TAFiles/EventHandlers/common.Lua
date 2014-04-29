@@ -61,7 +61,7 @@ common = { --common event handlers, these are always active
       screen.glass = nil
     end
   end,
-  chat_command == function(tEvent)
+  chat_command = function(tEvent)
     local command = tEvent[2]
     local tCommand = {}
     for word in command:gmatch"%S+" do
@@ -76,6 +76,14 @@ common = { --common event handlers, these are always active
       local x,y = tCommand[2],tCommand[3]
       if type(x) == "number" and type(y) == "number" then
         screen:glassResize(x,y)
+      end
+    elseif tCommand[1] == "toggle" then
+      if tCommand[2] == "follow" then
+        glasses.followTurtle = not glasses.followTurtle
+      elseif tcommand[2] == "minimal" then
+        glasses.minimal = not glasses.minimal
+      else
+        
       end
     end
   end,
@@ -162,7 +170,9 @@ common = { --common event handlers, these are always active
           renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
         elseif type == "Point" then --probably brush
           tBlueprint[data.layer][data.x][data.z] = data.color
-          if tTerm.scroll.layer == data.layer then
+          if glasses.bridge and glasses.followTurtle then
+            scroll(data.layer,data.x-math.floor(tTerm.canvas.tX/2),data.z-math.floor(tTerm.canvas.tZ/2),true,true)
+          elseif tTerm.scroll.layer == data.layer then
             renderPoint(data.x,data.z,true)
           end
         elseif type == "Delete" then

@@ -235,10 +235,15 @@ screenBuffer = {
   end,
   glassInit = function(buffer,bridge,sizeX,sizeY)
     bridge.clear()
-    buffer.glass = class.matrix.new(2)
+    buffer.glass = {
+      pixel = class.matrix.new(2),
+      text = class.matrix.new(2)
+    }
     for iX = 1,tTerm.screen.x do
       for iY = 1,tTerm.screen.y do
-        buffer.glass[iX][iY] = bridge.addBox(iX*sizeX,iY*sizeY,sizeX,sizeY)
+        buffer.glass.pixel[iX][iY] = bridge.addBox(iX*sizeX,iY*sizeY,sizeX,sizeY)
+        buffer.glass.text[iX][iY] = bridge.addText(iX*sizeX,iY*sizeY," ")
+        buffer.glass.text[iX][iY].setScale(math.floor(((sizeX+sizeY)/2))/8)
       end
     end
   end,
@@ -247,11 +252,15 @@ screenBuffer = {
     glasses.size.y = y
     for iX = 1,tTerm.screen.x do
       for iY = 1,tTerm.screen.y do
-        local pixel = buffer.glass[iX][iY]
-        pixel.setHeight(x)
-        pixel.setWidth(y)
+        local pixel = buffer.glass.pixel[iX][iY]
+        pixel.setHeight(y)
+        pixel.setWidth(x)
         pixel.setX(iX*x)
         pixel.setY(iY*y)
+        local text = buffer.glass.text[iX][iY]
+        text.setScale(math.floor(((x+y)/2))/8)
+        text.setX(iX*x)
+        text.setY(iY*y)
       end
     end
   end,
@@ -261,7 +270,7 @@ screenBuffer = {
     end
     for iX = 1,tTerm.screen.x do
       for iY = 1,tTerm.screen.y do
-        buffer.glass[iX][iY].setColor(glasses.colors[buffer[buffer:getTop(iX,iY)][iX][iY].bColor])
+        buffer.glass.pixel[iX][iY].setColor(glasses.colors[buffer[buffer:getTop(iX,iY)][iX][iY].bColor])
       end
     end
   end,
@@ -271,7 +280,9 @@ screenBuffer = {
     end
     for x,vX in pairs(buffer.changed) do
       for y,layer in pairs(vX) do
-        buffer.glass[x][y].setColor(glasses.colors[buffer[layer][x][y].bColor])
+        buffer.glass.pixel[x][y].setColor(glasses.colors[buffer[layer][x][y].bColor])
+        buffer.glass.text[x][y].setText(buffer[layer][x][y].marker)
+        buffer.glass.text[x][y].setColor(glasses.colors[buffer[layer][x][y].tColor])
       end
     end
   end

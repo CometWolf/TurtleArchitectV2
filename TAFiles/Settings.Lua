@@ -144,6 +144,8 @@ glasses = { --openP glass settings
     x = 3,
     y = 5
   },
+  followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
+  minimal = true, --glasses display mode, false will render the entire computer screen, true will only render messages
   colors = { --glass colors
     white = 0xFFFFFF,
     orange = 0xFFA500,

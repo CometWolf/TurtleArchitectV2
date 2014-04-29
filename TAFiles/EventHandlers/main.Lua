@@ -16,7 +16,6 @@ main = {
       if tMenu.open then
         renderMenu() --closes open menu
       elseif tMenu.rightClick.open then
-        scroll()
         renderBottomBar()
         renderSideBar()
       elseif button ~= 3 then
