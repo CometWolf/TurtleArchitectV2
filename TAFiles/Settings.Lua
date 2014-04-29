@@ -139,9 +139,12 @@ for k,v in pairs(colorKeyUpper) do
 end
 colorKeyUpper = nil
 
---openP peripheral glass colors
-glasses = {
-  colors = {
+glasses = { --openP glass settings
+  size = { --the size of each screen pixel
+    x = 3,
+    y = 5
+  },
+  colors = { --glass colors
     white = 0xFFFFFF,
     orange = 0xFFA500,
     magenta = 0xFF00FF,

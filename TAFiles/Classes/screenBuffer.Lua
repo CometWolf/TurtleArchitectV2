@@ -233,12 +233,25 @@ screenBuffer = {
     end
     buffer:glassRedraw()
   end,
-  glassInit = function(buffer,bridge)
+  glassInit = function(buffer,bridge,sizeX,sizeY)
     bridge.clear()
     buffer.glass = class.matrix.new(2)
     for iX = 1,tTerm.screen.x do
       for iY = 1,tTerm.screen.y do
-        buffer.glass[iX][iY] = bridge.addBox(iX,iY,1,1)
+        buffer.glass[iX][iY] = bridge.addBox(iX*sizeX,iY*sizeY,sizeX,sizeY)
+      end
+    end
+  end,
+  glassResize = function(buffer,x,y)
+    glasses.size.x = x
+    glasses.size.y = y
+    for iX = 1,tTerm.screen.x do
+      for iY = 1,tTerm.screen.y do
+        local pixel = buffer.glass[iX][iY]
+        pixel.setHeight(x)
+        pixel.setWidth(y)
+        pixel.setX(iX*x)
+        pixel.setY(iY*y)
       end
     end
   end,

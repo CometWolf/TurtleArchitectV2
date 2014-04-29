@@ -173,9 +173,6 @@ http = setmetatable(
 rednet = {
   send = function(rID,event,content,success,timeout,time,failure)
     content = content or {}
-    if not rID then
-      error("Missing id!",2)
-    end
     content.rID = type(rID) == "table" and rID or {[rID] = true}
     content.sID = os.id
     content.event = event
@@ -448,6 +445,9 @@ tTransmissions = { --stores reaction functions to modem transmissions
   )
 }
 
+tIgnore = { --ids of turtles to ignore status messages from
+
+}
 --load settings
 loadFile(tFile.settings)
 
@@ -471,7 +471,7 @@ elseif term.isColor() then
       modem.open(modemChannel)
     elseif pType == "openperipheral_glassesbridge" then
       glasses.bridge = peripheral.wrap(side)
-      screen:glassInit(glasses.bridge)
+      screen:glassInit(glasses.bridge,glasses.size.x,glasses.size.y)
     end
     if glasses.bridge and modem then
       break
@@ -1157,13 +1157,16 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
     end
   }
   if customEvent then
-    for k,v in pairs(eventHandlers) do
+    for k,v in pairs(customEvent) do
+      local mainFunc = eventHandlers[k]
       eventHandlers[k] = function(tEvent)
-        local button = customEvent(tEvent)
+        local button = v(tEvent)
         if button then
           return endExecution(button)
         end
-        return v(tEvent)
+        if mainFunc then
+          return mainFunc(tEvent)
+        end
       end
     end
   end
@@ -1173,9 +1176,9 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   eventHandler.switch(eventHandlers)
   while true do
   --user interaction begins
-    local ret = {eventHandler.pull()}
-    if ret[1] then
-      return unpack(ret)
+    local event,tRes,reInput = eventHandler.pull()
+    if event then
+      return event,tRes,reInput
     end
   end
 end
@@ -1299,7 +1302,10 @@ function selectColor(color,threshold)
         return true
       end
     end
-    local retry = os.startTimer(tTimers.restockRetry.time)
+    local retry = tTimers.restockRetry.start()
+    if tMode.sync.amount > 0 then
+      rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocks required"})
+    end
     local button,tRes = input(
       keyColor[color].." blocks required in slots "..tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]],
       {
@@ -1307,11 +1313,27 @@ function selectColor(color,threshold)
         "Ok"
       },
       false,
-      function(tEvent)
-        if tEvent[1] == "timer" and tEvent[2] == retry then
-          return "Ok"
+      {
+        timer = function(tEvent)
+          if tEvent[2] == retry then
+            return "Ok"
+          end
+        end,
+        modem_message = function(tEvent)
+          if tEvent[3] == modemChannel
+          and type(tEvent[5]) == "table"
+          and tEvent[5].rID[os.id] then
+            local data = tEvent[5]
+            local event = data.event
+            local senderId = data.sID
+            local type = data.type
+            if event == "Turtle command"
+            and type == "Restock" then
+              return "Ok"
+            end
+          end
         end
-      end
+      }
     )
     if button == "Cancel" then
       return false

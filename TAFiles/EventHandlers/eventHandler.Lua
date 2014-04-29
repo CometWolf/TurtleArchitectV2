@@ -11,8 +11,7 @@ eventHandler = {
         eventHandler.common[k]
         and not skipCommon
         and function(tEvent)
-          eventHandler.common[k](tEvent)
-          return v(tEvent)
+          return eventHandler.common[k](tEvent) or v(tEvent)
         end
         or v
       )
@@ -36,7 +35,9 @@ eventHandler = {
   pull = function(sFilter)
     screen:refresh()
     local tEvent = {os.pullEvent(sFilter)}
-    return eventHandler.active[tEvent[1]] and eventHandler.active[tEvent[1]](tEvent)
+    if eventHandler.active[tEvent[1]] then
+      return eventHandler.active[tEvent[1]](tEvent)
+    end
   end
 }
 for _k, file in pairs(fs.list(tFile.eventHandlerFolder)) do

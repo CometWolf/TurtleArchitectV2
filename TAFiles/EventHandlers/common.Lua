@@ -41,6 +41,44 @@ common = { --common event handlers, these are always active
       end
     end
   end,
+  peripheral = function(tEvent)
+    local side = tEvent[2]
+    if not modem and peripheral.getType(side) == "modem" and peripheral.call(side,"isWireless") then
+      modem = peripheral.wrap(side)
+      modem.open(modemChannel)
+      modem.side = side
+    elseif not glasses and peripheral.getType(side) == "openperipheral_glassesbridge" then
+      glasses.bridge = peripheral.wrap(side)
+      glasses.side = side
+      screen:glassInit(glasses.bridge,glasses.size)
+    end
+  end,
+  peripheral_detach = function(tEvent)
+    local side = tEvent[2]
+    if modem and side == modem.side then
+      modem = nil
+    elseif glasses and side == glasses.side then
+      screen.glass = nil
+    end
+  end,
+  chat_command == function(tEvent)
+    local command = tEvent[2]
+    local tCommand = {}
+    for word in command:gmatch"%S+" do
+      local num = tonumber(word)
+      if num then
+        tCommand[#tCommand+1] = num
+      else
+        tCommand[#tCommand+1] = word:lower()
+      end
+    end
+    if tCommand[1] == "resize" then
+      local x,y = tCommand[2],tCommand[3]
+      if type(x) == "number" and type(y) == "number" then
+        screen:glassResize(x,y)
+      end
+    end
+  end,
   modem_message = function(tEvent)
     if tEvent[3] == modemChannel
     and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
@@ -225,6 +263,40 @@ common = { --common event handlers, these are always active
           build(tBlueprint,true)
           tMode.sync = oldSync
         end
+      elseif event == "Turtle status" and not tIgnore[senderId] then
+        if type == "Blocks required" then
+          local button = input(
+            "Turtle "..senderId.." requires more blocks to continue building",
+            {
+              "Cancel",
+              "Ignore",
+              "Ok"
+            },
+            false,
+            {
+              modem_message = function(tEvent)
+                if tEvent[3] == modemChannel
+                and type(tEvent[5]) == "table"
+                and tEvent[5].rID[os.id] then
+                  local data = tEvent[5]
+                  local event = data.event
+                  local senderId2 = data.sID
+                  local type = data.type
+                  if event == "Turtle status"
+                  and type == "Restock" 
+                  and senderId == senderId2 then
+                    return "Cancel"
+                  end
+                end
+              end
+            }
+          )
+          if button == "Ok" then
+            rednet.send(senderId,"Turtle command",{type == "Restock"})
+          elseif button == "Ignore" then
+            tIgnore[senderId] = true
+          end
+        end
       elseif event == "Blueprint transmission" then
         local timeoutId = tTimers.inputTimeout.start()
         local button, tRes, reInput = input(
@@ -241,12 +313,13 @@ common = { --common event handlers, these are always active
               accepted = "."
             },
           },
-          function(tEvent)
-            if tEvent[1] == "timer" and
-            tEvent[2] == timeoutId then
-              return "Ignore"
+          {
+            timer = function(tEvent)
+              if tEvent[2] == timeoutId then
+                return "Ignore"
+              end
             end
-          end,
+          },
           true
         )
         while button ~= "Ignore" do
