@@ -271,6 +271,7 @@ common = { --common event handlers, these are always active
             renderSideBar()
           end
           input((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
+					rednet.log.write((turtle and "Turtle" or "Computer").." ID "..senderId.." de-synced")
         end
       elseif event == "Turtle command" then
         local response = {
@@ -298,7 +299,12 @@ common = { --common event handlers, these are always active
           tMode.sync = oldSync
         end
       elseif event == "Turtle status" and not tIgnore[senderId] then
-        if type == "Blocks required" then
+        if type == "Build complete" then
+				  input("Turtle id "..senderId.." has completed construction of "..data.blueprintName)
+					rednet.log.write(senderId.." completed construction of "..data.blueprintName)
+				elseif type == "Layer complete" then
+					rednet.log.write(senderId.." completed layer "..data.layer.." of "..data.blueprintName)
+				elseif type == "Blocks required" then
 					rednet.log.write("Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots)
           local button = input(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",

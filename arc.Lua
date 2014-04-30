@@ -1862,7 +1862,13 @@ function build(blueprint,auto)
         end
       end
     end
+		if tMode.sync.amount > 0 then
+			rednet.send(tMode.sync.ids,"Turtle status",{type = "Layer complete", blueprintName = tFile.blueprint, layer = nL})
+    end
   end
+	if tMode.sync.amount > 0 then
+	  rednet.send(tMode.sync.ids,"Turtle status",{type = "Build complete", blueprintName = tFile.blueprint})
+	end
 end
 
 --[[----------------------------------------------------------------------------------------------------------
