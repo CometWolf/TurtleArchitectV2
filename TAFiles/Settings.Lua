@@ -63,6 +63,7 @@ glasses = { --openP glass settings
   },
   followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
   minimal = true, --glasses display mode, false will render the entire computer screen, true will only render messages
+  colors = {} --CC to HEX color conversion
 }
 --cc to hex color conversion table
 local colorValueToHex = {}
@@ -77,7 +78,7 @@ end
 for k,v in pairs(colorValueToHex) do
   glasses.colors[k] = v
 end
-tColors.glass.log = tColors.glass.blue, --message log window color
+tColors.glass.log = tColors.glass.blue --message log window color
 tColors.glass.logText = tColors.glass.yellow --message log text color
 
 tTimers = setmetatable( -- timer settings
@@ -141,7 +142,6 @@ colorKey = setmetatable(
   },
   {
     __index = function(t,k)
-      debug(k)
       error("Attempt to access non-existant color "..tostring(k),2)
     end
   }
@@ -166,6 +166,7 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
           )
         end
       )
+      keyColor[kK:upper()] = keyColor[kK]
       break
     end
   end

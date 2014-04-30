@@ -86,7 +86,7 @@ common = { --common event handlers, these are always active
       else
         
       end
-    elseif tMenu.main[menuName] then
+    elseif tMenu.main[menuName] and not inputOpen then
       if not tCommand[2] then
         renderMenu(menuName)
       else
@@ -98,7 +98,8 @@ common = { --common event handlers, these are always active
           end
         end
       end
-    elseif tMenu.open then
+    elseif tMenu.open and not inputOpen then
+      menuName = tMenu.open
       local funcName = table.concat(tCommand," ",2)
       funcName = string.upper(string.sub(funcName,1,1))..string.sub(funcName,2)
       for i=1,#tMenu.main[menuName].items do
@@ -138,14 +139,15 @@ common = { --common event handlers, these are always active
               "Accept"
             },
             false,
-            function(tEvent)
-              if tEvent[1] == "timer" and
-              tEvent[2] == timeoutId then
-                return "Deny"
+            {
+              timer = function(tEvent)
+                if tEvent[2] == timeoutId then
+                  return "Deny"
+                end
               end
-            end
+            }
           )
-          if button == "Accept" then
+          if button == "Accept" or "Ok" then
             local reRenderSideBar = tMode.sync.turtles > 0
             if tMode.sync.amount > 0 then
               rednet.disconnect(tMode.sync.ids)
@@ -197,7 +199,7 @@ common = { --common event handlers, these are always active
             renderPoint(data.x,data.z,true)
           end
 					if data.isBuilding then
-					  rednet.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color]placed.." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
+					  rednet.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color].." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
 					end
         elseif type == "Delete" then
           for iX = data.sX,data.eX do

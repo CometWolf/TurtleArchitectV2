@@ -469,12 +469,12 @@ glasses.openLog = function(sX,sY,eX,eY)
     background = glasses.bridge.addBox(sX,sY,eX-sX,eY-sY,tColors.glass.log)
   }
   for i = sY,eY,10 do
-    glasses.log[#glass.log+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
+    glasses.log[#glasses.log+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
 	end
-	glasses.lineLength = math.floor((eX-sX))/10)
+	glasses.lineLength = math.floor((eX-sX)/10)
 end
 
-glass.refreshLog = function()
+glasses.refreshLog = function()
   local curLine = 1
 	local curLog = 1
   while #glasses.log > curLine and rednet.log[curLog] do
@@ -953,6 +953,7 @@ end
 Input function
 ----------------------------------------------------------------------------------------------------------]]--
 local activeInputs = 0 --amount of windows open
+inputOpen = false --whether an input window is currently open or not
 local inputDefaults = { --default values for tInputFields tables passed to the input function
   name = "", --text on the side of the field
   accepted = ".", --accepted input pattern
@@ -964,6 +965,10 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
 }
 function input(text,tButtonFields,tInputFields,customEvent,reInput)
   local screenLayer = screen.layers.dialogue+activeInputs
+  inputOpen = true
+  if type(customEvent) == "function" then
+    error("Correct this you turd",2)
+  end
   screen:setLayer(screenLayer)
   activeInputs = activeInputs+1
   tInputFields = tInputFields or {}
@@ -1057,6 +1062,8 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
       end
     end
     screen:delLayer(screenLayer)
+    inputOpen = (screenLayer ~= screen.layers.dialogue)
+    activeInputs = activeInputs-1
     return event,tRes,reInput
   end
   --render box

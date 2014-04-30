@@ -213,7 +213,7 @@ screenBuffer = {
         end
       end
     end
-    buffer[layer] = class.layer.new(2)
+    buffer[layer] = class.matrix.new(2)
 	end,
   delPoint = function(buffer,x,y,layer)
     layer = layer or buffer.layer

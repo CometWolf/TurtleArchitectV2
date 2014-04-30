@@ -253,12 +253,13 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
                     "Successfully synced with "..(data.turtle and "Turtle" or "Computer").." ID "..id,
                     false,
                     false,
-                    function(tEvent)
-                      if tEvent[1] == "timer" and
-                      tEvent[2] == timerId then
-                        return true
+                    {
+                      timer = function(tEvent)
+                        if tEvent[2] == timerId then
+                          return true
+                        end
                       end
-                    end
+                    }
                   )
                 end
               )
