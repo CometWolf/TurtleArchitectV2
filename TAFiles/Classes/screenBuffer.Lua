@@ -194,8 +194,27 @@ screenBuffer = {
         end
       end
     end
-    buffer[layer] = class.matrix.new(2)
+    table.remove(buffer,layer)
   end,
+	clearLayer = function(buffer,layer)
+    layer = layer or #buffer
+    if layer == #buffer then
+      for nX,vX in pairs(buffer[layer]) do
+        for nY,vY in pairs(vX) do
+          buffer.changed[nX][nY] = buffer:getTop(nX,nY,layer-1)
+        end
+      end
+    else
+      for nX,vX in pairs(buffer[layer]) do
+        for nY,vY in pairs(vX) do
+          if buffer:getTop(nX,nY) == layer then
+            buffer.changed[nX][nY] = buffer:getTop(nX,nY,layer-1)
+          end
+        end
+      end
+    end
+    buffer[layer] = class.layer.new(2)
+	end,
   delPoint = function(buffer,x,y,layer)
     layer = layer or buffer.layer
     if layer == #buffer

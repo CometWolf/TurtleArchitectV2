@@ -8,7 +8,7 @@ common = { --common event handlers, these are always active
       if toggle then
         renderToolOverlay()
       else
-        screen:delLayer(screen.layers.toolsOverlay)
+        screen:clearLayer(screen.layers.toolsOverlay)
       end
       tTimers.blink.start()
     elseif timerID == tTimers.ctrl.id then

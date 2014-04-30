@@ -647,7 +647,7 @@ end
 
 function renderMenu(menu) --renders the given menu and creates touchmap for said menu
   tMenu.touchMap = class.matrix.new(2)
-  screen:delLayer(4)
+  screen:clearLayer(4)
   if not menu 
   or not tMenu.main[menu] and menu ~= "rightClick" then
     tMenu.open = false
@@ -836,7 +836,7 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
 end
 
 function renderToolOverlay() --renders all tool overlays
-  screen:delLayer(screen.layers.toolsOverlay)
+  screen:clearLayer(screen.layers.toolsOverlay)
   screen:setLayer(screen.layers.toolsOverlay)
   local view = tTerm.viewable
   local t = tTool.clipboard or (tTool.shape.eX and tTool.shape)
@@ -857,7 +857,7 @@ function renderToolOverlay() --renders all tool overlays
   t = tTool.select
   if t.sX
   and t.layer == tTerm.scroll.layer then
-    screen:delLayer(screen.layers.toolsOverlay)
+    screen:clearLayer(screen.layers.toolsOverlay)
     screen:setLayer(screen.layers.toolsOverlay)
     local x1,z1 = t.sX-tTerm.scroll.x,t.sZ-tTerm.scroll.z
     if t.sX >= view.sX and t.sX <= view.eX
