@@ -252,19 +252,36 @@ screenBuffer = {
     end
     buffer:glassRedraw()
   end,
-  glassInit = function(buffer,bridge,sizeX,sizeY)
-    bridge.clear()
+  glassInit = function(buffer,bridge,sizeX,sizeY,posX,posY)
+    bridge = bridge or buffer.bridge
+    if buffer.glass then
+      buffer:glassClose()
+    end
     buffer.glass = {
       pixel = class.matrix.new(2),
-      text = class.matrix.new(2)
+      text = class.matrix.new(2),
     }
     for iX = 1,tTerm.screen.x do
       for iY = 1,tTerm.screen.y do
-        buffer.glass.pixel[iX][iY] = bridge.addBox(iX*sizeX,iY*sizeY,sizeX,sizeY)
-        buffer.glass.text[iX][iY] = bridge.addText(iX*sizeX,iY*sizeY," ")
-        buffer.glass.text[iX][iY].setScale(math.floor(((sizeX+sizeY)/2))/8)
+        local pX = ((iX-1)*sizeX)+posX
+        local pY = ((iY-1)*sizeY)+posY
+        buffer.glass.pixel[iX][iY] = bridge.addBox(pX,pY,sizeX,sizeY)
+        buffer.glass.text[iX][iY] = bridge.addText(pX,pY," ")
+        buffer.glass.text[iX][iY].setScale(((sizeX+sizeY)/2)/8)
       end
     end
+    local file = class.fileTable.new(tFile.settings)
+    local line = file:find("glasses = { --openP glass settings",true)
+    file:write(
+[[      x = ]]..sizeX..[[,
+      y = ]]..sizeY..[[ 
+    },
+    pos = { --where to render the glasses screen
+      x = ]]..posX..[[,
+      y = ]]..posY,
+      line+3
+    )
+    file:save()
   end,
   glassResize = function(buffer,x,y)
     glasses.size.x = x
@@ -282,6 +299,14 @@ screenBuffer = {
         text.setY(iY*y)
       end
     end
+    local file = class.fileTable.new(tFile.settings)
+    local line = file:find("glasses = { --openP glass settings",true)
+    file:write(
+[[      x = ]]..sizeX..[[,
+      y = ]]..sizeY,
+      line+3
+    )
+    file:save()
   end,
   glassRedraw = function(buffer)
     if not buffer.glass then
@@ -304,6 +329,33 @@ screenBuffer = {
         buffer.glass.text[x][y].setColor(glasses.colors[buffer[layer][x][y].tColor])
       end
     end
+  end,
+  glassOpacity = function(buffer,opacity)
+    if not buffer.glass then
+      return
+    end
+    for iX = 1,tTerm.screen.x do
+      for iY = 1,tTerm.screen.y do
+        buffer.glass.pixel[iX][iY].setOpacity(opacity)
+        buffer.glass.text[iX][iY].setAlpha(opacity)
+      end
+    end
+    local file = class.fileTable.new(tFile.settings)
+    local line = file:find("    opacity = %d%.?%d?%d?%d? %-%-screen transparency")
+    file:write("    opacity = "..opacity.." --screen transparency",line)
+    file:save()
+  end,
+  glassClose = function(buffer)
+    if not buffer.glass then
+      return
+    end
+    for iX = 1,tTerm.screen.x do
+      for iY = 1,tTerm.screen.y do
+        buffer.glass.pixel[iX][iY].delete()
+        buffer.glass.text[iX][iY].delete()
+      end
+    end
+    buffer.glass = nil
   end
 }
 return screenBuffer

@@ -221,16 +221,6 @@ rednet = {
       content
     )
   end,
-	log = {
-	  maxSize = 50, --amount of entries to store in the log
-	  write = function(text)
-	    table.insert(rednet.log,1,text)
-		  rednet.log[rednet.log.maxSize+1] = nil
-			if glasses.log then
-			  glasses.refreshLog()
-		  end
-		end
-	},
   connected = { --connected computers
     amount = 0,
     ids = {
@@ -464,21 +454,41 @@ loadFile(tFile.settings)
 --[[----------------------------------------------------------------------------------------------------------
 Glass functions
 ----------------------------------------------------------------------------------------------------------]]--
-glasses.openLog = function(sX,sY,eX,eY)
-  glasses.log = {
+glasses.log.open = function(sX,sY,eX,eY)
+  glasses.log.lines = {
     background = glasses.bridge.addBox(sX,sY,eX-sX,eY-sY,tColors.glass.log)
   }
   for i = sY,eY,10 do
-    glasses.log[#glasses.log+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
+    glasses.log.lines[#glasses.log.lines+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
 	end
-	glasses.lineLength = math.floor((eX-sX)/10)
+  local file = class.fileTable.new(tFile.settings)
+  local line = file:find("  log = { --where to render the message bar",true)
+  file:write(
+[[    sX = ]]..sX..[[,
+    sY = ]]..sY..[[,
+    eX = ]]..eX..[[,
+    eY = ]]..eY..[[,]],
+    line+1
+  )
+  file:save()
+	glasses.log.lineLength = math.floor((eX-sX)/10)
+  glasses.log.refresh()
 end
 
-glasses.refreshLog = function()
+glasses.log.write = function(text)
+    table.insert(glasses.log,1,text)
+    glasses.log[glasses.log.maxSize+1] = nil
+    if glasses.screenMode:match"Log" then
+      glasses.refreshLog()
+    end
+  end
+end
+
+glasses.log.refresh = function()
   local curLine = 1
 	local curLog = 1
-  while #glasses.log > curLine and rednet.log[curLog] do
-	  local text = rednet.log[curLog]
+  while #glasses.log.lines >= curLine and glasses.log[curLog] do
+	  local text = glasses.log[curLog]
 		while #text > 0 do  --splits text into lines
 			local line = text:sub(1,glasses.lineLength)
 			local newLine = string.find(line.."","\n") --check for new line character
@@ -492,20 +502,30 @@ glasses.refreshLog = function()
 			else
 				text = ""
 			end
-			glasses.log[curLine].setText(line)
+			glasses.log.lines[curLine].setText(line)
 			curLine = curLine+1
 		end
 		curLog = curLog+1
 	end
 end
 
-glasses.closeLog = function()
-  glasses.log.background.delete()
-	for i=1,#glass.log do
-	  glasses.log[i].setText""
-    glasses.log[i].delete()
+glasses.log.setOpacity = function(opacity)
+  glasses.log.lines.background.setOpacity(opacity)
+  for i=1,#glasses.log.lines do
+    glasses.log.lines[i].setAlpha(opacity)
+  end
+  local file = class.fileTable.new(tFile.settings)
+  local line = file:find("    opacity = %d%.?%d?%d?d? %-%-log transparency")
+  file:write("    opacity = "..opacity.." --log transparency",line)
+  file:save()
+end
+
+glasses.log.close = function()
+  glasses.log.lines.background.delete()
+	for i=1,#glasses.log.lines do
+    glasses.log.lines[i].delete()
 	end
-	glasses.log = nil
+	glasses.log.lines = nil
 end
 
 --[[----------------------------------------------------------------------------------------------------------
@@ -529,11 +549,19 @@ elseif term.isColor() then
     and not modem
     and peripheral.call(side,"isWireless") then
       modem = peripheral.wrap(side)
+      modem.side = side
       modem.open(modemChannel)
-    elseif pType == "openperipheral_glassesbridge" then
+    elseif pType == "openperipheral_glassesbridge"
+    and not glasses.bridge then
       glasses.bridge = peripheral.wrap(side)
-      screen:glassInit(glasses.bridge,glasses.size.x,glasses.size.y)
-			glasses.openLog(200,200,500,1000)
+      glasses.side = side
+      glasses.bridge.clear()
+      if glasses.screenMode:match"Screen" then
+        screen:glassInit(glasses.bridge,glasses.screen.size.x,glasses.screen.size.y,glasses.screen.pos.x,glasses.screen.pos.y)
+      end
+      if glasses.screenMode:match"Log" then
+			  glasses.log.open(glasses.log.sX,glasses.log.sY,glasses.log.eX,glasses.log.eY)
+      end
     end
     if glasses.bridge and modem then
       break
@@ -1900,6 +1928,9 @@ Error handling
 local function Quit()
   if tMode.sync.amount > 0 then
     rednet.send(tMode.sync.ids,"Sync OFF")
+  end
+  if glasses.bridge then
+    glasses.bridge.clear()
   end
   term.setTextColor(colors.white)
   term.setBackgroundColor(colors.black)

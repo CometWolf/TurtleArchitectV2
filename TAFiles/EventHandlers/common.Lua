@@ -50,15 +50,21 @@ common = { --common event handlers, these are always active
     elseif not glasses and peripheral.getType(side) == "openperipheral_glassesbridge" then
       glasses.bridge = peripheral.wrap(side)
       glasses.side = side
-      screen:glassInit(glasses.bridge,glasses.size)
+      if glasses.screenMode:match"Screen" then
+        screen:glassInit(glasses.bridge,glasses.screen.size.x,glasses.screen.size.y,glasses.screen.pos.x,glasses.screen.pos.y)
+      end
+      if glasses.screenMode:match"Log" then
+			  glasses.log.open(glasses.log.sX,glasses.log.sY,glasses.log.eX,glasses.log.eY)
+      end
     end
   end,
   peripheral_detach = function(tEvent)
     local side = tEvent[2]
     if modem and side == modem.side then
       modem = nil
-    elseif glasses and side == glasses.side then
-      screen.glass = nil
+    elseif glasses.bridge and side == glasses.side then
+      glasses.log.close()
+      screen:glassClose()
     end
   end,
   chat_command = function(tEvent)
@@ -73,18 +79,81 @@ common = { --common event handlers, these are always active
       end
     end
     local menuName = string.upper(string.sub(tCommand[1],1,1))..string.sub(tCommand[1],2)
-    if tCommand[1] == "resize" then
-      local x,y = tCommand[2],tCommand[3]
-      if type(x) == "number" and type(y) == "number" then
-        screen:glassResize(x,y)
+    if tCommand[1] == "resize"
+    or tCommand[1] == "repos" then
+      local x,y,command
+      if type(tCommand[2]) == "number" and type(tCommand[3]) == "number" then
+        command = glasses.screenMode:match"^%S+$"
+        command = command and command:lower()
+        x1 = tCommand[2]
+        y1 = tCommand[3]
+        x2 = tCommand[4]
+        y2 = tCommand[5]
+      elseif type(tCommand[2]) == "string" then
+        command = tCommand[2]
+        x1 = tCommand[3]
+        y1 = tCommand[4]
+        x2 = tCommand[5]
+        y2 = tCommand[6]
       end
-    elseif tCommand[1] == "toggle" then
-      if tCommand[2] == "follow" then
-        glasses.followTurtle = not glasses.followTurtle
-      elseif tcommand[2] == "minimal" then
-        glasses.minimal = not glasses.minimal
+      if tCommand[1] == "resize" then
+        if type(x1) == "number" and type(y1) == "number" then
+          screen:glassResize(x1,y1)
+        end
+      elseif tCommand[1] == "repos" then
+        if command == "screen" then
+          if type(x1) == "number" and type(y1) == "number" then
+            screen:glassInit(x1,y1,glasses.screen.size.x,glasses.screen.size.y)
+          end
+        elseif command == "log" then
+          if type(x1) == "number" and type(y1) == "number" and type(x2) == "number" and type(y2) == "number" then
+            glasses.log.close()
+            glasses.log.open(x1,y1,x2,y2)
+          end
+        end
+      end
+    elseif tCommand[1] == "opacity" then
+      local opacity,command
+      if type(tCommand[2]) == "number" then
+        command = glasses.screenMode:match"^%S+$"
+        command = command and command:lower()
+        opacity = tCommand[2]
       else
-        
+        command = tCommand[2]
+        opacity = tCommand[3]
+      end
+      if type(opacity) == "number" then
+        if command == "screen" then
+          screen:glassOpacity(opacity)
+        elseif command == "log" then
+          glasses.log.setOpacity(opacity)
+        end
+      end
+    elseif tCommand[1] == "mode" then
+      local screenMode = command:match"screen" and true
+      local logMode = command:match"log" and true
+      local oldScreenMode = glasses.screenMode:match"Screen" and true
+      local oldLogMode = glasses.screenMode:match"Log" and true
+      if screenMode or logMode then
+        glasses.screenMode = (screenMode and "Screen " or "")..(logMode and "Log" or "")
+        local file = class.fileTable.new(tFile.settings)
+        local line = file:find('  screenMode = ".+", %-%-glasses display mode')
+        file:write('  screenMode = "'..glasses.screenMode..'", --glasses display mode,simply write which modes you want in plain text, remember to capitalize the first letter',line)
+        file:save()
+        if not oldScreenMode and screenMode then
+          screen:glassInit(glasses.screen.size.x,glasses.screen.size.y,glasses.screen.pos.x,glasses.pos.y)
+        elseif not screenMode and oldScreenMode then
+          screen:glassClose()
+        end
+        if not oldLogMode and logMode then
+          glasses.log.open(glasses.log.sX,glasses.log.sY,glasses.log.eX,glasses.log.eY)
+        elseif not logMode and oldLogMode then
+          glasses.log.close()
+        end
+      end
+    elseif tcommand[1] == "toggle" then
+      if tCommand[2] == "follow" and tCommand[3] == "turtle" then
+        glasses.followTurtle = not glasses.followTurtle
       end
     elseif tMenu.main[menuName] and not inputOpen then
       if not tCommand[2] then
@@ -199,7 +268,7 @@ common = { --common event handlers, these are always active
             renderPoint(data.x,data.z,true)
           end
 					if data.isBuilding then
-					  rednet.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color].." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
+					  glasses.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color].." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
 					end
         elseif type == "Delete" then
           for iX = data.sX,data.eX do
@@ -273,7 +342,7 @@ common = { --common event handlers, these are always active
             renderSideBar()
           end
           input((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
-					rednet.log.write((turtle and "Turtle" or "Computer").." ID "..senderId.." de-synced")
+					glasses.log.write((turtle and "Turtle" or "Computer").." ID "..senderId.." de-synced")
         end
       elseif event == "Turtle command" then
         local response = {
@@ -303,11 +372,11 @@ common = { --common event handlers, these are always active
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Build complete" then
 				  input("Turtle id "..senderId.." has completed construction of "..data.blueprintName)
-					rednet.log.write(senderId.." completed construction of "..data.blueprintName)
+					glasses.log.write(senderId.." completed construction of "..data.blueprintName)
 				elseif type == "Layer complete" then
-					rednet.log.write(senderId.." completed layer "..data.layer.." of "..data.blueprintName)
+					glasses.log.write(senderId.." completed layer "..data.layer.." of "..data.blueprintName)
 				elseif type == "Blocks required" then
-					rednet.log.write("Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots)
+					glasses.log.write("Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots)
           local button = input(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
             {

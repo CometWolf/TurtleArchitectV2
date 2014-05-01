@@ -1,14 +1,17 @@
 local fileTable
 fileTable = { --file table class, this is used to simplify file handling
-  new = function()
-    return setmetatable(
-      {
-
-      },
+  new = function(path)
+    local file = {}
+    setmetatable(
+      file,
       {
         __index = fileTable
       }
     )
+    if path then
+      file:load(path)
+    end
+    return file
   end,
   load = function(tTable,filePath)
     --loads the specified file into the table
@@ -42,10 +45,25 @@ fileTable = { --file table class, this is used to simplify file handling
     if type(line) == "table" then
       for i=1,#line do
         tTable[lineNum+i-1] = line[i]
-      end        
-    else
-      tTable[lineNum] = line
+      end
+      return
     end
+    while line:match"\n." do --multi line
+      local newLine = line:match"^(.-)\n"
+      line = line:sub(#newLine+2)
+      tTable[lineNum] = newLine
+      lineNum = lineNum+1
+    end
+    tTable[lineNum] = line
+  end,
+  find = function(tTable,sString,plain)
+    --finds the specified string in the file
+    for i=1,#tTable do
+      if tTable[i]:find(sString,nil,plain) then
+        return i
+      end
+    end
+    return false
   end,
   delete = function(tTable,lineNum)
     --clears the last line, or optionally the specified lineNum

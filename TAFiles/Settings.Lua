@@ -57,12 +57,27 @@ tColors.glass = { --glass colors
 	black = 0x000000,
 }
 glasses = { --openP glass settings
-  size = { --the size of each screen pixel
-    x = 3,
-    y = 5
+  screen = {
+    size = { --the size of each screen pixel
+      x = 3,
+      y = 5
+    },
+    pos = { --where to render the screen
+      x = 0,
+      y = 0
+    },
+    opacity = 1 --screen transparency
+  },
+  log = { --where to render the message bar
+    sX = 331,
+    sY = 100,
+    eX = 480,
+    eY = 246,
+    opacity = 1 --log transparency
+	  maxSize = 50 --amount of entries to store in the log
   },
   followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
-  minimal = true, --glasses display mode, false will render the entire computer screen, true will only render messages
+  screenMode = "Screen Log", --glasses display mode,simply write which modes you want in plain text, remember to capitalize the first letter
   colors = {} --CC to HEX color conversion
 }
 --cc to hex color conversion table
@@ -142,6 +157,7 @@ colorKey = setmetatable(
   },
   {
     __index = function(t,k)
+      debug(k)
       error("Attempt to access non-existant color "..tostring(k),2)
     end
   }
@@ -166,7 +182,6 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
           )
         end
       )
-      keyColor[kK:upper()] = keyColor[kK]
       break
     end
   end
