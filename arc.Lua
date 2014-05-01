@@ -476,11 +476,10 @@ glasses.log.open = function(sX,sY,eX,eY)
 end
 
 glasses.log.write = function(text)
-    table.insert(glasses.log,1,text)
-    glasses.log[glasses.log.maxSize+1] = nil
-    if glasses.screenMode:match"Log" then
-      glasses.refreshLog()
-    end
+  table.insert(glasses.log,1,text)
+  glasses.log[glasses.log.maxSize+1] = nil
+  if glasses.screenMode:match"Log" then
+    glasses.refreshLog()
   end
 end
 
@@ -516,7 +515,7 @@ glasses.log.setOpacity = function(opacity)
   end
   local file = class.fileTable.new(tFile.settings)
   local line = file:find("    opacity = %d%.?%d?%d?d? %-%-log transparency")
-  file:write("    opacity = "..opacity.." --log transparency",line)
+  file:write("    opacity = "..opacity..", --log transparency",line)
   file:save()
 end
 

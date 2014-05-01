@@ -73,7 +73,7 @@ glasses = { --openP glass settings
     sY = 100,
     eX = 480,
     eY = 246,
-    opacity = 1 --log transparency
+    opacity = 1, --log transparency
 	  maxSize = 50 --amount of entries to store in the log
   },
   followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
