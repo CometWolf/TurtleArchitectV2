@@ -20,7 +20,7 @@ tArg = {...} --store program arguments
 --[[----------------------------------------------------------------------------------------------------------
 File paths
 ----------------------------------------------------------------------------------------------------------]]--
-tFile.folder = tFile.program:match"^(.+/).-$".."/TAFiles" --program files folder
+tFile.folder = (tFile.program:match"^(.+/).-$" or "").."/TAFiles" --program files folder
 tFile.classFolder = tFile.folder.."/Classes" --classes folder
 tFile.menuFolder = tFile.folder.."/Menus" --menu tables folder
 tFile.mainMenuFolder = tFile.menuFolder.."/mainMenus" --main menus folder
@@ -514,7 +514,7 @@ glasses.log.setOpacity = function(opacity)
     glasses.log.lines[i].setAlpha(opacity)
   end
   local file = class.fileTable.new(tFile.settings)
-  local line = file:find("    opacity = %d%.?%d?%d?d? %-%-log transparency")
+  local line = file:find("    opacity = %d%.?%d?%d?d?, %-%-log transparency")
   file:write("    opacity = "..opacity..", --log transparency",line)
   file:save()
 end
