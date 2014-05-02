@@ -1,18 +1,24 @@
-local cTurtle
-cTurtle = { --cTurtle only events
+local handler
+handler = { --cTurtle only events
   refuel = function()
     if tMode.sync.amount > 0 then
-      rednet.send("Turtle status",{type = "Fuel required",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
+      rednet.send(tMode.sync.ids,"Turtle status",{type = "Fuel required",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
     end
-    local timeOut = tTimers.restockRetry.start()
-    input(
-      "Fuel required, please put fuel in the currently selected slot and press Ok",
-      nil,
+    tTimers.restockRetry.start()
+    local button,tRes,reInput = input(
+      "Fuel required, please input slot to refuel from and press Ok",
       nil,
       {
+        {
+          name = "Slot",
+          value = 1,
+          accepted = "%d"
+        }
+      },
+      {
         timer = function(tEvent)
-          if tEvent[2] == timeOut then
-            return "Ok"
+          if tTimers.restockRetry.ids[tEvent[2]] then
+            return "timeout"
           end
         end,
         modem_message = function(tEvent)
@@ -22,17 +28,33 @@ cTurtle = { --cTurtle only events
             local data = tEvent[5]
             if data.event == "Turtle command"
             and data.type == "Refuel" then
-              return "Ok"
+              return "timeout"
             end
           end
         end
-      }
+      },
+      true
     )
+    while button ~= "timeout" do
+      local slot = tRes.Slot
+      if not slot then
+        tTimers.restockRetry.start()
+        button,tRes,reInput = reInput("Missing refuel slot number!")
+      elseif slot > 16
+      or slot < 1 then
+        tTimers.restockRetry.start()
+        button,tRes,reInput = reInput("Invalid slot number "..slot.."!")
+      else
+        turtle.select(slot)
+        turtle.refuel(64)
+        return
+      end
+    end
   end,
   blocked = 0, --amount of times the turtle has been blocked
   moveFail = function() --movement blocked
-    cTurtle.blocked = cTurtle.blocked+1
-    if cTurtle.blocked%20 == 0
+    handler.blocked = handler.blocked+1
+    if handler.blocked%20 == 0
     and tMode.sync.amount > 0 then
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocked",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
     end
