@@ -523,6 +523,9 @@ glasses.log.refresh = function()
     for i=#tLines,1,-1 do
       glasses.lines[curLine].setText(tLines[i])
 			curLine = curLine+1
+      if not glasses.lines[curLine] then
+        break
+      end
 		end
 		curLog = curLog+1
 	end
@@ -596,6 +599,9 @@ elseif term.isColor() then
   end
 else
   error("Turtle Architect is incompatible with regular computers!",0)
+end
+if not glasses.bridge then
+  glasses.screenMode = ""
 end
 
 if tArg[1] then --attempt to load argument blueprint
@@ -704,7 +710,8 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
   tMenu.touchMap = class.matrix.new(2)
   screen:clearLayer(4)
   if not menu 
-  or not tMenu.main[menu] and menu ~= "rightClick" then
+  or not tMenu.main[menu] and menu ~= "rightClick" 
+  or (not tMenu.main[menu].enabled or type(tMenu.main[menu].enabled) == "function" and not tMenu.main[menu].enabled()) then
     tMenu.open = false
     return
   elseif tMenu.open then

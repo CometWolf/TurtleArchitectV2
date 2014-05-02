@@ -178,16 +178,17 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
     if vC == vK then
       colorKeyNames[kC] = kK
       keyColor[kK] = kC:gsub( --capitalize first letter, add space between first and second word and decap second word
-        "^(.).-%l(%u)",
+        "^(.)%l-(%u)",
         function(l)
           return (
             l:match"%u" 
-            and l:match " "..l:lower()
+            and " "..l:lower()
           ) or (
             l:upper()
           )
         end
       )
+      keyColor[kK:upper()] = keyColor[kK]
       break
     end
   end

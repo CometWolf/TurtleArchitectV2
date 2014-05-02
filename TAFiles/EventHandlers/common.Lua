@@ -167,13 +167,14 @@ common = { --common event handlers, these are always active
     elseif tCommand[1] == "test" then
       glasses.log.write(table.concat(tCommand," ",2))
     elseif tMenu.main[menuName] and not inputOpen then
-      if not tCommand[2] then
+      if not tCommand[2] and not tMenu.open then
         renderMenu(menuName)
       else
-        local funcName = table.concat(tCommand," ",2)
+        local funcName = table.concat(tCommand," ",(tCommand[2] and 2 or 1))
         funcName = string.upper(string.sub(funcName,1,1))..string.sub(funcName,2)
         for i=1,#tMenu.main[menuName].items do
           if tMenu.main[menuName].items[i].name:match(funcName) then
+            renderMenu()
             tMenu.main[menuName].items[i].func()
           end
         end
@@ -273,13 +274,14 @@ common = { --common event handlers, these are always active
           renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
         elseif type == "Point" then --probably brush
           tBlueprint[data.layer][data.x][data.z] = data.color
-          if glasses.bridge and glasses.followTurtle then
-            scroll(data.layer,data.x-math.floor(tTerm.canvas.tX/2),data.z-math.floor(tTerm.canvas.tZ/2),true,true)
-          elseif tTerm.scroll.layer == data.layer then
+          if tTerm.scroll.layer == data.layer then
             renderPoint(data.x,data.z,true)
           end
 					if data.isBuilding then
-					  glasses.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color].." at" or "broke").." "..data.x..", "..data.layer..", "..data.z)
+					  glasses.log.write("Turtle "..senderId.." "..(data.color and "placed "..keyColor[data.color].." at" or "broke").."\n"..data.x..", "..data.layer..", "..data.z)
+            if glasses.bridge and glasses.followTurtle then
+              scroll(data.layer,data.x-math.floor(tTerm.canvas.tX/2),data.z-math.floor(tTerm.canvas.tZ/2),true,true)
+            end
 					end
         elseif type == "Delete" then
           for iX = data.sX,data.eX do
@@ -381,9 +383,9 @@ common = { --common event handlers, these are always active
         end
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Build complete" then
-				  input("Turtle id "..senderId.." has completed construction of "..data.blueprintName)
+				  input("Turtle "..senderId.." has completed construction of "..data.blueprintName)
 				elseif type == "Layer complete" then
-					glasses.log.write(senderId.." completed layer "..data.layer.." of "..data.blueprintName)
+					glasses.log.write("Turtle "..senderId.." completed layer "..data.layer.." of "..data.blueprintName)
 				elseif type == "Blocks required" then
           local button = input(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
