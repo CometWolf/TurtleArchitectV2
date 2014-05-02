@@ -46,7 +46,7 @@ local tool = {
         c.sX = x+tTerm.scroll.x
         c.sZ = z+tTerm.scroll.z
         if c.eX then
-          screen:delLayer(screen.layers.toolsOverlay)
+          screen:clearLayer(screen.layers.toolsOverlay)
         end
         c.eX = false
         c.eZ = false

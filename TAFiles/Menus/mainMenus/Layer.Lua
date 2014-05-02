@@ -215,7 +215,7 @@ menu = {
             if i == 1 and #tBlueprint == 1 then
               tBlueprint[1] = tBlueprint[1].new()
             else
-              table.remove(tBlueprint,i)
+              table.remove(tBlueprint,tRes.From)
             end
           end
           tTerm.scroll.layer = math.min(tTerm.scroll.layer,#tBlueprint)
@@ -465,6 +465,9 @@ menu = {
             }
           )
           button = (button2 == "Cancel") and "Reinput" or button2
+          if button == "Reinput" then
+            button,tRes,reInput = reInput("Stretch copy current layer("..tTerm.scroll.layer..") across")
+          end
         elseif button == "Ok"
         or button == "Overwrite" then
           for i=tRes.From,tRes.To do

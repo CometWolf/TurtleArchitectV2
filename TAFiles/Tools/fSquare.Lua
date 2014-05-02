@@ -32,7 +32,7 @@ local tool = {
         s.sX = x+tTerm.scroll.x
         s.sZ = z+tTerm.scroll.z
         if s.eX then
-          screen:delLayer(screen.layers.toolsOverlay)
+          screen:clearLayer(screen.layers.toolsOverlay)
         end
         s.eX = false
         s.eZ = false
