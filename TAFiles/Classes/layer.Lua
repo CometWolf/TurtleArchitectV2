@@ -229,9 +229,13 @@ layer = { --layer class
   --renders the layer on the canvas
     local view = tTerm.viewable
     screen:setLayer(screen.layers.canvas)
+    local mX = view.mX
+    local mZ = view.mZ
+    local scrX = tTerm.scroll.x
+    local scrZ = tTerm.scroll.z
     for x = view.sX,view.eX do
       for z = view.sZ,view.eZ do
-        screen:setCursorPos(x-tTerm.scroll.x+tTerm.viewable.mX,z-tTerm.scroll.z+tTerm.viewable.mZ)
+        screen:setCursorPos(x-scrX+mX,z-scrZ+mZ)
         writePoint(x,z)
       end
     end
