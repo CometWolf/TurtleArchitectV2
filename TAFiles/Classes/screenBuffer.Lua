@@ -324,6 +324,11 @@ screenBuffer = {
     end
     for x,vX in pairs(buffer.changed) do
       for y,layer in pairs(vX) do
+        if not buffer.glass.pixel[x]
+        or not buffer.glass.pixel[x][y] then
+          debug({x = x,y = y})
+          debug(tTerm.viewable)
+        end
         buffer.glass.pixel[x][y].setColor(glasses.colors[buffer[layer][x][y].bColor])
         buffer.glass.text[x][y].setText(buffer[layer][x][y].marker)
         buffer.glass.text[x][y].setColor(glasses.colors[buffer[layer][x][y].tColor])

@@ -334,6 +334,7 @@ debug = {
       end
       debug.pause()
     end
+    screen:redraw()
   end,
   timedStart = function(key)
     debug.tExecutionTime[k] = os.clock()
@@ -921,22 +922,38 @@ function renderToolOverlay() --renders all tool overlays
   and t.layer == tTerm.scroll.layer then
     screen:clearLayer(screen.layers.toolsOverlay)
     screen:setLayer(screen.layers.toolsOverlay)
-    local x1,z1 = t.sX-tTerm.scroll.x,t.sZ-tTerm.scroll.z
-    if t.sX >= view.sX and t.sX <= view.eX
-    and t.sZ >= view.sZ and t.sZ <= view.eZ then
-      screen:drawPoint(x1,z1,tColors.selection)
-    end
-    if t.eX then
-      local x2,z2 = t.eX-tTerm.scroll.x,t.eZ-tTerm.scroll.z
-      if t.eX >= view.sX and t.eX <= view.eX then
-        screen:drawPoint(x2,z1,tColors.selection)
-        if t.eZ >= view.sZ and t.eZ <= view.eZ then
-          screen:drawPoint(x1,z2,tColors.selection)
-          screen:drawPoint(x2,z2,tColors.selection)
+    local sX = t.sX >= view.sX and t.sX <= view.eX and t.sX-tTerm.scroll.x
+    local sZ = t.sZ >= view.sZ and t.sZ <= view.eZ and t.sZ-tTerm.scroll.z
+    local eX = t.eX and t.eX >= view.sX and t.eX <= view.eX and t.eX-tTerm.scroll.x
+    local eZ = t.eX and t.eZ >= view.sZ and t.eZ <= view.eZ and t.eZ-tTerm.scroll.z
+    local color = tColors.selection
+    if sX then
+      if sZ then
+        screen:drawPoint(sX,sZ,color)
+        if eX then
+          screen:drawPoint(eX,sZ,color)
+          if eZ then
+            screen:drawPoint(sX,eZ,color)
+            screen:drawPoint(eX,eZ,color)
+          end
+        elseif eZ then
+          screen:drawPoint(sX,eZ,color)
         end
-      elseif t.eZ >= view.sZ and t.eZ <= view.eZ then
-        screen:drawPoint(x1,z2,tColors.selection)
+      elseif eZ then
+        screen:drawPoint(sX,eZ,color)
+        if eX then
+          screen:drawPoint(eX,eZ,color)
+        end
       end
+    elseif sZ then
+      if eX then
+        screen:drawPoint(eX,sZ,color)
+        if eZ then
+          screen:drawPoint(eX,eZ,color)
+        end
+      end
+    elseif eX and eZ then
+      screen:drawPoint(eX,eZ,color)
     end
   end
 end
