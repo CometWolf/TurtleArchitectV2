@@ -18,7 +18,7 @@ menu = {
       local t = tTool.select
       tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
       tTool.select = {}
-      screen:delLayer(screen.layers.toolsOverlay)
+      screen:clearLayer(screen.layers.toolsOverlay)
       local c = tTool.clipboard
       c.sX = c.sX+1
       c.sZ = c.sZ+1
@@ -148,7 +148,7 @@ menu = {
         renderArea(t.sX,t.sZ,t.eX,t.eZ,true)
       else
         tTool.clipboard = false
-        screen:delLayer(screen.layers.toolsOverlay)
+        screen:clearLayer(screen.layers.toolsOverlay)
       end
     end
   },
