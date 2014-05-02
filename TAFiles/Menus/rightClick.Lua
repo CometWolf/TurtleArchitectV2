@@ -34,7 +34,7 @@ menu = {
       local c = tTool.clipboard
       c.layer = tTerm.scroll.layer
       sync(c,"Paste")
-      tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX,c.sZ,tMode.overwrite)
+      tBlueprint[tTerm.scroll.layer]:paste(c.l,c.sX,c.sZ,not tMode.overwrite)
       renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       c.sX = c.sX+1
       c.sZ = c.sZ+1
@@ -180,8 +180,8 @@ menu = {
         screen:setTextColor(tColors.rightClickUseable)
         for iX = x,eX do
           tMenu.touchMap[iX][z] = function(button)
-            menu[i].func(button)
             renderMenu()
+            menu[i].func(button)
           end
         end
       else

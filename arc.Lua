@@ -27,7 +27,7 @@ tFile.mainMenuFolder = tFile.menuFolder.."/mainMenus" --main menus folder
 tFile.toolFolder = tFile.folder.."/Tools" --tools folder
 tFile.eventHandlerFolder = tFile.folder.."/EventHandlers"
 tFile.cTurtle = "/cTurtle" --cTurtle API,downloaded automatically if missing on a turtle.
-tFile.settings = tFile.folder.."/settings.Lua" --settings file
+tFile.settings = tFile.folder.."/Settings.Lua" --settings file
 tFile.installer = tFile.folder.."/installer.Lua" --github installer, used for updates
 
 tPaste = {
@@ -708,7 +708,7 @@ end
 
 function renderMenu(menu) --renders the given menu and creates touchmap for said menu
   tMenu.touchMap = class.matrix.new(2)
-  screen:clearLayer(4)
+  screen:clearLayer(screen.layers.menus)
   if not menu 
   or not tMenu.main[menu] and menu ~= "rightClick" 
   or (not tMenu.main[menu].enabled or type(tMenu.main[menu].enabled) == "function" and not tMenu.main[menu].enabled()) then
