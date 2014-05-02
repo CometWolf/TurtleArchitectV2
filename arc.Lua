@@ -454,12 +454,17 @@ loadFile(tFile.settings)
 --[[----------------------------------------------------------------------------------------------------------
 Glass functions
 ----------------------------------------------------------------------------------------------------------]]--
+--the screen functions are part of the buffer class
 glasses.log.open = function(sX,sY,eX,eY)
-  glasses.log.lines = {
-    background = glasses.bridge.addBox(sX,sY,eX-sX,eY-sY,tColors.glass.log)
+  glasses.lines = {
+    background = glasses.bridge.addBox(sX,eY-1,eX-sX,1,tColors.glass.log,glasses.log.opacity)
   }
-  for i = sY,eY,10 do
-    glasses.log.lines[#glasses.log.lines+1] = glasses.bridge.addText(sX,i," ",tColors.glass.logText)
+  glasses.lines.background.setZ(1)
+  for i = eY-10,sY,-10 do
+    glasses.lines[#glasses.lines+1] = glasses.bridge.addText(sX+1,i+1," ",tColors.glass.logText)
+    local line = glasses.lines[#glasses.lines]
+    line.setZ(2)
+    line.setAlpha(glasses.log.opacity)
 	end
   local file = class.fileTable.new(tFile.settings)
   local line = file:find("  log = { --where to render the message bar",true)
@@ -471,23 +476,35 @@ glasses.log.open = function(sX,sY,eX,eY)
     line+1
   )
   file:save()
-	glasses.log.lineLength = math.floor((eX-sX)/10)
+	glasses.lineLength = math.floor((eX-sX)/5)
   glasses.log.refresh()
 end
 
-glasses.log.write = function(text)
-  table.insert(glasses.log,1,text)
+glasses.log.write = function(text,time)
+  local timerId = tTimers.display.start()
+  local logLine = {text = text,visible = true}
+  table.insert(glasses.log,1,logLine)
+  glasses.log.timers[tTimers.display.start(time)] = function()
+    logLine.visible = false
+  end
   glasses.log[glasses.log.maxSize+1] = nil
   if glasses.screenMode:match"Log" then
-    glasses.refreshLog()
+    glasses.log.refresh()
   end
 end
 
 glasses.log.refresh = function()
   local curLine = 1
 	local curLog = 1
-  while #glasses.log.lines >= curLine and glasses.log[curLog] do
-	  local text = glasses.log[curLog]
+  while #glasses.lines >= curLine do
+    while glasses.log[curLog] and not glasses.log[curLog].visible do
+      curLog = curLog+1
+    end
+    if not glasses.log[curLog] then
+      break
+    end
+	  local text = glasses.log[curLog].text
+    local tLines = {}
 		while #text > 0 do  --splits text into lines
 			local line = text:sub(1,glasses.lineLength)
 			local newLine = string.find(line.."","\n") --check for new line character
@@ -495,23 +512,33 @@ glasses.log.refresh = function()
 				line = line:sub(1,newLine-1)
 				text = text:sub(#line+2,#text)
 			elseif #line == glasses.lineLength then
-				local endSpace = line:find"%s$" or line:find"%s%S-$" or glass.lineLength
+				local endSpace = line:find"%s$" or line:find"%s%S-$" or glasses.lineLength
 				line = line:sub(1,endSpace)
 				text = text:sub(#line+1,#text)
 			else
 				text = ""
 			end
-			glasses.log.lines[curLine].setText(line)
+      tLines[#tLines+1] = line
+    end
+    for i=#tLines,1,-1 do
+      glasses.lines[curLine].setText(tLines[i])
 			curLine = curLine+1
 		end
 		curLog = curLog+1
 	end
+  for i=curLine,#glasses.lines do
+    glasses.lines[i].setText""
+  end
+  local background = glasses.lines.background
+  local upper = glasses.log.eY-(10*(curLine-1))
+  background.setY(upper)
+  background.setHeight(glasses.log.eY-upper)
 end
 
 glasses.log.setOpacity = function(opacity)
-  glasses.log.lines.background.setOpacity(opacity)
-  for i=1,#glasses.log.lines do
-    glasses.log.lines[i].setAlpha(opacity)
+  glasses.lines.background.setOpacity(opacity)
+  for i=1,#glasses.lines do
+    glasses.lines[i].setAlpha(opacity)
   end
   local file = class.fileTable.new(tFile.settings)
   local line = file:find("    opacity = %d%.?%d?%d?d?, %-%-log transparency")
@@ -560,6 +587,7 @@ elseif term.isColor() then
       end
       if glasses.screenMode:match"Log" then
 			  glasses.log.open(glasses.log.sX,glasses.log.sY,glasses.log.eX,glasses.log.eY)
+        glasses.log.write("Welcome to Turtle Architect V2",5)
       end
     end
     if glasses.bridge and modem then
@@ -993,9 +1021,6 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
 function input(text,tButtonFields,tInputFields,customEvent,reInput)
   local screenLayer = screen.layers.dialogue+activeInputs
   inputOpen = true
-  if type(customEvent) == "function" then
-    error("Correct this you turd",2)
-  end
   screen:setLayer(screenLayer)
   activeInputs = activeInputs+1
   tInputFields = tInputFields or {}
@@ -1005,6 +1030,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   if type(text) == "table" then --converts text to string if it's a table
     text = table.concat(text,"\n")
   end
+  glasses.log.write(text)
   while #text > 0 do  --splits text into a table containing each line
     local line = text:sub(1,lineLength)
     local newLine = string.find(line.."","\n") --check for new line character

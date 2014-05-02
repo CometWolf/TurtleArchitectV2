@@ -13,6 +13,14 @@ common = { --common event handlers, these are always active
       tTimers.blink.start()
     elseif timerID == tTimers.ctrl.id then
       tTimers.ctrl.pressed = false
+    elseif tTimers.display.ids[timerID] then
+      local func = glasses.log.timers[timerID]
+      if func then
+        func()
+        if glasses.screenMode:match"Log" then
+          glasses.log.refresh()
+        end
+      end
     elseif timerID == tTimers.connectionPing.id then
       if rednet.connected.amount > 0 then
         rednet.send(
@@ -65,6 +73,7 @@ common = { --common event handlers, these are always active
     elseif glasses.bridge and side == glasses.side then
       glasses.log.close()
       screen:glassClose()
+      glasses.bridge = nil
     end
   end,
   chat_command = function(tEvent)
@@ -151,10 +160,12 @@ common = { --common event handlers, these are always active
           glasses.log.close()
         end
       end
-    elseif tcommand[1] == "toggle" then
+    elseif tCommand[1] == "toggle" then
       if tCommand[2] == "follow" and tCommand[3] == "turtle" then
         glasses.followTurtle = not glasses.followTurtle
       end
+    elseif tCommand[1] == "test" then
+      glasses.log.write(table.concat(tCommand," ",2))
     elseif tMenu.main[menuName] and not inputOpen then
       if not tCommand[2] then
         renderMenu(menuName)
@@ -342,7 +353,6 @@ common = { --common event handlers, these are always active
             renderSideBar()
           end
           input((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
-					glasses.log.write((turtle and "Turtle" or "Computer").." ID "..senderId.." de-synced")
         end
       elseif event == "Turtle command" then
         local response = {
@@ -372,11 +382,9 @@ common = { --common event handlers, these are always active
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Build complete" then
 				  input("Turtle id "..senderId.." has completed construction of "..data.blueprintName)
-					glasses.log.write(senderId.." completed construction of "..data.blueprintName)
 				elseif type == "Layer complete" then
 					glasses.log.write(senderId.." completed layer "..data.layer.." of "..data.blueprintName)
 				elseif type == "Blocks required" then
-					glasses.log.write("Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots)
           local button = input(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
             {

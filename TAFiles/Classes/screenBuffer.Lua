@@ -265,7 +265,7 @@ screenBuffer = {
       for iY = 1,tTerm.screen.y do
         local pX = ((iX-1)*sizeX)+posX
         local pY = ((iY-1)*sizeY)+posY
-        buffer.glass.pixel[iX][iY] = bridge.addBox(pX,pY,sizeX,sizeY)
+        buffer.glass.pixel[iX][iY] = bridge.addBox(pX,pY,sizeX,sizeY,glasses.screen.opacity)
         buffer.glass.text[iX][iY] = bridge.addText(pX,pY," ")
         buffer.glass.text[iX][iY].setScale(((sizeX+sizeY)/2)/8)
       end

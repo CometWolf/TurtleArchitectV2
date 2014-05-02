@@ -73,8 +73,11 @@ glasses = { --openP glass settings
     sY = 100,
     eX = 480,
     eY = 246,
-    opacity = 1, --log transparency
-	  maxSize = 50 --amount of entries to store in the log
+    opacity = 0.5, --log transparency
+	  maxSize = 50, --amount of entries to store in the log
+    timers = {--used to store cleanup timer functions, indexed by timer id
+      
+    }
   },
   followTurtle = true, --whether to auto scroll the canvas along with the turtle as it builds, provided you have glasses connected
   screenMode = "Screen Log", --glasses display mode,simply write which modes you want in plain text, remember to capitalize the first letter
@@ -113,8 +116,11 @@ tTimers = setmetatable( -- timer settings
     inputTimeout = { --Time to wait for time sensitive dialogue boxes, eg accept blueprint transmission or sync mode
       time = 100
     },
-    ctrl = {
+    ctrl = { --ctrl key press timer, for ctrl shortcuts
       time = 1
+    },
+    display = { --time a openP glasses message remains on screen
+      time = 20
     }
   },
   {
