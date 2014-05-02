@@ -369,6 +369,7 @@ common = { --common event handlers, these are always active
           rednet.send(senderId,"Success",response)
         elseif type == "Save blueprint progress" then
           saveProgress(data.blueprintName,data.progress)
+          tFile.blueprint = data.blueprintName
         elseif type == "Build" then
           local oldSync = tMode.sync
           tMode.sync = {
@@ -386,7 +387,10 @@ common = { --common event handlers, these are always active
 				  input("Turtle "..senderId.." has completed construction of "..data.blueprintName)
 				elseif type == "Layer complete" then
 					glasses.log.write("Turtle "..senderId.." completed layer "..data.layer.." of "..data.blueprintName)
+        elseif type == "Blocked" then
+          glasses.log.write("Turtle "..senderId.." is being blocked, please remove the obstruction at\nX: "..data.x.."\nY: "..data.y.."n\Z: "..data.z)
 				elseif type == "Blocks required" then
+          local timeOut = tTimers.restockRetry.start()
           local button = input(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
             {
@@ -398,7 +402,7 @@ common = { --common event handlers, these are always active
             {
               modem_message = function(tEvent)
                 if tEvent[3] == modemChannel
-                and type(tEvent[5]) == "table"
+                and _G.type(tEvent[5]) == "table"
                 and tEvent[5].rID[os.id] then
                   local data = tEvent[5]
                   local event = data.event
@@ -410,11 +414,54 @@ common = { --common event handlers, these are always active
                     return "Cancel"
                   end
                 end
+              end,
+              timer = function(tEvent)
+                if tTimers.restockRetry[tEvent[2]] then
+                  return "Cancel"
+                end
               end
             }
           )
           if button == "Ok" then
             rednet.send(senderId,"Turtle command",{type == "Restock"})
+          elseif button == "Ignore" then
+            tIgnore[senderId] = true
+          end
+				elseif type == "Fuel required" then
+          local timeOut = tTimers.restockRetry.start()
+          local button = input(
+            "Turtle "..senderId.." located at\nX: "..data.x.."\nY: "..data.y.."\nZ: "..data.z.."\nrequires fuel",
+            {
+              "Cancel",
+              "Ignore",
+              "Ok"
+            },
+            false,
+            {
+              modem_message = function(tEvent)
+                if tEvent[3] == modemChannel
+                and _G.type(tEvent[5]) == "table"
+                and tEvent[5].rID[os.id] then
+                  local data = tEvent[5]
+                  local event = data.event
+                  local senderId2 = data.sID
+                  local type = data.type
+                  if event == "Turtle status"
+                  and type == "Refuel" 
+                  and senderId == senderId2 then
+                    return "Cancel"
+                  end
+                end
+              end,
+              timer = function(tEvent)
+                if tTimers.restockRetry[tEvent[2]] then
+                  return "Cancel"
+                end
+              end
+            }
+          )
+          if button == "Ok" then
+            rednet.send(senderId,"Turtle command",{type == "Refuel"})
           elseif button == "Ignore" then
             tIgnore[senderId] = true
           end
@@ -464,6 +511,6 @@ common = { --common event handlers, these are always active
         end
       end
     end
-  end
+  end,
 }
 return common

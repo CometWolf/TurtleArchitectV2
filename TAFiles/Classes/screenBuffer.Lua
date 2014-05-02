@@ -266,7 +266,7 @@ screenBuffer = {
         local pX = ((iX-1)*sizeX)+posX
         local pY = ((iY-1)*sizeY)+posY
         buffer.glass.pixel[iX][iY] = bridge.addBox(pX,pY,sizeX,sizeY,glasses.screen.opacity)
-        buffer.glass.text[iX][iY] = bridge.addText(pX,pY," ")
+        buffer.glass.text[iX][iY] = bridge.addText(pX+1,pY+1," ")
         buffer.glass.text[iX][iY].setScale(((sizeX+sizeY)/2)/8)
       end
     end
@@ -295,8 +295,8 @@ screenBuffer = {
         pixel.setY(iY*y)
         local text = buffer.glass.text[iX][iY]
         text.setScale(math.floor(((x+y)/2))/8)
-        text.setX(iX*x)
-        text.setY(iY*y)
+        text.setX((iX*x+1))
+        text.setY((iY*y+1))
       end
     end
     local file = class.fileTable.new(tFile.settings)
