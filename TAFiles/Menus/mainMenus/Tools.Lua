@@ -18,14 +18,16 @@ end
 local menu = {
   enabled = true
 }
-local codeFuncs = {} --holds all the code functions for the code tool
+codeEnv = { --Environment for the code tool
+  tool = {} --holds tool codefuncs
+}
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do
   if file ~= "Code.Lua" then
     local tool = loadFile(tFile.toolFolder.."/"..file,progEnv)
     local toolName = file:match"(.+)%.Lua"
     tTool[toolName] = tool.renderFunc
-    codeFuncs[toolName] = tool.codeFunc
+    codeEnv.tool[toolName] = tool.codeFunc
     menu[tool.menuOrder] = {
       name = toolName,
       enabled = tool.enabled or true,
@@ -38,11 +40,13 @@ for _k,file in pairs(fs.list(tFile.toolFolder)) do
 end
 
 --code tool must be loaded last
-local tool = loadFile(tFile.toolFolder.."/Code.Lua",progEnv,codeFuncs) 
-tTool["Code"] = tool.renderFunc
+local tool = loadFile(tFile.toolFolder.."/Code.Lua",getfenv())
+tTool["Code"] = function(...) --since it changes, it has to be looked up on each call.
+  tool.renderFunc(...)
+end
 menu[tool.menuOrder] = {
   name = "Code",
-  enabled = false,
+  enabled = true,
   func = function(button)
     tool.selectFunc(button)
     renderBottomBar()

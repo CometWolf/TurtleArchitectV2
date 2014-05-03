@@ -55,7 +55,13 @@ local tool = {
     end
   end,
   codeFunc = function(sX,sZ,eX,eZ,color,layer) --this is used by the code tool
+    color = color or codeEnv.color
+    layer = layer or codeEnv.layer
+    if not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
+      error("Expected number,number,number,number",2)
+    end
     tBlueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+    renderArea(sX,sZ,eX,eZ,true)
   end
 }
 return tool

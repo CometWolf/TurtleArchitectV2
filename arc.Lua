@@ -334,7 +334,6 @@ debug = {
       end
       debug.pause()
     end
-    screen:redraw()
   end,
   timedStart = function(key)
     debug.tExecutionTime[k] = os.clock()
