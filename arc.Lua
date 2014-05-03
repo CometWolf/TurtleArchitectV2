@@ -360,7 +360,7 @@ setmetatable(debug,
 --[[----------------------------------------------------------------------------------------------------------
 Load class files
 ----------------------------------------------------------------------------------------------------------]]--
-function loadFile(path,env) --custom file loader, sets environment, handles errors and runs file and returns results
+function loadFile(path,env,arg) --custom file loader, sets environment, handles errors and runs file and returns results
   if not path then
     return
   end
@@ -370,7 +370,13 @@ function loadFile(path,env) --custom file loader, sets environment, handles erro
     error("The following error occured while loading "..path..": "..tRes[2])
   end
   local func = setfenv(tRes[1],progEnv)
-  tRes = {pcall(func)}
+  tRes = {
+    pcall(
+      function()
+        return func(arg)
+      end
+    )
+  }
   if not tRes[1] then
     error("The following error occured while loading "..path..":\n"..tRes[2])
   end

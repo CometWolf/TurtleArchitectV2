@@ -18,17 +18,34 @@ end
 local menu = {
   enabled = true
 }
+local codeFuncs = {} --holds all the code functions for the code tool
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do
-  local tool = loadFile(tFile.toolFolder.."/"..file,progEnv)
-  tTool[file:match"(.+)%.Lua"] = tool.renderFunc
-  menu[tool.menuOrder] = {
-    name = file:match"(.+)%.Lua",
-    enabled = true,
-    func = function(button)
-      tool.selectFunc(button)
-      renderBottomBar()
-    end
-  }
+  if file ~= "Code.Lua" then
+    local tool = loadFile(tFile.toolFolder.."/"..file,progEnv)
+    local toolName = file:match"(.+)%.Lua"
+    tTool[toolName] = tool.renderFunc
+    codeFuncs[toolName] = tool.codeFunc
+    menu[tool.menuOrder] = {
+      name = toolName,
+      enabled = tool.enabled or true,
+      func = function(button)
+        tool.selectFunc(button)
+        renderBottomBar()
+      end
+    }
+  end
 end
+
+--code tool must be loaded last
+local tool = loadFile(tFile.toolFolder.."/Code.Lua",progEnv,codeFuncs) 
+tTool["Code"] = tool.renderFunc
+menu[tool.menuOrder] = {
+  name = "Code",
+  enabled = false,
+  func = function(button)
+    tool.selectFunc(button)
+    renderBottomBar()
+  end
+}
 return menu

@@ -60,5 +60,8 @@ local tool = {
       renderToolOverlay()
     end
   end,
+  codeFunc = function(sX,sZ,eX,eZ,color,layer) --this is used by the code tool
+    tBlueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+  end
 }
 return tool

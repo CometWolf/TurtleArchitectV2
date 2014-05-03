@@ -1,5 +1,5 @@
 local tool = {
-  menuOrder = 8, --menu order, 1 being top
+  menuOrder = 9, --menu order, 1 being top
   selectFunc = function(button)
     tTool.change("Drag",button)
   end,
