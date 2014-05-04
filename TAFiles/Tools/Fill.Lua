@@ -26,7 +26,7 @@ local tool = {
         if tBlueprint[layer][x][z] == replaceColor
         and x >= tTerm.viewable.sX and x <= tTerm.viewable.eX 
         and z >= tTerm.viewable.sZ and z <= tTerm.viewable.eZ then
-          drawPoint(x,z,color,true,true)
+          drawPoint(x,z,color,layer,true,true)
           table.insert(tAffectedPoints,{["x"] = x,["z"] = z})
         end
         x = tAffectedPoints[1]["x"]
@@ -34,7 +34,7 @@ local tool = {
         if tBlueprint[layer][x][z] == replaceColor
         and x >= tTerm.viewable.sX and x <= tTerm.viewable.eX 
         and z >= tTerm.viewable.sZ and z <= tTerm.viewable.eZ then
-          drawPoint(x,z,color,true,true)
+          drawPoint(x,z,color,layer,true,true)
           table.insert(tAffectedPoints,{["x"] = x,["z"] = z})
         end
       end

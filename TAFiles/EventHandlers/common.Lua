@@ -150,7 +150,7 @@ common = { --common event handlers, these are always active
         file:write('  screenMode = "'..glasses.screenMode..'", --glasses display mode,simply write which modes you want in plain text, remember to capitalize the first letter',line)
         file:save()
         if not oldScreenMode and screenMode then
-          screen:glassInit(glasses.screen.size.x,glasses.screen.size.y,glasses.screen.pos.x,glasses.pos.y)
+          screen:glassInit(glasses.screen.size.x,glasses.screen.size.y,glasses.screen.pos.x,glasses.screen.pos.y)
         elseif not screenMode and oldScreenMode then
           screen:glassClose()
         end
@@ -271,7 +271,11 @@ common = { --common event handlers, these are always active
           end
         elseif type == "Paste" then --this is used for most tools
           tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+          if data.eX and data.eZ then
+            renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
+          else
+            scroll()
+          end
         elseif type == "Point" then --probably brush
           tBlueprint[data.layer][data.x][data.z] = data.color
           if tTerm.scroll.layer == data.layer then

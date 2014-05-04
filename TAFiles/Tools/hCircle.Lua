@@ -66,8 +66,21 @@ local tool = {
     if not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
       error("Expected number,number,number,number",2)
     end
-    tBlueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
-    renderArea(sX,sZ,eX,eZ,true)
+    if codeEnv.settings.direct then
+      local c = {
+        sX = sX,
+        sZ = sZ,
+        eX = eX,
+        eZ = eZ,
+        layer = layer,
+        l = calcFunc(sX,sZ,eX,eZ,color)
+      }
+      tBlueprint[layer]:paste(c.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+      sync(c,"Paste")
+      renderArea(sX,sZ,eX,eZ,true)
+    else
+      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+    end
   end
 }
 return tool

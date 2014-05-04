@@ -1,4 +1,10 @@
-for k,v in pairs(codeEnv.tool) do
+codeEnv.getCanvas = function()
+  return tBlueprint
+end
+
+codeEnv.tool.brush = codeEnv.tool.Brush
+codeEnv.tool.Brush = nil
+for k,v in pairs(codeEnv.tool) do --setup proper environment access for the tool functions
   if type(v) == "function" then
     setfenv(v,progEnv)
   end
@@ -42,9 +48,9 @@ tool = {
       "Input path to code tool file",
       {
         "Cancel",
-        "Ok",
+        "Load",
         "Edit",
-        "Direct"
+        "Execute"
       },
       {
         {
@@ -58,7 +64,7 @@ tool = {
     )
     while button ~= "Cancel" do
       local path = tRes.Path
-      if button == "Direct" then
+      if button == "Execute" then
         local loadRes = {loadstring(path)}
         if not loadRes[1] then
           button,tRes,reInput = reInput("Error: "..loadRes[2])
@@ -66,20 +72,32 @@ tool = {
           setfenv(loadRes[1],codeEnv)
           codeEnv.code = path
           tool.renderFunc = function(event,button,x,z,color,layer)
+            codeEnv.settings.direct = false
             codeEnv.event = event
             codeEnv.button = button
             codeEnv.x = x+tTerm.scroll.x
             codeEnv.z = z+tTerm.scroll.z
             codeEnv.color = color
             codeEnv.layer = layer
+            codeEnv.blueprint = class.blueprint.new(nil,true)
             loadRes[1]()
+            if not codeEnv.settings.direct then
+              tBlueprint:paste(codeEnv.blueprint)
+              local syncObj = {
+                sX = 0,
+                sZ = 0,
+                l = codeEnv.blueprint
+              }
+              sync(syncObj,"Paste")
+              scroll()
+            end
           end
           break
         end
       elseif button == "Edit" then
         shell.run("Edit "..path) --lmao, im actually using shell.run!
         button,tRes,reInput = reInput"Input path to code tool file"
-      else --button == ok, load code
+      else --button == Load, load code
         if not fs.exists(path) then
           button,tRes,reInput = reInput(path.." does not exist!")
         else
@@ -90,13 +108,19 @@ tool = {
             setfenv(loadRes[1],codeEnv)
             codeEnv.code = path
             tool.renderFunc = function(event,button,x,z,color,layer)
+              codeEnv.settings.direct = false
               codeEnv.event = event
               codeEnv.button = button
               codeEnv.x = x+tTerm.scroll.x
               codeEnv.z = z+tTerm.scroll.z
               codeEnv.color = color
               codeEnv.layer = layer
+              codeEnv.blueprint = class.blueprint.new(nil,true)
               loadRes[1]()
+              if not codeEnv.settings.direct then
+                tBlueprint:paste(codeEnv.blueprint)
+                scroll()
+              end
             end
             break
           end

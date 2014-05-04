@@ -1,15 +1,33 @@
 local blueprint
 blueprint = { --blueprint class
-  new = function(data)
+  new = function(data,auto)
     data = data or {}
     data[1] = class.layer.new(data[1])
     data.colorSlots = class.matrix.new(2,data.colorSlots)
-    return setmetatable(
-      data,
-      {
-        __index = blueprint
-      }
-    )
+    if auto then
+      return setmetatable(
+        data,
+        {
+          __index = function(t,k)
+            if type(k) == "number" then
+              for i=#t+1,k do
+                t[i] = class.layer.new()
+              end
+              return t[k]
+            else
+              return blueprint[k]
+            end
+          end
+        }
+      )
+    else
+      return setmetatable(
+        data,
+        {
+          __index = blueprint
+        }
+      )
+    end
   end,
   save = function(blueprint,path,disableTrimming)
   --saves the blueprint to the specified path
@@ -149,6 +167,14 @@ blueprint = { --blueprint class
       end
     end
     return copy
+  end,
+  paste = function(blueprint,clipboard,pX,pZ,merge)
+    --combines blueprint, with an optional offset
+    pX = pX and pX-1 or 0
+    pZ = pZ and pZ-1 or 0
+    for nL = 1,#clipboard do
+      blueprint[nL]:paste(clipboard[nL],pX,pZ,merge)
+    end
   end,
   markBuilt = function(blueprint,x1,z1,x2,z2)
     --marks the blueprint as built, optionally just one area

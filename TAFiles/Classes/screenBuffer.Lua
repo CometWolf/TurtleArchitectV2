@@ -261,13 +261,17 @@ screenBuffer = {
       pixel = class.matrix.new(2),
       text = class.matrix.new(2),
     }
+    local textScale = ((sizeX+sizeY)/2)/8
+    local opacity = glasses.screen.opacity
     for iX = 1,tTerm.screen.x do
+      local xPixel = buffer.glass.pixel[iX]
+      local xText = buffer.glass.text[iX]
+      local pX = ((iX-1)*sizeX)+posX
       for iY = 1,tTerm.screen.y do
-        local pX = ((iX-1)*sizeX)+posX
         local pY = ((iY-1)*sizeY)+posY
-        buffer.glass.pixel[iX][iY] = bridge.addBox(pX,pY,sizeX,sizeY,glasses.screen.opacity)
-        buffer.glass.text[iX][iY] = bridge.addText(pX,pY," ")
-        buffer.glass.text[iX][iY].setScale(((sizeX+sizeY)/2)/8)
+        xPixel[iY] = bridge.addBox(pX,pY,sizeX,sizeY,opacity)
+        xText[iY] = bridge.addText(pX,pY," ")
+        xText[iY].setScale(textScale)
       end
     end
     local file = class.fileTable.new(tFile.settings)
@@ -286,17 +290,21 @@ screenBuffer = {
   glassResize = function(buffer,x,y)
     glasses.size.x = x
     glasses.size.y = y
+    local textScale = ((x+y)/2)/8
     for iX = 1,tTerm.screen.x do
+      local pX = iX*x
+      local xPixel = buffer.glass.pixel[iX]
+      local xText = buffer.glass.text[iX]
       for iY = 1,tTerm.screen.y do
-        local pixel = buffer.glass.pixel[iX][iY]
+        local pixel = xPixel[iY]
         pixel.setHeight(y)
         pixel.setWidth(x)
-        pixel.setX(iX*x)
+        pixel.setX(pX)
         pixel.setY(iY*y)
-        local text = buffer.glass.text[iX][iY]
-        text.setScale(math.floor(((x+y)/2))/8)
-        text.setX((iX*x+1))
-        text.setY((iY*y+1))
+        local text = xPixel[iY]
+        text.setScale(textScale)
+        text.setX(iX*x)
+        text.setY(iY*y)
       end
     end
     local file = class.fileTable.new(tFile.settings)
@@ -324,14 +332,13 @@ screenBuffer = {
     end
     for x,vX in pairs(buffer.changed) do
       for y,layer in pairs(vX) do
-        if not buffer.glass.pixel[x]
-        or not buffer.glass.pixel[x][y] then
-          debug({x = x,y = y})
-          debug(tTerm.viewable)
+        local text = buffer.glass.text[x][y]
+        if text then
+          local pixel = buffer[layer][x][y]
+          buffer.glass.pixel[x][y].setColor(glasses.colors[pixel.bColor])
+          text.setText(pixel.marker)
+          text.setColor(glasses.colors[pixel.tColor])
         end
-        buffer.glass.pixel[x][y].setColor(glasses.colors[buffer[layer][x][y].bColor])
-        buffer.glass.text[x][y].setText(buffer[layer][x][y].marker)
-        buffer.glass.text[x][y].setColor(glasses.colors[buffer[layer][x][y].tColor])
       end
     end
   end,

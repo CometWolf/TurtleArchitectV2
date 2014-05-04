@@ -19,7 +19,10 @@ local menu = {
   enabled = true
 }
 codeEnv = { --Environment for the code tool
-  tool = {} --holds tool codefuncs
+  tool = {}, --holds tool codefuncs
+  settings = {
+    direct = false --whether to affect the blueprint directly, or through a pasted blueprint. this should only be enabled if your code is very light drawing wise.
+  }
 }
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do

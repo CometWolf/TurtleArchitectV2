@@ -1020,8 +1020,8 @@ function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the 
   end
 end
 
-function drawPoint(x,z,color,skipScroll,ignoreOverwrite) --renders the point on screen as well as adding it to the blueprint
-  local layer = tBlueprint[tTerm.scroll.layer]
+function drawPoint(x,z,color,layer,skipScroll,ignoreOverwrite) --renders the point on screen as well as adding it to the blueprint
+  local layer = tBlueprint[layer or tTerm.scroll.layer]
   color = tMode.builtDraw and color:upper() or color
   if not skipScroll then
     x = x+tTerm.scroll.x
