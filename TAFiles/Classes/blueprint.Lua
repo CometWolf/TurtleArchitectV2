@@ -170,8 +170,8 @@ blueprint = { --blueprint class
   end,
   paste = function(blueprint,clipboard,pX,pZ,merge)
     --combines blueprint, with an optional offset
-    pX = pX and pX-1 or 0
-    pZ = pZ and pZ-1 or 0
+    pX = pX and pX-1 or 1
+    pZ = pZ and pZ-1 or 1
     for nL = 1,#clipboard do
       blueprint[nL]:paste(clipboard[nL],pX,pZ,merge)
     end

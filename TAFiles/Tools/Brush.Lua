@@ -20,12 +20,12 @@ tool = {
     if not (type(x) == "number" and type(z) == "number") then
       error("Expected number,number",2)
     end
-    color = color or codeEnv.color
-    layer = layer or codeEnv.layer
+    color = color or codeEnv.click.color
+    layer = layer or codeEnv.click.layer
     if codeEnv.settings.direct then
       drawPoint(x,z,color,layer,true)
     else
-      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+      codeEnv.blueprint[layer][x][z] = color
     end
   end
 }

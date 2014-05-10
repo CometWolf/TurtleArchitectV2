@@ -96,6 +96,25 @@ string = setmetatable(
   }
 )
 
+table = setmetatable(
+  {
+    deepCopy = function(t)
+      local copy = {}
+      for k,v in pairs(t) do
+        if type(v) == "table" and v ~= _G then
+          copy[k] = table.deepCopy(v)
+        else
+          copy[k] = v
+        end
+      end
+      return copy
+    end
+  },
+  {
+    __index = _G.table
+  }
+)
+
 http = setmetatable(
   {
     paste = {
@@ -779,7 +798,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
   screen:setLayer(screen.layers.sideBar)
   local posX,posY = tTerm.screen.x,(tTerm.screen.y > 8+#tMenu.main and tTerm.screen.y-1) or tTerm.screen.y
   for k,v in pairs(colorKey) do
-    if #k == 1 and k:match"[%l%s]" then
+    if string.match(k,"^[%l%s]$") then
       screen:setBackgroundColor(v)
       screen:setCursorPos(posX,posY)
       screen:write" "
@@ -1222,15 +1241,15 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
    --updates input fields
      screen:setLayer(screenLayer)
     field = tInputs[field]
-    if field.cX > field.lX then
-      field.scroll = field.scroll+(field.cX-field.lX)
+    if field.cX >= field.lX then
+      field.scroll = field.scroll+(field.cX+1-field.lX)
       field.cX = field.lX
     elseif field.cX < 0 then
       field.scroll = math.max(0,field.scroll+field.cX)
       field.cX = 0
     end
     if field.cX+field.scroll > #field.value then
-      field.scroll = math.max(0,#field.value-field.lX)
+      field.scroll = math.max(0,#field.value-field.lX+1)
       field.cX = math.max(#field.value-field.scroll,math.min(#field.value,field.lX))
     end
     local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
@@ -1268,7 +1287,11 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         if key == 14
         and (field.cX > 0 or field.scroll > 0) then
           --backspace
-          field.value = field.value:sub(1,field.cX+field.scroll-1)..field.value:sub(field.cX+field.scroll+1)
+          local curs = field.cX+field.scroll
+          if field.cX >= field.lX then
+            curs = curs-1
+          end
+          field.value = field.value:sub(1,curs-1)..field.value:sub(curs+1)
           if field.scroll > 0 then
             field.scroll = field.scroll-1
           else
@@ -1283,7 +1306,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         elseif key == 208 then --down arrow
           tInputs.enabled = math.min(#tInputs,tInputs.enabled+1)
         elseif key == 211 then --delete
-          if #field.value <= 1 and field.cX == 1 then
+          if #field.value <= 1 and field.cX == 0 then
             field.value = ""
           else
             field.value = field.value:sub(1,field.cX+field.scroll)..field.value:sub(field.cX+field.scroll+2)
@@ -1966,6 +1989,9 @@ Event handlers
 ----------------------------------------------------------------------------------------------------------]]--
 eventHandler = loadFile(tFile.eventHandlerFolder.."/eventHandler.Lua")
 local execution = function()
+  while rawget(screen,1) do
+    screen.delLayer(1)
+  end
   eventHandler.switch(eventHandler.main)
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
   tTimers.blink.start()

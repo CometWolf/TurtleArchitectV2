@@ -270,7 +270,11 @@ common = { --common event handlers, these are always active
             end
           end
         elseif type == "Paste" then --this is used for most tools
-          tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
+          if data.layer then
+            tBlueprint[data.layer]:paste(data.l,data.sX,data.sZ,data.merge)
+          else
+            tBlueprint:paste(data.l,data.sX,data.sZ,data.merge)
+          end
           if data.eX and data.eZ then
             renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
           else

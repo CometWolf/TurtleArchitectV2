@@ -169,14 +169,14 @@ colorKey = setmetatable(
   }
 )
 
-local colorKeyNames = {}
-local colorKeyUpper = {}
+local colorLoop = {}
 keyColor = {}
 for kK,vK in pairs(colorKey) do -- add color names to colorKey table
-  colorKeyUpper[kK:upper()] = vK
+  colorLoop[kK:upper()] = vK
   for kC,vC in pairs(colors) do
     if vC == vK then
-      colorKeyNames[kC] = kK
+      colorLoop[vC] = kK
+      colorLoop[kC] = kK
       keyColor[kK] = kC:gsub( --capitalize first letter, add space between first and second word and decap second word
         "^(.)%l-(%u)",
         function(l)
@@ -195,15 +195,10 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
 end
 keyColor.X = "Break"
 
-for k,v in pairs(colorKeyNames) do
+for k,v in pairs(colorLoop) do
   colorKey[k] = v
 end
-colorKeyNames = nil
-
-for k,v in pairs(colorKeyUpper) do
-  colorKey[k] = v
-end
-colorKeyUpper = nil
+colorLoop = nil
 
 tTool = { --Default equipped tools and colors
   [1] = { --left mouse button

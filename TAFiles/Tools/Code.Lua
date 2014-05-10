@@ -10,11 +10,6 @@ for k,v in pairs(codeEnv.tool) do --setup proper environment access for the tool
   end
 end
 
-local sandboxG = {}
-for k,v in pairs(_G) do
-  sandboxG[k] = v
-end
-sandboxG._G = sandboxG
 local tDisabled = { --disabled APIs and functions, edit them if you wish...
   fs = true,
   term = true,
@@ -28,15 +23,27 @@ local tDisabled = { --disabled APIs and functions, edit them if you wish...
   print = true,
   write = true
 }
-for k,v in pairs(tDisabled) do
-  sandboxG[k] = (
-    type(sandboxG[k]) == "table"
-    and setmetatable({},{__index = function() error(k.." functions are disabled within the code tool!",2) end})
-  ) or (
-    function() error(k.." is disabled within the code tool!",2) end
-  )
+
+setmetatable(codeEnv,{__index = _G})
+for k,v in pairs(_G) do
+  if tDisabled[k] then
+    codeEnv[k] = (
+      type(codeEnv[k]) == "table"
+      and setmetatable({},{__index = function() error(k.." functions are disabled within the code tool!",2) end})
+    ) or (
+      function() error(k.." is disabled within the code tool!",2) end
+    )
+  elseif type(v) == "table" then
+    codeEnv[k] = setmetatable({},{__index = v})
+  end
 end
-setmetatable(codeEnv,{__index = sandboxG})
+codeEnv._G = codeEnv
+
+for k,v in pairs(_G.colors) do
+  if type(v) == "number" then
+    codeEnv.colors[k] = colorKey[v]
+  end
+end
 
 codeEnv.debug = debug
 
@@ -73,12 +80,14 @@ tool = {
           codeEnv.code = path
           tool.renderFunc = function(event,button,x,z,color,layer)
             codeEnv.settings.direct = false
-            codeEnv.event = event
-            codeEnv.button = button
-            codeEnv.x = x+tTerm.scroll.x
-            codeEnv.z = z+tTerm.scroll.z
-            codeEnv.color = color
-            codeEnv.layer = layer
+            codeEnv.click = {
+              event = event,
+              button = button,
+              x = x+tTerm.scroll.x,
+              z = z+tTerm.scroll.z,
+              color = color,
+              layer = layer
+            }
             codeEnv.blueprint = class.blueprint.new(nil,true)
             loadRes[1]()
             if not codeEnv.settings.direct then
@@ -109,12 +118,14 @@ tool = {
             codeEnv.code = path
             tool.renderFunc = function(event,button,x,z,color,layer)
               codeEnv.settings.direct = false
-              codeEnv.event = event
-              codeEnv.button = button
-              codeEnv.x = x+tTerm.scroll.x
-              codeEnv.z = z+tTerm.scroll.z
-              codeEnv.color = color
-              codeEnv.layer = layer
+              codeEnv.click = {
+                event = event,
+                button = button,
+                x = x+tTerm.scroll.x,
+                z = z+tTerm.scroll.z,
+                color = color,
+                layer = layer
+              }
               codeEnv.blueprint = class.blueprint.new(nil,true)
               loadRes[1]()
               if not codeEnv.settings.direct then
