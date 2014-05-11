@@ -1894,7 +1894,7 @@ function build(blueprint,auto)
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
-  tOnoging.dropoff = blueprint.colorSlots.X[2] and tOngoing.enderChest and true
+  tOngoing.dropoff = blueprint.colorSlots.X[2] and tOngoing.enderChest and true
   local threshold = digSlot and 1 or 2
   for nL = tOngoing.sLayer,tOngoing.eLayer do
     cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
@@ -1998,7 +1998,7 @@ Event handlers
 eventHandler = loadFile(tFile.eventHandlerFolder.."/eventHandler.Lua")
 local execution = function()
   while rawget(screen,1) do
-    screen.delLayer(1)
+    screen:delLayer(1)
   end
   eventHandler.switch(eventHandler.main)
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
