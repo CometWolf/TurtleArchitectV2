@@ -1672,6 +1672,7 @@ X: ]]..tProgress.x..[[ "]]..tProgress.dir.x..[["
 Y: ]]..tProgress.y..[[ "]]..tProgress.dir.y..[["
 Z: ]]..tProgress.z..[[ "]]..tProgress.dir.z..[["
 Break mode: ]]..(tProgress.breakMode and "ON" or "OFF")..[[ 
+Enderchest: ]]..(tProgress.enderChest or "Disabled")..[[ 
 Load?]],
         {
           "Yes",
@@ -1893,13 +1894,15 @@ function build(blueprint,auto)
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
+  tOnoging.dropoff = blueprint.colorSlots.X[2] and tOngoing.enderChest and true
   local threshold = digSlot and 1 or 2
   for nL = tOngoing.sLayer,tOngoing.eLayer do
     cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
     local layerCopy = tBlueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
+      local xLine = tBlueprint[nL][nX]
       for nZ in pairs(vX) do
-        local block = tBlueprint[nL][nX][nZ]
+        local block = xLine[nZ]
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
@@ -1910,7 +1913,7 @@ function build(blueprint,auto)
               return
             end
             cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
-            blueprint[nL][nX][nZ] = block:upper()
+            xLine[nZ] = block:upper()
             blueprint:save(tFile.blueprint,true)
             sync(
               {
@@ -1928,10 +1931,15 @@ function build(blueprint,auto)
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
             selectColor(block)
-            cTurtle.drop("Y-",false,64)
+            if tOngoing.dropoff then
+              if turtle.getItemCount(tBlueprint.colorSlots.X[#tBlueprint.colorSlots.X]) > 0 then
+                cTurtle.enderDroppoff(tOngoing.enderChest,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+              end
+            else
+              cTurtle.drop("Y-",false,64)
+            end
             cTurtle.dig("-Y"..tOngoing.dir.y)
-            cTurtle.drop("Y-",false,64)
-            blueprint[nL][nX][nZ] = nil
+            xLine[nZ] = nil
             blueprint:save(tFile.blueprint,true)
             sync(
               {
