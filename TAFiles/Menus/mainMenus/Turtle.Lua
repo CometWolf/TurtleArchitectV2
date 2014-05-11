@@ -62,24 +62,5 @@ menu = {
       build(tBlueprint)
     end
   },
-  [4] = {
-    name = "Break mode",
-    enabled = true,
-    func = function()
-      local button = input(
-        [[Break mode means the turtle will break any obstructions in it's path, provided it has a pickaxe.
-Break mode: ]]..tOngoing.breakMode and "ON" or "OFF",
-        {
-          "Cancel",
-          (tOngoing.breakMode and "Break mode OFF" or "Break mode ON"),
-        }
-      )
-      if button == "Break mode ON" then
-        tOngoing.breakMode = true
-      elseif button == "Break mode OFF" then
-        tOngoing.breakMode = false
-      end
-    end
-  },
 }
 return menu

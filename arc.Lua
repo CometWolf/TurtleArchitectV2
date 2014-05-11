@@ -1874,6 +1874,19 @@ Load?]],
       end
     end
   end
+  if not tProgress.breakMode and not auto then
+    local button = input(
+      "Enable break mode?"
+        {
+          "Cancel",
+          "Break mode ON"),
+        }
+      )
+      if button == "Break mode ON" or "Ok" then
+        tOngoing.breakMode = true
+      end
+    end
+  end
   saveProgress(fileName,tProgress)
   return tProgress,fileName
 end
