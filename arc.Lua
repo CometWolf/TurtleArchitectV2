@@ -1507,8 +1507,8 @@ function selectColor(color,threshold)
         return true
       end
     end
-    if cTurtle.tSettings.enderChest then
-      if cTurtle.enderRestock(cTurtle.tSettings.enderChest,tBlueprint.colorSlots[colorNum],tBlueprint.colorSlots[colorNum]) then
+    if cTurtle.tSettings.enderFuel then
+      if cTurtle.enderRestock(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots[colorNum],tBlueprint.colorSlots[colorNum]) then
         turtle.select(tBlueprint.colorSlots[color][1])
         return true
       end
@@ -1867,6 +1867,7 @@ Load?]],
         button,tRes,reInput = reInput("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
         tProgress.enderChest = tRes.Slot
+        cTurtle.tSettings.enderFuel = tRes.Slot
         break
       elseif button == "Permanent" then
         tProgress.enderChest = tRes.Slot
@@ -1907,12 +1908,11 @@ function build(blueprint,auto)
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
-  local threshold = 1
   for nL = tOngoing.sLayer,tOngoing.eLayer do
     cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
-    local layerCopy = tBlueprint[nL]:copy() --table copy because fuck you next
+    local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
-      local xLine = tBlueprint[nL][nX]
+      local xLine = blueprint[nL][nX]
       for nZ in pairs(vX) do
         local block = xLine[nZ]
         local nX = nX
@@ -1920,7 +1920,7 @@ function build(blueprint,auto)
           if block:match"%l" then --unbuilt block
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
-            if not selectColor(block,threshold) then
+            if not selectColor(block,2) then
               input("Construction cancelled.")
               return
             end
@@ -1942,10 +1942,10 @@ function build(blueprint,auto)
           elseif block == "X" then --break block
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
-            selectColor(block)
+            turtle.select(blueprint.colorSlots.X[1])
             if tOngoing.dropoff then
               if turtle.getItemCount(tOngoing.dropoff) > 0 then
-                cTurtle.enderDropoff(tOngoing.enderChest,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+                cTurtle.enderDropoff(tOngoing.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
               end
             else
               cTurtle.drop("Y-",false,64)

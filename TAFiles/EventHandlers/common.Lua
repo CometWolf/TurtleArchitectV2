@@ -349,6 +349,7 @@ common = { --common event handlers, these are always active
           scroll(1,0,0,true,true)
         elseif type == "Colorslots load" then
           tBlueprint.colorsSlots = class.matrix.new(2,data.colorSlots)
+          tBlueprint:save(tFile.blueprint,true)
         end
       elseif event == "Sync OFF"
       and tMode.sync.ids[senderId] then
