@@ -1500,7 +1500,7 @@ function selectColor(color,threshold)
   threshold = threshold or 0 --min amount of items in accepted slot
   while true do
     for k,v in pairs(tBlueprint.colorSlots[color]) do
-      if turtle.getItemCount(v) > threshold then
+      if turtle.getItemCount(v) >= threshold then
         turtle.select(v)
         return true
       end
@@ -1882,7 +1882,7 @@ Load?]],
         "Ok"
       }
     )
-    tOngoing.breakMode = (button == "Ok")
+    tProgress.breakMode = (button == "Ok")
   end
   saveProgress(fileName,tProgress)
   return tProgress,fileName
@@ -1904,8 +1904,8 @@ function build(blueprint,auto)
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
-  tOngoing.dropoff = blueprint.colorSlots.X[2] and tOngoing.enderChest and true
-  local threshold = digSlot and 1 or 2
+  tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
+  local threshold = 1
   for nL = tOngoing.sLayer,tOngoing.eLayer do
     cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
     local layerCopy = tBlueprint[nL]:copy() --table copy because fuck you next
@@ -1942,8 +1942,8 @@ function build(blueprint,auto)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
             selectColor(block)
             if tOngoing.dropoff then
-              if turtle.getItemCount(tBlueprint.colorSlots.X[#tBlueprint.colorSlots.X]) > 0 then
-                cTurtle.enderDroppoff(tOngoing.enderChest,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+              if turtle.getItemCount(tOngoing.dropoff) > 0 then
+                cTurtle.enderDropoff(tOngoing.enderChest,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
               end
             else
               cTurtle.drop("Y-",false,64)
