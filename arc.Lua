@@ -1912,9 +1912,8 @@ function build(blueprint,auto)
     cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
-      local xLine = blueprint[nL][nX]
       for nZ in pairs(vX) do
-        local block = xLine[nZ]
+        local block = blueprint[nL][nX][nZ]
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
@@ -1925,7 +1924,7 @@ function build(blueprint,auto)
               return
             end
             cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
-            xLine[nZ] = block:upper()
+            blueprint[nL][nX][nZ] = block:upper()
             blueprint:save(tFile.blueprint,true)
             sync(
               {
@@ -1951,7 +1950,7 @@ function build(blueprint,auto)
               cTurtle.drop("Y-",false,64)
             end
             cTurtle.dig("-Y"..tOngoing.dir.y)
-            xLine[nZ] = nil
+            blueprint[nL][nX][nZ] = nil
             blueprint:save(tFile.blueprint,true)
             sync(
               {
