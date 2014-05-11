@@ -8,6 +8,7 @@ menu = {
       tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
       sync(t,"Delete")
       tBlueprint[t.layer]:delete(t.sX,t.sZ,t.eX,t.eZ)
+      renderArea(c.sX,c.sZ,c.eX,c.eZ,true)
       tTool.select = {}
     end
   },

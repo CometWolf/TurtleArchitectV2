@@ -388,11 +388,13 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if not tRes.To then
+        if button == "Reinput" then
+          button, tRes, reInput = reInput("Copy current layer("..curLayer..")")
+        elseif not tRes.To then
           button,tRes,reInput = reInput"Missing copy to layer parameter!"
         elseif tRes.To < 1 then
           button,tRes,reInput = reInput("Invalid copy to layer "..tRes.To)
-        elseif tBlueprint[tRes.To] then
+        elseif button == "Ok" and tBlueprint[tRes.To] then
           local button2 = input(
             "The layer "..tRes.To.." already exists!",
             {

@@ -48,7 +48,7 @@ layer = { --layer class
       copy[nX] = vX.new()
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
-          copy[nX][nZ-z.min+1] = vZ
+          copy[nX][nZ-z.min+1] = vZ ~= " " and vZ or nil
           eZ = math.max(eZ,nZ)
         end
       end

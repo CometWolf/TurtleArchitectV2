@@ -926,6 +926,8 @@ function renderToolOverlay() --renders all tool overlays
   screen:clearLayer(screen.layers.toolsOverlay)
   screen:setLayer(screen.layers.toolsOverlay)
   local view = tTerm.viewable
+  local mX = view.mX
+  local mZ = view.mZ
   local t = tTool.clipboard or (tTool.shape.eX and tTool.shape)
   if t then
     local sX = math.min(t.sX,t.eX)
@@ -936,7 +938,7 @@ function renderToolOverlay() --renders all tool overlays
       for iZ = math.max(sZ,view.sZ),math.min(eZ,view.eZ) do 
         local block = t.l[iX-sX+1][iZ-sZ+1]
         if block ~= " " then
-          screen:drawPoint(iX-tTerm.scroll.x+tTerm.viewable.mX,iZ-tTerm.scroll.z+tTerm.viewable.mZ,colorKey[block],block == "X" and block)
+          screen:drawPoint(iX-tTerm.scroll.x+mX,iZ-tTerm.scroll.z+mZ,colorKey[block],block == "X" and block)
         end
       end
     end
@@ -946,10 +948,10 @@ function renderToolOverlay() --renders all tool overlays
   and t.layer == tTerm.scroll.layer then
     screen:clearLayer(screen.layers.toolsOverlay)
     screen:setLayer(screen.layers.toolsOverlay)
-    local sX = t.sX >= view.sX and t.sX <= view.eX and t.sX-tTerm.scroll.x
-    local sZ = t.sZ >= view.sZ and t.sZ <= view.eZ and t.sZ-tTerm.scroll.z
-    local eX = t.eX and t.eX >= view.sX and t.eX <= view.eX and t.eX-tTerm.scroll.x
-    local eZ = t.eX and t.eZ >= view.sZ and t.eZ <= view.eZ and t.eZ-tTerm.scroll.z
+    local sX = t.sX >= view.sX and t.sX <= view.eX and t.sX-tTerm.scroll.x+mX
+    local sZ = t.sZ >= view.sZ and t.sZ <= view.eZ and t.sZ-tTerm.scroll.z+mZ
+    local eX = t.eX and t.eX >= view.sX and t.eX <= view.eX and t.eX-tTerm.scroll.x+mX
+    local eZ = t.eX and t.eZ >= view.sZ and t.eZ <= view.eZ and t.eZ-tTerm.scroll.z+mZ
     local color = tColors.selection
     if sX then
       if sZ then
@@ -1242,7 +1244,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
      screen:setLayer(screenLayer)
     field = tInputs[field]
     if field.cX >= field.lX then
-      field.scroll = field.scroll+(field.cX+1-field.lX)
+      field.scroll = field.scroll+(field.cX-field.lX)
       field.cX = field.lX
     elseif field.cX < 0 then
       field.scroll = math.max(0,field.scroll+field.cX)

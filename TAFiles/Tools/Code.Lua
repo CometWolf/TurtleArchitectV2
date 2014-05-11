@@ -91,7 +91,7 @@ tool = {
             codeEnv.blueprint = class.blueprint.new(nil,true)
             loadRes[1]()
             if not codeEnv.settings.direct then
-              tBlueprint:paste(codeEnv.blueprint)
+              tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
               local syncObj = {
                 sX = 0,
                 sZ = 0,
@@ -129,7 +129,13 @@ tool = {
               codeEnv.blueprint = class.blueprint.new(nil,true)
               loadRes[1]()
               if not codeEnv.settings.direct then
-                tBlueprint:paste(codeEnv.blueprint)
+                tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
+                local syncObj = {
+                  sX = 0,
+                  sZ = 0,
+                  l = codeEnv.blueprint
+                }
+                sync(syncObj,"Paste")
                 scroll()
               end
             end
