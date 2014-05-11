@@ -1909,7 +1909,6 @@ function build(blueprint,auto)
   local digSlot = blueprint.colorSlots.X[1]
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
   for nL = tOngoing.sLayer,tOngoing.eLayer do
-    cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
       for nZ in pairs(vX) do
@@ -1917,6 +1916,7 @@ function build(blueprint,auto)
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
+            cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
             if not selectColor(block,2) then
@@ -1944,7 +1944,7 @@ function build(blueprint,auto)
             turtle.select(blueprint.colorSlots.X[1])
             if tOngoing.dropoff then
               if turtle.getItemCount(tOngoing.dropoff) > 0 then
-                cTurtle.enderDropoff(tOngoing.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+                cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
               end
             else
               cTurtle.drop("Y-",false,64)
