@@ -11,7 +11,7 @@ tTool.change = function(tool,b1,b2) --tool change function
     tTool.select = {}
     tTool.clipboard = false
     tTool.shape = {}
-    screen:delLayer(screen.layers.toolsOverlay)
+    screen:clearLayer(screen.layers.toolsOverlay)
   end
 end
 

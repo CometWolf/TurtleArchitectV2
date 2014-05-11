@@ -527,7 +527,9 @@ menu = {
       )
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
-        if not from then
+        if button == "Reinput" then
+          button,tRes,reInput = reInput"Copy layer range"
+        elseif not from then
           button,tRes,reInput = reInput"Missing starting layer parameter!"
         elseif not to then
           button,tRes,reInput = reInput"Missing to layer parameter!"
@@ -538,7 +540,7 @@ menu = {
           button,tRes,reInput = reInput"Missing copy into layer parameter!"
         elseif tRes.Into < 1 then
           button,tRes,reInput = reInput("Invalid copy to layer "..tRes.Into) 
-        elseif tBlueprint[tRes.Into] then
+        elseif button == "Ok" and tBlueprint[tRes.Into] then
           local button2 = input(
             "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).."!",
             {
@@ -547,7 +549,7 @@ menu = {
               "Insert"
             }
           )
-          button = (button2 == "cancel") and "Reinput" or button2
+          button = (button2 == "Cancel") and "Reinput" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.Into do
