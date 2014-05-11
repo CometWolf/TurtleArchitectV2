@@ -1508,7 +1508,7 @@ function selectColor(color,threshold)
       end
     end
     if cTurtle.tSettings.enderFuel then
-      if cTurtle.enderRestock(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots[colorNum],tBlueprint.colorSlots[colorNum]) then
+      if cTurtle.enderRestock(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots[color],tBlueprint.colorSlots[color]) then
         turtle.select(tBlueprint.colorSlots[color][1])
         return true
       end
