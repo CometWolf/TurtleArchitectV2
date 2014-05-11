@@ -630,11 +630,6 @@ if not glasses.bridge then
 end
 
 if tArg[1] then --attempt to load argument blueprint
-  local load = tArg[1]
-  if turtle and tArg[2] and tArg[1] == "-r" then
-    load = tArg[2]
-    tMode.recovery = true
-  end
   tBlueprint = class.blueprint.load(tArg[1]) or class.blueprint.new()
   tFile.blueprint = tArg[1]
 else
@@ -2024,7 +2019,7 @@ local execution = function()
   renderBottomBar()
   renderSideBar()
   tBlueprint[1]:render()
-  if tMode.recovery and tArg[2] then
+  if turtle and tArg[2] == "-r" then
     build(tBlueprint,true)
   end
   while true do
