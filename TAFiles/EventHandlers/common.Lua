@@ -1,5 +1,8 @@
 local common
 common = { --common event handlers, these are always active
+  turtle = function(tEvent)
+    os.queueEvent(unpack(tEvent))
+  end,
   timer = function(tEvent)
     local timerID = tEvent[2]
     if timerID == tTimers.blink.id then
