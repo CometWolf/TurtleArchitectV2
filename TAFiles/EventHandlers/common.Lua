@@ -1,6 +1,6 @@
 local common
 common = { --common event handlers, these are always active
-  turtle = function(tEvent)
+  turtle_response = function(tEvent)
     os.queueEvent(unpack(tEvent))
   end,
   timer = function(tEvent)

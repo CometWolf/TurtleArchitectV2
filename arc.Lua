@@ -1660,6 +1660,7 @@ function assignColorSlots(color)
 end
 
 function checkProgress(fileName,tProgress,blueprint,auto)
+  blueprint = blueprint or class.blueprint.load(fileName) or tBlueprint
   if fileName
   and fs.exists(fileName..".TAo")
   and not tProgress then
@@ -1729,7 +1730,6 @@ Load?]],
       end
     end
   end
-  local blueprint = blueprint or class.blueprint.load(fileName) or tBlueprint
   local tUsage = checkUsage(blueprint,tProgress.sLayer,tProgress.eLayer)
   local fuelUsage = tUsage.fuel
   tUsage.fuel = nil
@@ -1908,7 +1908,7 @@ function build(blueprint,auto)
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
-  for nL = tOngoing.sLayer,tOngoing.eLayer do
+  for nL = tOngoing.sLayer,math.min(tOngoing.eLayer,#blueprint) do
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
       for nZ in pairs(vX) do
