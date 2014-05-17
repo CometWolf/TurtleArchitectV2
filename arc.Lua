@@ -692,39 +692,43 @@ function renderBottomBar() --renders bottom bar and updates info
   local screenX = tTerm.screen.y > 8+#tMenu.main and tTerm.screen.x-2 or tTerm.screen.x-3
   screen:write(string.rep(" ",math.max(screenX-#coordString-cursX+1,0))..coordString)
   for iX = screenX-#coordString+1,screenX do
-    tBar.touchMap[iX][cursY] = function()
-      local button, tRes, reInput = input(
-        "Go to",
-        {
-          "Ok",
-          "Cancel"
-        },
-        {
+    tBar.touchMap[iX][cursY] = function(button)
+      if tTool[button].tool == "Help" then
+        input"These are the current view coordinates.\nX is left and right.\nZ is up and down.\nY is the current layer.\nClicking these without the help tool equipped will allow you to input them directly"
+      else
+        local button, tRes, reInput = input(
+          "Go to",
           {
-            name = "X",
-            value = tTerm.scroll.x,
-            accepted = "%d"
+            "Ok",
+            "Cancel"
           },
           {
-            name = "Y",
-            value = tTerm.scroll.layer,
-            accepted = "%d"
+            {
+              name = "X",
+              value = tTerm.scroll.x,
+              accepted = "%d"
+            },
+            {
+              name = "Y",
+              value = tTerm.scroll.layer,
+              accepted = "%d"
+            },
+            {
+              name = "Z",
+              value = tTerm.scroll.z,
+              accepted = "%d"
+            }
           },
-          {
-            name = "Z",
-            value = tTerm.scroll.z,
-            accepted = "%d"
-          }
-        },
-        false,
-        true
-      )
-      while button ~= "Cancel" do
-        if not tBlueprint[tRes.Y] then
-          button, tRes, reInput = reInput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
-        else
-          scroll(tRes.Y,tRes.X,tRes.Z,true)
-          return
+          false,
+          true
+        )
+        while button ~= "Cancel" do
+          if not tBlueprint[tRes.Y] then
+            button, tRes, reInput = reInput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
+          else
+            scroll(tRes.Y,tRes.X,tRes.Z,true)
+            return
+          end
         end
       end
     end
@@ -782,8 +786,17 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
           (
             enabled
             and function(button)
-              renderMenu()
-              menu.items[iMenu].func(button)
+              if tTool[button].tool == "Help" then
+                local help = menu.items[iMenu].help
+                if help then
+                  help(button)
+                else
+                  input(menu.items[iMenu].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"")
+                end
+              else
+                renderMenu()
+                menu.items[iMenu].func(button)
+              end
             end
           ) or (
             true --true prevents the touchmap func from closing the menu
@@ -803,8 +816,12 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       screen:setCursorPos(posX,posY)
       screen:write" "
       tBar.touchMap[posX][posY] = function(button)
-        tTool[button].color = k
-        renderBottomBar()
+        if tTool[button].tool == "Help" then
+          input"This is the color selection. It's used to select what color your current tool draws with"
+        else
+          tTool[button].color = k
+          renderBottomBar()
+        end
       end
       posX = posX-1
       if posX < tTerm.screen.x-1 then
@@ -856,15 +873,23 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
     if posY > 2 then
       screen:setCursorPos(tTerm.screen.x-1,1)
       screen:write"/\\"
-      tBar.touchMap[tTerm.screen.x][1] = function()
-        tBlueprint[tTerm.scroll.layer+1] = tBlueprint[tTerm.scroll.layer+1] or class.layer.new()
-        scroll(tTerm.scroll.layer+1)
+      tBar.touchMap[tTerm.screen.x][1] = function(button)
+        if tTool[button].tool == "Help" then
+          input"These buttons are used to change layers up and down. This one goes up one layer, as well as create new ones if they don't exist"
+        else
+          tBlueprint[tTerm.scroll.layer+1] = tBlueprint[tTerm.scroll.layer+1] or class.layer.new()
+          scroll(tTerm.scroll.layer+1)
+        end
       end
       tBar.touchMap[tTerm.screen.x-1][1] = tBar.touchMap[tTerm.screen.x][1]
       screen:setCursorPos(tTerm.screen.x-1,2)
       screen:write"\\/"
-      tBar.touchMap[tTerm.screen.x][2] = function()
-        scroll(tTerm.scroll.layer-1)
+      tBar.touchMap[tTerm.screen.x][2] = function(button)
+        if tTool[button].tool == "Help" then
+          input"These buttons are used to change layers up and down. This one goes down one layer"
+        else
+          scroll(tTerm.scroll.layer-1)
+        end
       end
       tBar.touchMap[tTerm.screen.x-1][2] = tBar.touchMap[tTerm.screen.x][2]
     end
@@ -874,8 +899,12 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
     screen:write("XX")
     for i=0,1 do
       tBar.touchMap[tTerm.screen.x-i][tTerm.screen.y] = function(button)
-        tTool[button].color = "X"
-        renderBottomBar()
+        if tTool[button].tool == "Help" then
+          input"This is the break marker, every block you draw with this will be broken by the turtle."
+        else
+          tTool[button].color = "X"
+          renderBottomBar()
+        end
       end
     end
   else
@@ -884,8 +913,12 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
     screen:setTextColor(colorKey.X)
     screen:write("X")
     tBar.touchMap[tTerm.screen.x-2][tTerm.screen.y] = function(button)
-      tTool[button].color = "X"
-      renderBottomBar()
+      if tTool[button].tool == "Help" then
+        input"This is the break marker, every block you draw with this will be broken by the turtle."
+      else
+        tTool[button].color = "X"
+        renderBottomBar()
+      end
     end
   end
 end
@@ -2048,6 +2081,8 @@ while true do
     if tRes[2] == "Exit"
     or tRes[2] == "Terminated" then
       return Quit()
+    elseif tArg[2] == "-r" then
+      --recovery mode ignores errors
     elseif tTerm.color then --color supported crash
       local errors = ""
       local button = input(

@@ -22,6 +22,19 @@ end
 
 local tool = {
   menuOrder = 3, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The filled square tool lets you draw a filled square by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button)
     tTool.change("fSquare",1,2)
   end,

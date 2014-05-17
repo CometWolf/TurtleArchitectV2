@@ -25,6 +25,19 @@ end
 
 local tool = {
   menuOrder = 2, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The hollow square tool lets you draw a hollow square by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button)
     tTool.change("hSquare",1,2)
   end,

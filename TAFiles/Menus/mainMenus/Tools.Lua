@@ -13,6 +13,7 @@ tTool.change = function(tool,b1,b2) --tool change function
     tTool.shape = {}
     screen:clearLayer(screen.layers.toolsOverlay)
   end
+  renderBottomBar()
 end
 
 local menu = {
@@ -33,11 +34,9 @@ for _k,file in pairs(fs.list(tFile.toolFolder)) do
     codeEnv.tool[toolName] = tool.codeFunc
     menu[tool.menuOrder] = {
       name = toolName,
-      enabled = tool.enabled or true,
-      func = function(button)
-        tool.selectFunc(button)
-        renderBottomBar()
-      end
+      enabled = tool.enabled,
+      help = tool.help,
+      func = tool.selectFunc
     }
   end
 end
@@ -50,9 +49,7 @@ end
 menu[tool.menuOrder] = {
   name = "Code",
   enabled = true,
-  func = function(button)
-    tool.selectFunc(button)
-    renderBottomBar()
-  end
+  help = tool.help,
+  func = tool.selectFunc
 }
 return menu

@@ -50,6 +50,41 @@ codeEnv.debug = debug
 local tool  
 tool = {
   menuOrder = 8, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The code tool is a very unique tool. Using regular Lua code, you can code your own tool directly.",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+      return
+    end
+    button = input(
+      "Click information is stored in the click table under the keys\nx,z,color,layer,button and event.",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+      return
+    end
+    input(
+      "Most of the default tools may be called from this code as well, indexed in the tool table.\ntool.hSquare(x1,z1,x2,z2,color,layer)\nIf not specified, click.color and click.layer is used for the color and layer respectively",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(clickButton)
     local button,tRes,reInput = input(
       "Input path to code tool file",
@@ -89,8 +124,10 @@ tool = {
               layer = layer
             }
             codeEnv.blueprint = class.blueprint.new(nil,true)
-            loadRes[1]()
-            if not codeEnv.settings.direct then
+            local tCallRes = {pcall(loadRes[1])}
+            if not tCallRes[1] then
+              input("Code tool error:\n"..tCallRes[2])
+            elseif not codeEnv.settings.direct then
               tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
               local syncObj = {
                 sX = 0,
@@ -127,8 +164,10 @@ tool = {
                 layer = layer
               }
               codeEnv.blueprint = class.blueprint.new(nil,true)
-              loadRes[1]()
-              if not codeEnv.settings.direct then
+              local tCallRes = {pcall(loadRes[1])}
+              if not tCallRes[1] then
+                input("Code tool error:\n"..tCallRes[2])
+              elseif not codeEnv.settings.direct then
                 tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
                 local syncObj = {
                   sX = 0,

@@ -2,6 +2,19 @@
 local tool 
 tool = {
   menuOrder = 7, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The select tool has a myriad of functions.\nLeft click and drag to select an area, then right click to open up the selection menu. Here you can cut, copy, delete, recolor and change the built status of your current selection",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button)
     tTool.change("Select",1,2)
   end,

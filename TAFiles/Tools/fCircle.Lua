@@ -34,8 +34,22 @@ local calcFunc = function(x1,z1,x2,z2,color)
   return points
 end
 
-local tool = {
+local tool
+tool = {
   menuOrder = 5, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The filled circle tool lets you draw a filled circle by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button)
     tTool.change("fCircle",1,2)
   end,

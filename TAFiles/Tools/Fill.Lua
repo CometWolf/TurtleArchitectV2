@@ -1,5 +1,19 @@
-local tool = {
+local tool
+tool = {
   menuOrder = 6, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The fill tool will replace the block you click on and any block connected to it of the same color, to the color it has equipped. It will not go beyond the visible canvas however",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button) --called when the tool is selected
     tTool.change("Fill",button) --sets the tool on (button) to "Fill"
   end,

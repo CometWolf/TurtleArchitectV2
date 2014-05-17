@@ -1,6 +1,19 @@
 local tool
 tool = {
   menuOrder = 1, --menu order, 1 being top
+  enabled = true,
+  help = function(clickButton)
+    local button = input(
+      "The brush tool is the simplest tool, it merely draws a single block of your chosen color",
+      {
+        "Ok",
+        "Equip"
+      }
+    )
+    if button == "Equip" then
+      tool.selectFunc(clickButton)
+    end
+  end,
   selectFunc = function(button)
     tTool.change("Brush",button)
   end,
