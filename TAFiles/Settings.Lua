@@ -209,6 +209,10 @@ tTool = { --Default equipped tools and colors
     tool = "Brush",
     color = colorKey.white
   },
+  [3] = { --middle mouse button, somewhat secret...
+    tool = "Help",
+    color = colorKey.white
+  },
   select = {}, --contains selection tool info
   clipboard = false, --tool clipboard
   shape = {} --contains circle and square tool info

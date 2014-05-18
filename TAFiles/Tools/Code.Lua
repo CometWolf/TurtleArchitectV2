@@ -2,6 +2,22 @@ codeEnv.getCanvas = function()
   return tBlueprint
 end
 
+codeEnv.overlay = function(overlay,x,z)
+  if not (overlay and x and z)
+  or type(x) ~= "number"
+  or type(z) ~= "number" 
+  or type(overlay) ~= "table" 
+  or not overlay.size then
+    error("layer,number,number expected",2)
+  end
+  tTool.shape.sX = x
+  tTool.shape.sZ = z
+  tTool.shape.eX,tTool.shape.eZ = overlay:size()
+  tTool.shape.eX = tTool.shape.eX+x
+  tTool.shape.eZ = tTool.shape.eZ+z
+  tTool.shape.l = overlay
+end
+
 codeEnv.tool.brush = codeEnv.tool.Brush
 codeEnv.tool.Brush = nil
 for k,v in pairs(codeEnv.tool) do --setup proper environment access for the tool functions
@@ -53,7 +69,7 @@ tool = {
   enabled = true,
   help = function(clickButton)
     local button = input(
-      "The code tool is a very unique tool. Using regular Lua code, you can code your own tool directly.",
+      "The code tool is a very unique tool. Using regular Lua code, you can code your own tool directly. This code can either be input directly into the dialogue window, or loaded from a file",
       {
         "Ok",
         "Equip"
@@ -64,7 +80,7 @@ tool = {
       return
     end
     button = input(
-      "Click information is stored in the click table under the keys\nx,z,color,layer,button and event.",
+      "Click information is stored in the click table under the keys:\nx,z,color,layer,button and event.\n",
       {
         "Ok",
         "Equip"
@@ -92,7 +108,7 @@ tool = {
         "Cancel",
         "Load",
         "Edit",
-        "Execute"
+        "Compile"
       },
       {
         {
@@ -106,7 +122,7 @@ tool = {
     )
     while button ~= "Cancel" do
       local path = tRes.Path
-      if button == "Execute" then
+      if button == "Compile" then
         local loadRes = {loadstring(path)}
         if not loadRes[1] then
           button,tRes,reInput = reInput("Error: "..loadRes[2])
@@ -126,7 +142,16 @@ tool = {
             codeEnv.blueprint = class.blueprint.new(nil,true)
             local tCallRes = {pcall(loadRes[1])}
             if not tCallRes[1] then
-              input("Code tool error:\n"..tCallRes[2])
+              local button = input(
+                "Code tool error:\n"..(tCallRes[2]:match"string:1: (.+)" or tCallRes[2]),
+                {
+                  "Ok",
+                  "Edit"
+                }
+              )
+              if button == "Edit" then
+                tool.selectFunc()
+              end
             elseif not codeEnv.settings.direct then
               tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
               local syncObj = {
@@ -141,7 +166,25 @@ tool = {
           break
         end
       elseif button == "Edit" then
-        shell.run("Edit "..path) --lmao, im actually using shell.run!
+        local events = {}
+        parallel.waitForAny(
+          function()
+            shell.run("edit "..path) --lmao, im actually using shell.run!
+          end,
+          function()
+            while true do
+              local tEvent = {os.pullEvent()}
+              if tEvent[1] == "modem_message"
+              or tEvent[1] == "timer" then
+                events[#events+1] = tEvent
+              end
+            end
+          end
+        )
+        screen:redraw()
+        for i=1,#events do
+          os.queueEvent(unpack(events[i]))
+        end
         button,tRes,reInput = reInput"Input path to code tool file"
       else --button == Load, load code
         if not fs.exists(path) then
@@ -166,7 +209,16 @@ tool = {
               codeEnv.blueprint = class.blueprint.new(nil,true)
               local tCallRes = {pcall(loadRes[1])}
               if not tCallRes[1] then
-                input("Code tool error:\n"..tCallRes[2])
+                local button = input(
+                  "Code tool error:\n"..tCallRes[2],
+                  {
+                    "Ok",
+                    "Edit"
+                  }
+                )
+                if button == "Edit" then
+                  tool.selectFunc()
+                end
               elseif not codeEnv.settings.direct then
                 tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
                 local syncObj = {

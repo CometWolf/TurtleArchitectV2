@@ -8,6 +8,9 @@ menu = {
     enabled = function()
       return tMode.sync.turtles > 0 and true
     end,
+    help = function()
+      input"Move a synced turtle to the given coordinates"
+    end,
     func = function()
       local turtles = ""
       local id
@@ -89,6 +92,9 @@ menu = {
     enabled = function()
       return tMode.sync.turtles > 0 and true
     end,
+    help = function()
+      input"Turn a synced turtle in the given direction. Most forms of directions are supported, like x+,north or right"
+    end,
     func = function()
       local turtles = ""
       local id
@@ -155,6 +161,9 @@ menu = {
     name = "Build blueprint...",
     enabled = function()
       return tMode.sync.turtles > 0 and true
+    end,
+    help = function()
+      input"Makes synced turtles build the currently loaded blueprint"
     end,
     func = function()
       if not dialogue.save"Blueprint must be saved locally prior to building!" then

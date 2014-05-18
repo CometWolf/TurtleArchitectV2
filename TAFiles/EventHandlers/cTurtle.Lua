@@ -54,8 +54,9 @@ handler = { --cTurtle only events
   blocked = 0, --amount of times the turtle has been blocked
   moveFail = function() --movement blocked
     handler.blocked = handler.blocked+1
-    if handler.blocked%20 == 0
+    if handler.blocked > 20
     and tMode.sync.amount > 0 then
+      handler.blocked = 0
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocked",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
     end
   end

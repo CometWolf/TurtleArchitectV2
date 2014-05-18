@@ -4,6 +4,9 @@ menu = {
   [1] = {
     name = "Create new...",
     enabled = true,
+    help = function()
+      input"Creates a new blank layer"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Create new layer...",
@@ -55,6 +58,9 @@ menu = {
   [2] = {
     name = "Import...",
     enabled = true,
+    help = function()
+      input"Import layers from another blueprint into this one"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Import layers from another blueprint",
@@ -154,6 +160,9 @@ menu = {
   [3] = {
     name = "Delete current",
     enabled = true,
+    help = function()
+      input"Deletes the currently selected layer"
+    end,
     func = function()
       local delLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -179,6 +188,9 @@ menu = {
   [4] = {
     name = "Delete range...",
     enabled = true,
+    help = function()
+      input"Deletes a specified set of layers, aswell as moving any existant layers down to fill the gap"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Delete layer range",
@@ -228,6 +240,9 @@ menu = {
   [5] = {
     name = "Move to...",
     enabled = true,
+    help = function()
+      input"Move the currently selected layer"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes, reInput = input(
@@ -287,6 +302,9 @@ menu = {
   [6] = {
     name = "Move range...",
     enabled = true,
+    help = function()
+      input"Move a set of layers"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Move layer range",
@@ -369,6 +387,9 @@ menu = {
   [7] = {
     name = "Copy to...",
     enabled = true,
+    help = function()
+      input"Make a copy of the currently selected layer"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes, reInput = input(
@@ -426,6 +447,9 @@ menu = {
   [8] = {
     name = "Stretch copy...",
     enabled = true,
+    help = function()
+      input"Make multiple copies of the currently selected layer"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Stretch copy current layer("..tTerm.scroll.layer..") across",
@@ -498,6 +522,9 @@ menu = {
   [9] = {
     name = "Copy range...",
     enabled = true,
+    help = function()
+      input"Copy a set of layers"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Copy layer range",
@@ -580,6 +607,9 @@ menu = {
   [10] = {
     name = "Merge...",
     enabled = true,
+    help = function()
+      input"Combine a set of layers into 1"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Merge layer range",
@@ -628,6 +658,9 @@ menu = {
   [11] = {
     name = "Flip...",
     enabled = true,
+    help = function()
+      input"Flip the currently selected layer horizontally or vertically"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button = input(
@@ -652,6 +685,9 @@ menu = {
   [12] = {
     name = "Mark built",
     enabled = true,
+    help = function()
+      input"Mark the entire current layer as built, meaning the turtle will skip it"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -673,6 +709,9 @@ menu = {
   [13] = {
     name = "Mark unbuilt",
     enabled = true,
+    help = function()
+      input"Reset all build progress made on current layer"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -694,6 +733,9 @@ menu = {
   [14] = {
     name = "Goto...",
     enabled = true,
+    help = function()
+      input"Scroll to given layer"
+    end,
     func = function()
       local button, tRes = input(
         "Goto layer number...",

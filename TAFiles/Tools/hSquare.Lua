@@ -70,22 +70,29 @@ local tool = {
   codeFunc = function(sX,sZ,eX,eZ,color,layer) --this is used by the code tool
     color = color or codeEnv.click.color
     layer = layer or codeEnv.click.layer
-    if not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
+    if not (sX and sZ and eX and eZ)
+    or not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
       error("Expected number,number,number,number",2)
     end
     if codeEnv.settings.direct then
-      local s = {
-        sX = sX,
-        sZ = sZ,
-        eX = eX,
-        eZ = eZ,
-        layer = layer,
-        l = calcFunc(sX,sZ,eX,eZ,color)
-      }
-      tBlueprint[layer]:paste(s.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
-      sync(s,"Paste")
-      renderArea(sX,sZ,eX,eZ,true)
-    else
+      if type(layer) == "table" and layer.paste then
+        layer:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+      else
+        local s = {
+          sX = sX,
+          sZ = sZ,
+          eX = eX,
+          eZ = eZ,
+          layer = layer,
+          l = calcFunc(sX,sZ,eX,eZ,color)
+        }
+        tBlueprint[layer]:paste(s.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+        sync(s,"Paste")
+        renderArea(sX,sZ,eX,eZ,true)
+      end
+    elseif type(layer) == "table" and layer.paste then
+      layer:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+    elseif type(layer) == "number" then
       codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
     end
   end

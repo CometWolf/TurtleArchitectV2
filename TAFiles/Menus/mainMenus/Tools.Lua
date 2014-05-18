@@ -5,6 +5,12 @@ tTool.change = function(tool,b1,b2) --tool change function
     if b2 then
       tTool[b2].prevTool = tTool[b2].tool
       tTool[b2].tool = tool
+      tTool.double = true
+    elseif tTool.double then
+      tTool.double = false
+      b2 = b1 == 1 and 2 or 1
+      tTool[b2].tool = tTool[b2].prevTool
+      tTool[b2].prevTool = tTool[b2].tool
     end
   end
   if tTool.shape.eX or tTool.clipboard or tTool.select.sX then
@@ -21,6 +27,10 @@ local menu = {
 }
 codeEnv = { --Environment for the code tool
   tool = {}, --holds tool codefuncs
+  class = { --class table for creating layers and blueprints
+    layer = class.layer,
+    blueprint = class.blueprint
+  },
   settings = {
     direct = false --whether to affect the blueprint directly, or through a pasted blueprint. this should only be enabled if your code is very light drawing wise.
   }

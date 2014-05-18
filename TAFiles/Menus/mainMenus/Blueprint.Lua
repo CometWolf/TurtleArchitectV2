@@ -4,6 +4,9 @@ menu = {
   [1] = {
     name = "Create new...",
     enabled = true,
+    help = function()
+      input"Creates a new blueprint and unloads the current one."
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Create new blueprint file...",
@@ -40,6 +43,9 @@ menu = {
   [2] = {
     name = "Load...",
     enabled = true,
+    help = function()
+      input"Loads a previously saved blueprint."
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Load blueprint file",
@@ -104,6 +110,9 @@ menu = {
   [3] = {
     name = "Save",
     enabled = true,
+    help = function()
+      input"Saves the current blueprint. If it has not been saved previously, a file name is requested"
+    end,
     func = function()
       dialogue.save()
     end
@@ -111,6 +120,9 @@ menu = {
   [4] = {
     name = "Save as...",
     enabled = true,
+    help = function()
+      input"Save the current blueprint with a new name, or upload it to pastebin"
+    end,
     func = function()
       local button, tRes, reInput = input(
         "Save current blueprint as",
@@ -155,6 +167,9 @@ menu = {
   [5] = {
     name = "Send...",
     enabled = true and modem,
+    help = function()
+      input"Transfer the currently loaded blueprint via rednet. This is only enabled if a modem is connected"
+    end,
     func = function()
       local button, tRes, reInput = input(
       "Transfer current blueprint via rednet",
@@ -203,6 +218,9 @@ menu = {
   [6] = {
     name = "Flip...",
     enabled = true,
+    help = function()
+      input"Flip the entire blueprint vertically or horizontally"
+    end,
     func = function()
       local button = input(
         "Flip the entire blueprint",
@@ -226,6 +244,9 @@ menu = {
   [7] = {
     name = "Edit slot data...",
     enabled = true,
+    help = function()
+      input"Change the slots used for the color currently equipped on the button you clicked with"
+    end,
     func = function(button)
       assignColorSlots(tTool[button].color)
       sync({colorSlots = tBlueprint.colorSlots},"Colorslots load")
@@ -234,6 +255,9 @@ menu = {
   [8] = {
     name = "Mark built",
     enabled = true,
+    help = function()
+      input"Marks the entire blueprint as built, meaning the turtle will not build any of the currently drawn blocks"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -255,6 +279,9 @@ menu = {
   [9] = {
     name = "Mark unbuilt",
     enabled = true,
+    help = function()
+      input"Resets all build progress made on the blueprint, by marking every block as un-built"
+    end,
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = input(
@@ -276,6 +303,9 @@ menu = {
   [10] = {
     name = "Check usage",
     enabled = true,
+    help = function()
+      input"Check the materials required to build a given layer range"
+    end,
     func = function()
       local button, tRes = input(
         "Check material requirements for the layer range",

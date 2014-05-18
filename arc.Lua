@@ -62,11 +62,7 @@ os = setmetatable(
 math = setmetatable(
   {
     round = function(num)
-      if num+0.5 > math.ceil(num) then
-        return math.ceil(num)
-      else
-        return math.floor(num)
-      end
+      return num+0.5 > math.ceil(num) and math.ceil(num) or math.floor(num)
     end
   },
   {
@@ -781,27 +777,21 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
       screen:setTextColor(enabled and tColors.enabledMenuText or tColors.disabledMenuText)
       screen:setCursorPos(sX,sY)
       screen:write(menu.items[iMenu].string)
+      local menuFunc = function(button)
+        if tTool[button].tool == "Help" then
+          local help = menu.items[iMenu].help
+          if help then
+            help(button)
+          else
+            input(menu.items[iMenu].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"")
+          end
+        else
+          renderMenu()
+          menu.items[iMenu].func(button)
+        end
+      end
       for iX = sX,sX+menu.lX do
-        tMenu.touchMap[iX][sY] = (
-          (
-            enabled
-            and function(button)
-              if tTool[button].tool == "Help" then
-                local help = menu.items[iMenu].help
-                if help then
-                  help(button)
-                else
-                  input(menu.items[iMenu].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"")
-                end
-              else
-                renderMenu()
-                menu.items[iMenu].func(button)
-              end
-            end
-          ) or (
-            true --true prevents the touchmap func from closing the menu
-          )
-        )
+        tMenu.touchMap[iX][sY] = enabled and menuFunc or true --true prevents the touchmap func from closing the menu
       end
     end
   end
@@ -2054,6 +2044,7 @@ local execution = function()
   tBlueprint[1]:render()
   if turtle and tArg[2] == "-r" then
     build(tBlueprint,true)
+    tArg[2] = nil
   end
   while true do
     eventHandler.pull()
@@ -2078,7 +2069,9 @@ end
 while true do
   local tRes = {pcall(execution)}
   if not tRes[1] then
-    if tRes[2] == "Exit"
+    if tRes[2] == "Update" then
+      return
+    elseif tRes[2] == "Exit"
     or tRes[2] == "Terminated" then
       return Quit()
     elseif tArg[2] == "-r" then

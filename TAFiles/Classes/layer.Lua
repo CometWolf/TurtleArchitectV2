@@ -6,12 +6,8 @@ layer = { --layer class
       {
         __index = function(t,k)
           if not layer[k] then
-            if type(k) == "number" then
-              t[k] = class.x.new()
-              return t[k]
-            else
-              error("Attempt to access invalid x-axis "..tostring(k),2)
-            end
+            t[k] = class.x.new()
+            return t[k]
           end
           return layer[k]
         end,
@@ -19,11 +15,14 @@ layer = { --layer class
     )
   end,
   size = function(layer)
-    local size = 0
+    local x,z = 0,0
     for nX,vX in pairs(layer) do
-      size = math.max(nX,size)
+      x = math.max(nX,x)
+      for nZ in pairs(vX) do
+        z = math.max(nZ,z)
+      end
     end
-    return size
+    return x,z
   end,
   copy = function(layer,x1,z1,x2,z2,clipboard)
   --returns a layer copy, optional coordinates

@@ -28,7 +28,18 @@ main = {
   end,
   key = function(tEvent)
     local key = tEvent[2]
-    if key == 203 then --left arrow
+    if tTimers.ctrl.pressed then
+      if key == 48 then --B
+        local tool = tTool[1]
+        if tool.tool == "Brush" then
+          tool.tool = tool.prevTool or tool.tool
+        else
+          tool.prevTool = tool.tool
+          tool.tool = "Brush"
+        end
+        renderBottomBar()
+      end
+    elseif key == 203 then --left arrow
       scroll(false,-1,0)
     elseif key == 205 then --right arrow
       scroll(false,1,0)
@@ -43,17 +54,6 @@ main = {
     elseif key == 29 then --ctrl
       tTimers.ctrl.pressed = true
       tTimers.ctrl.start()
-    elseif tTimers.ctrl.pressed then
-      if key == 48 then --B
-        local tool = tTool[1]
-        if tool.tool == "Brush" then
-          tool.tool = tool.prevTool or tool.tool
-        else
-          tool.prevTool = tool.tool
-          tool.tool = "Brush"
-        end
-        renderBottomBar()
-      end
     end
   end,
   mouse_scroll = function(tEvent)
