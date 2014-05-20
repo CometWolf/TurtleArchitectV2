@@ -227,9 +227,9 @@ layer = { --layer class
   render = function(layer)
   --renders the layer on the canvas
     local view = tTerm.viewable
-    screen:setLayer(screen.layers.canvas)
-    local mX = view.mX
+	local mX = view.mX
     local mZ = view.mZ
+    screen:setLayer(screen.layers.canvas)
     local scrX = tTerm.scroll.x
     local scrZ = tTerm.scroll.z
     for x = view.sX,view.eX do

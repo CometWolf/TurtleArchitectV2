@@ -16,13 +16,11 @@ screenBuffer = {
       {
         __index = function(t,k)
           if not screenBuffer[k] then
-            if type(k) == "number" then
-              for i = #t+1,k do
-                t[i] = rawget(t,layer) or class.matrix.new(2)
-              end
-              buffer.layer = k
-              return t[k]
+            for i = #t+1,k do
+              t[i] = rawget(t,layer) or class.matrix.new(2)
             end
+            buffer.layer = k
+            return t[k]
           end
           return screenBuffer[k]
         end
@@ -51,8 +49,8 @@ screenBuffer = {
     buffer.layer = layer or #buffer
   end,
   setCursorPos = function(buffer,x,y)
-    buffer.x = math.min(tTerm.screen.x,(x or buffer.x))
-    buffer.y = math.min(tTerm.screen.y, (y or buffer.y))
+    buffer.x = x or buffer.x
+    buffer.y = y or buffer.y
   end,
   getCursorPos = function(buffer)
     return buffer.x,buffer.y
@@ -72,16 +70,14 @@ screenBuffer = {
   end,
   getTop = function(buffer,x,y,from)
     for iL = (from or #buffer),1,-1 do
-      if buffer[iL][x][y] then
+	  local xLine = rawget(buffer[iL][x])
+      if xLine and xLine[y] then
         return iL
       end
     end
   end,
   write = function(buffer,text,bColor,tColor)
     for character in string.gmatch(text,".") do
-      if buffer.x > tTerm.screen.x then
-        return
-      end
       local p = buffer[buffer.layer][buffer.x][buffer.y]
       if not p
       or p.marker ~= character
@@ -115,17 +111,20 @@ screenBuffer = {
       buffer:write(string.rep(" ",tTerm.screen.x))
     end
   end,
-  drawPoint = function(buffer,x,y,color,marker)
+  drawPoint = function(buffer,x,y,color,marker,mColor)
     marker = marker or buffer.marker
     color = color or buffer.bColor
+	x = x or buffer.x
+	y = y or buffer.y
+	mColor = mColor or color
     local p = buffer[buffer.layer][x][y]
     if not p
     or p.bColor ~= color
-    or p.tColor ~= color and marker and marker ~= " "
+    or p.tColor ~= mColor and marker and marker ~= " "
     or marker and p.marker ~= marker then
       buffer[buffer.layer][x][y] = {
         bColor = color,
-        tColor = color,
+        tColor = mColor,
         marker = marker
       }
       if buffer.layer == buffer:getTop(x,y) then

@@ -1007,26 +1007,25 @@ function renderToolOverlay() --renders all tool overlays
   end
 end
 
-function writePoint(x,z,color) --renders the specified blueprint point at wherever the cursor is
-  local marker,bColor
-  color = color or tBlueprint[tTerm.scroll.layer][x][z]
+function writePoint(x,z) --renders the specified blueprint point at wherever the cursor is
+  local marker,bColor,tColor
+  local color = tBlueprint[tTerm.scroll.layer][x][z]
   if color == "X" then
     marker = "X"
-    screen:setTextColor(color)
+    tColor = color
     bColor = colors.white
   elseif tMode.backgroundLayer and color == " " and (tMode.backgroundLayer[x][z] ~= " " and tMode.backgroundLayer[x][z] ~= "X") then
     marker = tMode.grid and "+" or " "
     bColor = tColors.backgroundLayer
-    screen:setTextColor(colorKey[tMode.backgroundLayer[x][z]] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMaker2)
+    tColor = colorKey[tMode.backgroundLayer[x][z]] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMaker2
   elseif tMode.builtRender and color:match"%u" then
     marker = "B"
-    screen:setTextColor(tColors.builtMarker)
+    tColor = tColors.builtMarker
   elseif tMode.grid then
     marker = "+"
-    screen:setTextColor(colorKey[color] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMarker2)
+    tColor = colorKey[color] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMarker2
   end
-  screen:setBackgroundColor(bColor or colorKey[color])
-  screen:write(marker or " ")
+  screen:drawPoint(nil,nil,bColor or colorKey[color],marker or " ",tColor)
 end
 
 function renderPoint(x,z,skipScroll) --renders the given point on screen
@@ -1043,7 +1042,7 @@ function renderPoint(x,z,skipScroll) --renders the given point on screen
   end
   screen:setLayer(screen.layers.canvas)
   screen:setCursorPos(pX+view.mX,pZ+view.mZ)
-  writePoint(x,z,false)
+  writePoint(x,z)
 end
 
 function renderArea(x1,z1,x2,z2,skipScroll) --renders the specified area of the blueprint on screen
