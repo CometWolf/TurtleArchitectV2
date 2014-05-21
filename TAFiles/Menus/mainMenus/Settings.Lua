@@ -232,7 +232,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
             turtles = 0
           }
           if not tRes["Sync IDs"] then
-            button,tRes,reInput = rewindow.text"Missing sync partner ID"
+            button,tRes,reInput = reinput"Missing sync partner ID"
           else
             local syncIds = {}
             local faultyIds = true
@@ -241,7 +241,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
               faultyIds = false
             end
             if faultyIds then
-              button,tRes,reInput = rewindow.text"Faulty IDs!"
+              button,tRes,reInput = reinput"Faulty IDs!"
             else
               tMode.sync.amount = 0
               tMode.sync.ids = {}
@@ -316,5 +316,12 @@ Developed by CometWolf.
       error("Exit",0)
     end
   },
+  [9] = {
+    name = "Scroll test",
+    enabled = false,
+    func = function()
+      window.scroll("Testing",{"scroll 1","scroll 2"})
+    end
+  }
 }
 return menu

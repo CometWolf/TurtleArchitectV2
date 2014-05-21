@@ -720,7 +720,7 @@ function renderBottomBar() --renders bottom bar and updates info
         )
         while button ~= "Cancel" do
           if not tBlueprint[tRes.Y] then
-            button, tRes, reInput = rewindow.text("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
+            button, tRes, reInput = reinput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
           else
             scroll(tRes.Y,tRes.X,tRes.Z,true)
             return
@@ -1402,9 +1402,7 @@ window = {
         end
       end
     end
-    for k,v in pairs(eventHandler.active) do
-      oldHandlers[k] = v
-    end
+    oldHandlers = eventHandler.active
     eventHandler.switch(eventHandlers)
     while true do
     --user interaction begins
@@ -1414,8 +1412,91 @@ window = {
       end
     end
   end,
-  scroll = function()
-    
+  scroll = function(text,tItems)
+    local screenLayer = screen.layers.dialogue+activeInputs
+    inputOpen = true
+    screen:setLayer(screenLayer)
+    activeInputs = activeInputs+1
+    --set up text
+    local lineLength = tTerm.screen.x-2 --max line length
+    local tLine = {}
+    if type(text) == "table" then --converts text to string if it's a table
+      text = table.concat(text,"\n")
+    end
+    glasses.log.write(text)
+    while #text > 0 do  --splits text into a table containing each line
+      local line = text:sub(1,lineLength)
+      local newLine = string.find(line.."","\n") --check for new line character
+      if newLine then
+        line = line:sub(1,newLine-1)
+        text = text:sub(#line+2,#text)
+      elseif #line == lineLength then
+        local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
+        line = line:sub(1,endSpace)
+        text = text:sub(#line+1,#text)
+      else
+        text = ""
+      end
+      tLine[#tLine+1] = line
+    end
+    local maxLines = 3
+    if #tLine > maxLines then
+      window.text(table.concat(tLine,"\n",maxLines+1))
+      tLine[maxLines+1] = nil
+    end
+    local box = {
+      height = 2+math.min(#tItems+#tLine,tTerm.screen.y-5),
+      width = tTerm.screen.x
+    }
+    box.top = tTerm.screen.yMid-math.ceil(box.height/2)
+    box.bottom = box.top+box.height
+    screen:drawBox(2,box.top+1,box.width-1,box.bottom-1,tColors.inputBox)
+    screen:drawFrame(1,box.top,box.width,box.bottom,tColors.inputBoxBorder)
+    local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
+    local eventHandlers = {
+      mouse_click = function(tEvent)
+        
+      end,
+      mouse_scroll = function(tEvent)
+        
+      end,
+      key = function(tEvent)
+        local key = tEvent[2]
+        if key == 28 then
+          return endExecution("Ok",tItems[curSelection])
+        end
+      end
+    }
+    if customEvent then
+      for k,v in pairs(customEvent) do
+        local mainFunc = eventHandlers[k]
+        eventHandlers[k] = function(tEvent)
+          local button = v(tEvent)
+          if button then
+            return endExecution(button)
+          end
+          if mainFunc then
+            return mainFunc(tEvent)
+          end
+        end
+      end
+    end
+    eventHandler.switch(eventHandlers)
+    local function endExecution(event,selection)
+      --closes input box and returns event and the values in the input fields
+      eventHandler.switch(oldHandlers,true)
+      screen:delLayer(screenLayer)
+      inputOpen = (screenLayer ~= screen.layers.dialogue)
+      activeInputs = activeInputs-1
+      return event, selection
+    end
+    while true do
+    --user interaction begins
+      local event,selection = eventHandler.pull()
+      if event then
+        return event,selection
+      end
+    end
   end
 }
 --[[----------------------------------------------------------------------------------------------------------
@@ -1446,7 +1527,7 @@ dialogue = {
     while button and button ~= "Cancel" do
       fileName = not tFile.blueprint and tRes["File name"] or fileName
       if not fileName then
-        button,tRes,reInput = rewindow.text("Invalid file name!")
+        button,tRes,reInput = reinput("Invalid file name!")
       elseif fs.exists(fileName..".TAb") then
         button = window.text(
           fileName.." already exists!\n Overwrite?",
@@ -1458,7 +1539,7 @@ dialogue = {
         if button == "Overwrite" then
           break
         end
-        button,tRes,reInput = rewindow.text("Overwrite of "..fileName.." cancelled. Input new file name.")
+        button,tRes,reInput = reinput("Overwrite of "..fileName.." cancelled. Input new file name.")
       else
         break
       end
@@ -1667,12 +1748,12 @@ function assignColorSlots(color)
   )
   while button ~= "Cancel" do
     if not tRes.From then
-      button,tRes,reInput = rewindow.text("Missing parameter From!")
+      button,tRes,reInput = reinput("Missing parameter From!")
     elseif not tRes.To then
-      button,tRes,reInput = rewindow.text("Missing parameter To!")
+      button,tRes,reInput = reinput("Missing parameter To!")
     elseif tRes.From < 1 or tRes.From > tRes.To
     or tRes.To > 16 then
-      button,tRes,reInput = rewindow.text("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
+      button,tRes,reInput = reinput("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
     elseif button == "Ok" then
       tBlueprint.colorSlots[color] = {}
       for i=tRes.From,tRes.To do
@@ -1745,9 +1826,9 @@ Load?]],
         window.text("Construction cancelled.")
         return
       elseif not tRes.Start then
-        button,tRes,reInput = rewindow.text("Missing start layer!")
+        button,tRes,reInput = reinput("Missing start layer!")
       elseif not tRes.End then
-        button,tRes,reInput = rewindow.text("Missing end layer!")
+        button,tRes,reInput = reinput("Missing end layer!")
       elseif button == "Ok" then
         tProgress.sLayer = tRes.Start
         tProgress.eLayer = tRes.End
@@ -1805,11 +1886,11 @@ Load?]],
         tRes.Z = cTurtle.tPos.z
       end
       if not tRes.X then
-        button,tRes,reInput = rewindow.text("Missing parameter X!")
+        button,tRes,reInput = reinput("Missing parameter X!")
       elseif not tRes.Y then
-        button,tRes,reInput = rewindow.text("Missing parameter Y!")
+        button,tRes,reInput = reinput("Missing parameter Y!")
       elseif not tRes.Z then
-        button,tRes,reInput = rewindow.text("Missing parameter Z!")
+        button,tRes,reInput = reinput("Missing parameter Z!")
       elseif button == "Ok" or button == "Cur pos" then
         tProgress.x = tRes.X
         tProgress.y = tRes.Y
@@ -1853,11 +1934,11 @@ Load?]],
         window.text("Construction cancelled.")
         return
       elseif not tRes.X then
-        button,tRes,reInput = rewindow.text("Missing X direction!")
+        button,tRes,reInput = reinput("Missing X direction!")
       elseif not tRes.Y then
-        button,tRes,reInput = rewindow.text("Missing Y direction!")
+        button,tRes,reInput = reinput("Missing Y direction!")
       elseif not tRes.Z then
-        button,tRes,reInput = rewindow.text("Missing Z direction!")
+        button,tRes,reInput = reinput("Missing Z direction!")
       elseif button == "Ok" then
         tProgress.dir.x = tRes.X
         tProgress.dir.y = tRes.Y
@@ -1889,7 +1970,7 @@ Load?]],
       if not tRes.Slot then
         break
       elseif tRes.Slot and (tRes.Slot > 16 or tRes.Slot < 1 ) then
-        button,tRes,reInput = rewindow.text("Invalid slot "..tRes.Slot)
+        button,tRes,reInput = reinput("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
         tProgress.enderChest = tRes.Slot
         cTurtle.tSettings.enderFuel = tRes.Slot

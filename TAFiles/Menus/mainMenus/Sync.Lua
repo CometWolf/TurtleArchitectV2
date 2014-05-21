@@ -60,17 +60,17 @@ menu = {
       while button ~= "Cancel" do
         local id = tRes.ID or id
         if not tRes.X then
-          button,tRes,reInput = rewindow.text"Missing X Coordinate!"
+          button,tRes,reInput = reinput"Missing X Coordinate!"
         elseif not tRes.Y then
-          button,tRes,reInput = rewindow.text"Missing Y Coordinate!"
+          button,tRes,reInput = reinput"Missing Y Coordinate!"
         elseif not tRes.Z then
-          button,tRes,reInput = rewindow.text"Missing Z Coordinate!"
+          button,tRes,reInput = reinput"Missing Z Coordinate!"
         elseif not id then
-          button,tRes,reInput = rewindow.text"Missing Turtle ID!"
+          button,tRes,reInput = reinput"Missing Turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = rewindow.text"The ID "..id.." is not connected!"
+          button,tRes,reInput = reinput"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = rewindow.text"The ID "..id.." is not a turtle!"
+          button,tRes,reInput = reinput"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             id,
@@ -134,15 +134,15 @@ menu = {
       while button ~= "Cancel" do
         local id = tRes.ID or id
         if not tRes.Direction then
-          button,tRes,reInput = rewindow.text"Missing turn direction!"
+          button,tRes,reInput = reinput"Missing turn direction!"
         elseif not cTurtle.dirStandardize(tRes.Direction) then
-          button,tRes,reInput = rewindow.text"Invalid turn direction!"
+          button,tRes,reInput = reinput"Invalid turn direction!"
         elseif not id then
-          button,tRes,reInput = rewindow.text"Missing turtle ID!"
+          button,tRes,reInput = reinput"Missing turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = rewindow.text"The ID "..id.." is not connected!"
+          button,tRes,reInput = reinput"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = rewindow.text"The ID "..id.." is not a turtle!"
+          button,tRes,reInput = reinput"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             tRes.ID,
@@ -208,11 +208,11 @@ menu = {
           for id in string.gmatch(string.format(tRes["IDs"]),"%d+") do
             id = tonumber(id)
             if not tMode.sync.ids[id] then
-              button,tRes,reInput = rewindow.text"The ID("..id..") is not connected"
+              button,tRes,reInput = reinput"The ID("..id..") is not connected"
               faultyId = true
               break
             elseif tMode.sync.ids[id] ~= "turtle" then
-              button,tRes,reInput = rewindow.text"The ID("..id..") is not a turtle"
+              button,tRes,reInput = reinput"The ID("..id..") is not a turtle"
               faultyId = true
               break
             else
@@ -221,7 +221,7 @@ menu = {
             end
           end
           if turtleAmount < 1 and not faultyId then
-            button,tRes,reInput = rewindow.text"Faulty ID input! Separate IDs with ,"
+            button,tRes,reInput = reinput"Faulty ID input! Separate IDs with ,"
           elseif not faultyId then
             turtleIds = ids
             break

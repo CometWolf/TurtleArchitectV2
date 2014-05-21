@@ -515,9 +515,9 @@ common = { --common event handlers, these are always active
             scroll(1,0,0,true,true)
             return
           elseif not fileName then
-            button,tRes,reInput = rewindow.text("Invalid file name!")
+            button,tRes,reInput = reinput("Invalid file name!")
           elseif fs.exists(fileName..".TAb") then
-            button,tRes,reInput = rewindow.text(fileName.." already exists!")
+            button,tRes,reInput = reinput(fileName.." already exists!")
           else
             class.blueprint.save(data.blueprint,fileName)
             window.text("Successfully saved "..fileName..".TAb.")

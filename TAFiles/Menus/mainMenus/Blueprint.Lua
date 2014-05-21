@@ -27,9 +27,9 @@ menu = {
       while button ~= "Cancel" do
         local fileName = tRes["File name"]
         if not fileName then
-          button,tRes,reInput = rewindow.text("Invalid file name!")
+          button,tRes,reInput = reinput("Invalid file name!")
         elseif fs.exists(fileName..".TAb") then
-          button,tRes,reInput = rewindow.text(fileName.." already exists!")
+          button,tRes,reInput = reinput(fileName.." already exists!")
         else
           tBlueprint = class.blueprint.new()
           tFile.blueprint = fileName
@@ -68,16 +68,16 @@ menu = {
         local fileName = tRes["File name"]
         if button == "Pastebin" then
           if not fileName then
-            button,tRes,reInput = rewindow.text("Missing pastebin code parameter!")
+            button,tRes,reInput = reinput("Missing pastebin code parameter!")
           else
             fileName = fileName:match"[^/]+"
             local paste = http.paste.get(fileName,true)
             if not paste then
-              button,tRes,reInput = rewindow.text("Pastebin download of "..fileName.." failed!")
+              button,tRes,reInput = reinput("Pastebin download of "..fileName.." failed!")
             else
               local blueprint = tBlueprint.load(paste)
               if not blueprint then
-                button,tRes,reInput = rewindow.text(fileName.." was not a Turtle Architect file!")
+                button,tRes,reInput = reinput(fileName.." was not a Turtle Architect file!")
               else
                 tBlueprint = blueprint
                 scroll()
@@ -90,11 +90,11 @@ menu = {
         else
           local blueprint = tBlueprint.load(fileName)
           if not fileName then
-            button,tRes,reInput = rewindow.text("Missing blueprint file name parameter!")
+            button,tRes,reInput = reinput("Missing blueprint file name parameter!")
           elseif not fs.exists(fileName..".TAb") then
-            button,tRes,reInput = rewindow.text(fileName.." does not exist!")
+            button,tRes,reInput = reinput(fileName.." does not exist!")
           elseif not blueprint then
-            button,tRes,reInput = rewindow.text(fileName.." is not a blueprint file!")
+            button,tRes,reInput = reinput(fileName.." is not a blueprint file!")
           elseif button == "Ok" then
             tFile.blueprint = fileName
             tBlueprint = blueprint
@@ -144,17 +144,17 @@ menu = {
       while button ~= "Cancel" do
         local fileName = tRes["File name"]
         if not fileName then
-          button,tRes,reInput = rewindow.text("Invalid file name!")
+          button,tRes,reInput = reinput("Invalid file name!")
         elseif button == "Pastebin" then
           local response,code = http.paste.put(tBlueprint,fileName)
           if not code then
-            button,tRes,reInput = rewindow.text("Pastebin upload failed!")
+            button,tRes,reInput = reinput("Pastebin upload failed!")
           else
             window.text("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..code.." \nURL: "..response)
             return
           end
         elseif fs.exists(fileName..".TAb") then
-          button,tRes,reInput = rewindow.text(fileName.." already exists!")
+          button,tRes,reInput = reinput(fileName.." already exists!")
         else
           tBlueprint:save(fileName)
           tFile.blueprint = fileName
@@ -194,7 +194,7 @@ menu = {
       while button ~= "Cancel" do
         local id = button ~= "All" and tRes["Computer ID"] or "All"
         if not id then
-          button,tRes,reInput = rewindow.text"Missing receiver ID!"
+          button,tRes,reInput = reinput"Missing receiver ID!"
         elseif button == "Ok"
         or button == "All" then
           rednet.send(id,"Init connection",
@@ -330,12 +330,12 @@ menu = {
       )
       while button ~= "Cancel" do
         if not tRes.From then
-          button,tRes,reInput = rewindow.text("Missing parameter From!")
+          button,tRes,reInput = reinput("Missing parameter From!")
         elseif not tRes.To then
-          button,tRes,reInput = rewindow.text("Missing parameter To!")
+          button,tRes,reInput = reinput("Missing parameter To!")
         elseif not tBlueprint[tRes.From]
         or not tBlueprint[tRes.To] then
-          button,tRes,reInput = rewindow.text("Invalid slot range "..tRes.From.."-"..tRes.To)
+          button,tRes,reInput = reinput("Invalid slot range "..tRes.From.."-"..tRes.To)
         else
           local tLines = {
             [1] = "Materials required to build current blueprint"
