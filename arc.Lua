@@ -1248,9 +1248,9 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         field.lX = field.eX-field.sX --total field length
         screen:setTextColor(field.textColor)
         screen:setBackgroundColor(field.backgroundColor)
-        screen:write(field.value)
+        screen:write(string.sub(field.value,1,field.lX))
         field.cX = (screen:getCursorPos())-field.sX --cursor pos
-        field.scroll = 0 --scroll value
+        field.scroll = math.max(0,#field.value-field.lX) --scroll value
         screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)
         for iX = field.sX,field.eX do
           inputTouchMap[iX][field.y] = i
@@ -1263,23 +1263,17 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
   end
   local function refreshField(field)
    --updates input fields
-     screen:setLayer(screenLayer)
+    screen:setLayer(screenLayer)
     field = tInputs[field]
-    if field.cX >= field.lX then
-      field.scroll = field.scroll+(field.cX-field.lX)
-      field.cX = field.lX
-    elseif field.cX < 0 then
-      field.scroll = math.max(0,field.scroll+field.cX)
-      field.cX = 0
-    end
-    if field.cX+field.scroll > #field.value then
+    if field.cX > #field.value then
       field.scroll = math.max(0,#field.value-field.lX+1)
-      field.cX = math.max(#field.value-field.scroll,math.min(#field.value,field.lX))
+      field.cX = #field.value
     end
+    field.scroll = field.cX >= field.lX and field.cX-field.lX or field.scroll
     local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
     screen:setCursorPos(field.sX,field.y)
     screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
-    screen:setCursorPos(field.sX+field.cX,field.y)
+    screen:setCursorPos(field.sX+field.cX-field.scroll,field.y)
   end
   local eventHandlers = {
     mouse_click = function(tEvent)
@@ -1309,9 +1303,9 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
         local field = tInputs[tInputs.enabled]
         --input box
         if key == 14
-        and (field.cX > 0 or field.scroll > 0) then
+        and field.cX > 0 then
           --backspace
-          local curs = field.cX+field.scroll
+          local curs = field.cX
           if field.cX >= field.lX then
             curs = curs-1
           end
@@ -1333,7 +1327,7 @@ function input(text,tButtonFields,tInputFields,customEvent,reInput)
           if #field.value <= 1 and field.cX == 0 then
             field.value = ""
           else
-            field.value = field.value:sub(1,field.cX+field.scroll)..field.value:sub(field.cX+field.scroll+2)
+            field.value = field.value:sub(1,field.cX)..field.value:sub(field.cX+2)
           end
         elseif key == 207 then --end
           field.cX = #field.value+1
