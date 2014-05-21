@@ -1,10 +1,10 @@
 
 local tool 
 tool = {
-  menuOrder = 7, --menu order, 1 being top
+  menuOrder = 8, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
-    local button = input(
+    local button = window.text(
       "The select tool has a myriad of functions.\nLeft click and drag to select an area, then right click to open up the selection menu. Here you can cut, copy, delete, recolor and change the built status of your current selection",
       {
         "Ok",

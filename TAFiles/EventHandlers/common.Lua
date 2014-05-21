@@ -43,7 +43,7 @@ common = { --common event handlers, these are always active
             if turtle and tMode.sync.turtles == 0 then
               renderSideBar()
             end
-            input("Connection to computer ID "..id.." was lost.")
+            window.text("Connection to computer ID "..id.." was lost.")
           end
         )
       end
@@ -219,7 +219,7 @@ common = { --common event handlers, these are always active
       elseif event == "Init connection" then
         if type == "Sync" then
           local timeoutId = tTimers.inputTimeout.start()
-          local button, tRes = input(
+          local button, tRes = window.text(
             "Computer ID "..senderId.." wants to initiate sync mode.",
             {
               "Deny",
@@ -369,7 +369,7 @@ common = { --common event handlers, these are always active
           if turtle and tMode.sync.turtles == 0 then
             renderSideBar()
           end
-          input((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
+          window.text((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
         end
       elseif event == "Turtle command" then
         local response = {
@@ -399,14 +399,14 @@ common = { --common event handlers, these are always active
         end
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Build complete" then
-				  input("Turtle "..senderId.." has completed construction of "..data.blueprintName)
+				  window.text("Turtle "..senderId.." has completed construction of "..data.blueprintName)
 				elseif type == "Layer complete" then
 					glasses.log.write("Turtle "..senderId.." completed layer "..data.layer.." of "..data.blueprintName)
         elseif type == "Blocked" then
           glasses.log.write("Turtle "..senderId.." is being blocked, please remove the obstruction at\nX: "..data.x.."\nY: "..data.y.."n\Z: "..data.z)
 				elseif type == "Blocks required" then
           local timeOut = tTimers.restockRetry.start()
-          local button = input(
+          local button = window.text(
             "Turtle "..senderId.." requires more "..keyColor[data.color].." blocks in the slots "..data.slots.." to continue building",
             {
               "Cancel",
@@ -444,7 +444,7 @@ common = { --common event handlers, these are always active
           end
 				elseif type == "Fuel required" then
           local timeOut = tTimers.restockRetry.start()
-          local button = input(
+          local button = window.text(
             "Turtle "..senderId.." located at\nX: "..data.x.."\nY: "..data.y.."\nZ: "..data.z.."\nrequires fuel",
             {
               "Cancel",
@@ -483,7 +483,7 @@ common = { --common event handlers, these are always active
         end
       elseif event == "Blueprint transmission" then
         local timeoutId = tTimers.inputTimeout.start()
-        local button, tRes, reInput = input(
+        local button, tRes, reInput = window.text(
           "Received blueprint "..tEvent[5].blueprintName.." from computer ID "..senderId,
           {
             "Ignore",
@@ -515,12 +515,12 @@ common = { --common event handlers, these are always active
             scroll(1,0,0,true,true)
             return
           elseif not fileName then
-            button,tRes,reInput = reInput("Invalid file name!")
+            button,tRes,reInput = rewindow.text("Invalid file name!")
           elseif fs.exists(fileName..".TAb") then
-            button,tRes,reInput = reInput(fileName.." already exists!")
+            button,tRes,reInput = rewindow.text(fileName.." already exists!")
           else
             class.blueprint.save(data.blueprint,fileName)
-            input("Successfully saved "..fileName..".TAb.")
+            window.text("Successfully saved "..fileName..".TAb.")
             return
           end
         end

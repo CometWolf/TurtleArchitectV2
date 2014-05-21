@@ -5,17 +5,17 @@ menu = {
     name = "Update",
     enabled = _G.http and true,
     help = function()
-      input"Updates Turtle Architect to the latest version"
+      window.text"Updates Turtle Architect to the latest version"
     end,
     func = function()
       if not fs.exists(tFile.installer) then
         local res = http.paste.get(tPaste.program,tFile.installer)
         if not res then
-          input"Failed to download installer script from pastebin!"
+          window.text"Failed to download installer script from pastebin!"
           return
         end
       end
-      local button = input(
+      local button = window.text(
         "All un-saved progress will be lost, continue?",
         {
           "No",
@@ -42,10 +42,10 @@ menu = {
     name = "Built mode",
     enabled = true,
     help = function()
-      input"Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them."
+      window.text"Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them."
     end,
     func = function()
-      local button = input(
+      local button = window.text(
         [[Built mode let's you draw/see blocks marked as built. This means a turtle will consider these blocks already built, and ignore them.
 Built render mode: ]]..(tMode.builtRender and "ON" or "OFF")..[[ 
 Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
@@ -72,10 +72,10 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
     name = "Grid mode",
     enabled = true,
     help = function()
-      input"Grid mode renders a grid line ontop of your blueprint, for ease of visualization."
+      window.text"Grid mode renders a grid line ontop of your blueprint, for ease of visualization."
     end,
     func = function()
-      local button = input(
+      local button = window.text(
         [[Grid mode renders a grid line ontop of your blueprint, for ease of visualization
 Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
         {
@@ -141,10 +141,10 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
     name = "Background layer",
     enabled = true,
     help = function()
-      input"Background layer mode renders the specified layer in gray underneath the layer you are currently viewing. This makes comparisons a breeze."
+      window.text"Background layer mode renders the specified layer in gray underneath the layer you are currently viewing. This makes comparisons a breeze."
     end,
     func = function()
-      local button,tRes = input(
+      local button,tRes = window.text(
         [[BGL mode renders the specified layer underneath the layer you are currently viewing. This makes comparisons a breeze.
 BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
         {
@@ -175,10 +175,10 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
     name = "Overwrite mode",
     enabled = true,
     help = function()
-      input"Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white)."
+      window.text"Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white)."
     end,
     func = function()
-      local button = input(
+      local button = window.text(
         [[Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white).
 Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
         {
@@ -197,14 +197,14 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
     name = "Sync mode",
     enabled = true,
     help = function()
-      input"Sync mode syncs the blueprint in real-time across multiple computers. If you sync with turtles, they can be ordered to build the blueprint together"
+      window.text"Sync mode syncs the blueprint in real-time across multiple computers. If you sync with turtles, they can be ordered to build the blueprint together"
     end,
     func = function()
       local synced = ""
       for id in pairs(tMode.sync.ids) do
         synced = synced..id..","
       end
-      local button, tRes, reInput= input(
+      local button, tRes, reInput= window.text(
         [[Sync mode syncs the blueprint in real-time across multiple computers.
 Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
         {
@@ -232,7 +232,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
             turtles = 0
           }
           if not tRes["Sync IDs"] then
-            button,tRes,reInput = reInput"Missing sync partner ID"
+            button,tRes,reInput = rewindow.text"Missing sync partner ID"
           else
             local syncIds = {}
             local faultyIds = true
@@ -241,7 +241,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
               faultyIds = false
             end
             if faultyIds then
-              button,tRes,reInput = reInput"Faulty IDs!"
+              button,tRes,reInput = rewindow.text"Faulty IDs!"
             else
               tMode.sync.amount = 0
               tMode.sync.ids = {}
@@ -267,7 +267,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
                    if data.turtle then
                      renderSideBar()
                    end
-                  input(
+                  window.text(
                     "Successfully synced with "..(data.turtle and "Turtle" or "Computer").." ID "..id,
                     false,
                     false,
@@ -299,10 +299,10 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
     name = "About",
     enabled = true,
     help = function()
-      input"Tells the story of how awesome i am"
+      window.text"Tells the story of how awesome i am"
     end,
     func = function()
-      input([[Turtle Architect 2.0.
+      window.text([[Turtle Architect 2.0.
 This software lets you draw your Minecraft constructions on your computer, and have your turtle build it wherever you desire. Files may easily be saved or even uploaded to Pastebin, for later use.
 Developed by CometWolf.
 ]]

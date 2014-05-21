@@ -5,10 +5,10 @@ menu = {
     name = "Create new...",
     enabled = true,
     help = function()
-      input"Creates a new blank layer"
+      window.text"Creates a new blank layer"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Create new layer...",
         {
           "Cancel",
@@ -27,9 +27,9 @@ menu = {
       while button ~= "Cancel" do
         local newLayer = tRes["New layer"]
         if not newLayer then
-          button,tRes,reInput = reInput("Missing layer parameter!")
+          button,tRes,reInput = rewindow.text("Missing layer parameter!")
         elseif tBlueprint[newLayer] then
-          button = input(
+          button = window.text(
             "Layer "..newLayer.." already exists!\nOverwrite?",
             {
               "Cancel",
@@ -39,7 +39,7 @@ menu = {
           if button == "Overwrite" then
             break
           end
-          button,tRes,reInput = reInput("Overwrite of "..newLayer.." Cancelled. Input new layer number")
+          button,tRes,reInput = rewindow.text("Overwrite of "..newLayer.." Cancelled. Input new layer number")
         else
           break
         end
@@ -59,10 +59,10 @@ menu = {
     name = "Import...",
     enabled = true,
     help = function()
-      input"Import layers from another blueprint into this one"
+      window.text"Import layers from another blueprint into this one"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Import layers from another blueprint",
         {
           "Cancel",
@@ -98,28 +98,28 @@ menu = {
         local iBlueprint
         if not tRes.Blueprint then
           if button == "Pastebin" then
-            button,tRes,reInput = reinput("Pastebin code parameter missing!")
+            button,tRes,reInput = rewindow.text("Pastebin code parameter missing!")
           else
-            button,tRes,reInput = reinput("Import blueprint parameter missing!")
+            button,tRes,reInput = rewindow.text("Import blueprint parameter missing!")
           end
         else
           iBlueprint = button == "Pastebin" and tBlueprint.load(http.get(fileName,true)) or loadBlueprint(tRes.Blueprint)
           if button ~= "Pastebin" and not fs.exists(tRes.Blueprint) then
-            button,tRes,reInput = reinput(tRes.Blueprint.." does not exist!")
+            button,tRes,reInput = rewindow.text(tRes.Blueprint.." does not exist!")
           elseif not iBlueprint then
-            button,tRes,reInput = reInput(tRes.Blueprint.." is not a blueprint file!")
+            button,tRes,reInput = rewindow.text(tRes.Blueprint.." is not a blueprint file!")
           elseif not tRes.From then
-            button,tRes,reInput = reinput("From layer parameter missing!")
+            button,tRes,reInput = rewindow.text("From layer parameter missing!")
           elseif not iBlueprint[tRes.From] then
-            button,tRes,reInput = reInput("The layer "..tRes.From.." does not exist in the blueprint "..tRes.Blueprint.."!")
+            button,tRes,reInput = rewindow.text("The layer "..tRes.From.." does not exist in the blueprint "..tRes.Blueprint.."!")
           elseif not tRes.To then
-            button,tRes,reInput = reinput("To layer parameter missing!")
+            button,tRes,reInput = rewindow.text("To layer parameter missing!")
           elseif not iBlueprint[tRes.To] then
-            button,tRes,reInput = reInput("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
+            button,tRes,reInput = rewindow.text("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
           elseif not tRes.Into then
-            button,tRes,reInput = reinput("Into layer parameter missing!")
+            button,tRes,reInput = rewindow.text("Into layer parameter missing!")
           elseif tBlueprint[tRes.Into] then
-            local button2 = input(
+            local button2 = window.text(
               "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).." in the current blueprint!",
               {
                 "Cancel",
@@ -127,7 +127,7 @@ menu = {
                 "Insert"
               }
             )
-            button = (button2 == "cancel") and "Reinput" or button2
+            button = (button2 == "cancel") and "Rewindow.text" or button2
           elseif button == "Ok"
           or button == "Overwrite"
           or button == "Pastebin" then
@@ -161,11 +161,11 @@ menu = {
     name = "Delete current",
     enabled = true,
     help = function()
-      input"Deletes the currently selected layer"
+      window.text"Deletes the currently selected layer"
     end,
     func = function()
       local delLayer = tTerm.scroll.layer
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Are you sure you wish to delete layer "..delLayer.."?",
         {
           "Cancel",
@@ -189,10 +189,10 @@ menu = {
     name = "Delete range...",
     enabled = true,
     help = function()
-      input"Deletes a specified set of layers, aswell as moving any existant layers down to fill the gap"
+      window.text"Deletes a specified set of layers, aswell as moving any existant layers down to fill the gap"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Delete layer range",
         {
           "Cancel",
@@ -216,12 +216,12 @@ menu = {
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
         if not from then
-          button,tRes,reInput = reInput"Missing starting layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing starting layer parameter!"
         elseif not to then
-          button,tRes,reInput = reInput"Missing to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing to layer parameter!"
         elseif from > to
         or from < 1 then
-          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+          button,tRes,reInput = rewindow.text("Invalid layer range "..from.."-"..to)
         else
           for i=tRes.From,tRes.To do
             if i == 1 and #tBlueprint == 1 then
@@ -241,11 +241,11 @@ menu = {
     name = "Move to...",
     enabled = true,
     help = function()
-      input"Move the currently selected layer"
+      window.text"Move the currently selected layer"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Move current layer("..curLayer..")",
         {
           "Cancel",
@@ -263,11 +263,11 @@ menu = {
       )
       while button ~= "Cancel" do
         if not tRes.To then
-          button,tRes,reInput = reInput"Missing move to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing move to layer parameter!"
         elseif tRes.To < 1 then
-          button,tRes,reInput = reInput("Invalid layer number "..tRes.To)
+          button,tRes,reInput = rewindow.text("Invalid layer number "..tRes.To)
         elseif tBlueprint[tRes.To] then
-          local button2 = input(
+          local button2 = window.text(
             "The layer "..tRes.To.." already exists!",
             {
               "Cancel",
@@ -275,7 +275,7 @@ menu = {
               "Insert",
             }
           )
-          button = (button2 == "Cancel") and "Reinput" or button2
+          button = (button2 == "Cancel") and "Rewindow.text" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.To do
@@ -303,10 +303,10 @@ menu = {
     name = "Move range...",
     enabled = true,
     help = function()
-      input"Move a set of layers"
+      window.text"Move a set of layers"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Move layer range",
         {
           "Cancel",
@@ -335,18 +335,18 @@ menu = {
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
         if not from then
-          button,tRes,reInput = reInput"Missing starting layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing starting layer parameter!"
         elseif not to then
-          button,tRes,reInput = reInput"Missing to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing to layer parameter!"
         elseif from > to
         or from < 1 then
-          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+          button,tRes,reInput = rewindow.text("Invalid layer range "..from.."-"..to)
         elseif not tRes.Into then
-          button,tRes,reInput = reInput"Missing move into layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing move into layer parameter!"
         elseif tRes.Into < 1 then
-          button,tRes,reInput = reInput("Invalid move to layer "..tRes.Into) 
+          button,tRes,reInput = rewindow.text("Invalid move to layer "..tRes.Into) 
         elseif tBlueprint[tRes.Into] then
-          local button2 = input(
+          local button2 = window.text(
             "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).."!",
             {
               "Cancel",
@@ -354,7 +354,7 @@ menu = {
               "Insert"
             }
           )
-          button = (button2 == "cancel") and "Reinput" or button2
+          button = (button2 == "cancel") and "Rewindow.text" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.Into do
@@ -388,11 +388,11 @@ menu = {
     name = "Copy to...",
     enabled = true,
     help = function()
-      input"Make a copy of the currently selected layer"
+      window.text"Make a copy of the currently selected layer"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Copy current layer("..curLayer..")",
         {
           "Cancel",
@@ -409,14 +409,14 @@ menu = {
         true
       )
       while button ~= "Cancel" do
-        if button == "Reinput" then
-          button, tRes, reInput = reInput("Copy current layer("..curLayer..")")
+        if button == "Rewindow.text" then
+          button, tRes, reInput = rewindow.text("Copy current layer("..curLayer..")")
         elseif not tRes.To then
-          button,tRes,reInput = reInput"Missing copy to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing copy to layer parameter!"
         elseif tRes.To < 1 then
-          button,tRes,reInput = reInput("Invalid copy to layer "..tRes.To)
+          button,tRes,reInput = rewindow.text("Invalid copy to layer "..tRes.To)
         elseif button == "Ok" and tBlueprint[tRes.To] then
-          local button2 = input(
+          local button2 = window.text(
             "The layer "..tRes.To.." already exists!",
             {
               "Cancel",
@@ -424,7 +424,7 @@ menu = {
               "Insert",
             }
           )
-          button = (button2 == "Cancel") and "Reinput" or button2
+          button = (button2 == "Cancel") and "Rewindow.text" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
           tBlueprint[tRes.To] = tBlueprint[curLayer]:copy()
@@ -448,10 +448,10 @@ menu = {
     name = "Stretch copy...",
     enabled = true,
     help = function()
-      input"Make multiple copies of the currently selected layer"
+      window.text"Make multiple copies of the currently selected layer"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Stretch copy current layer("..tTerm.scroll.layer..") across",
         {
           "Cancel",
@@ -475,14 +475,14 @@ menu = {
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
         if not from then
-          button,tRes,reInput = reInput"Missing starting layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing starting layer parameter!"
         elseif not to then
-          button,tRes,reInput = reInput"Missing to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing to layer parameter!"
         elseif from > to
         or from < 1 then
-          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+          button,tRes,reInput = rewindow.text("Invalid layer range "..from.."-"..to)
         elseif tBlueprint[tRes.From] and button == "Ok" then
-          local button2 = input(
+          local button2 = window.text(
             "Layers already exist in the range "..tRes.From.."-"..tRes.To.."!",
             {
               "Cancel",
@@ -490,9 +490,9 @@ menu = {
               "Insert"
             }
           )
-          button = (button2 == "Cancel") and "Reinput" or button2
-          if button == "Reinput" then
-            button,tRes,reInput = reInput("Stretch copy current layer("..tTerm.scroll.layer..") across")
+          button = (button2 == "Cancel") and "Rewindow.text" or button2
+          if button == "Rewindow.text" then
+            button,tRes,reInput = rewindow.text("Stretch copy current layer("..tTerm.scroll.layer..") across")
           end
         elseif button == "Ok"
         or button == "Overwrite" then
@@ -523,10 +523,10 @@ menu = {
     name = "Copy range...",
     enabled = true,
     help = function()
-      input"Copy a set of layers"
+      window.text"Copy a set of layers"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Copy layer range",
         {
           "Cancel",
@@ -554,21 +554,21 @@ menu = {
       )
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
-        if button == "Reinput" then
-          button,tRes,reInput = reInput"Copy layer range"
+        if button == "Rewindow.text" then
+          button,tRes,reInput = rewindow.text"Copy layer range"
         elseif not from then
-          button,tRes,reInput = reInput"Missing starting layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing starting layer parameter!"
         elseif not to then
-          button,tRes,reInput = reInput"Missing to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing to layer parameter!"
         elseif from > to
         or from < 1 then
-          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+          button,tRes,reInput = rewindow.text("Invalid layer range "..from.."-"..to)
         elseif not tRes.Into then
-          button,tRes,reInput = reInput"Missing copy into layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing copy into layer parameter!"
         elseif tRes.Into < 1 then
-          button,tRes,reInput = reInput("Invalid copy to layer "..tRes.Into) 
+          button,tRes,reInput = rewindow.text("Invalid copy to layer "..tRes.Into) 
         elseif button == "Ok" and tBlueprint[tRes.Into] then
-          local button2 = input(
+          local button2 = window.text(
             "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).."!",
             {
               "Cancel",
@@ -576,7 +576,7 @@ menu = {
               "Insert"
             }
           )
-          button = (button2 == "Cancel") and "Reinput" or button2
+          button = (button2 == "Cancel") and "Rewindow.text" or button2
         elseif button == "Ok"
         or button == "Overwrite" then
           while #tBlueprint < tRes.Into do
@@ -608,10 +608,10 @@ menu = {
     name = "Merge...",
     enabled = true,
     help = function()
-      input"Combine a set of layers into 1"
+      window.text"Combine a set of layers into 1"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Merge layer range",
         {
           "Cancel",
@@ -635,14 +635,14 @@ menu = {
       while button ~= "Cancel" do
         local from,to = tRes.From,tRes.To
         if not from then
-          button,tRes,reInput = reInput"Missing starting layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing starting layer parameter!"
         elseif not to then
-          button,tRes,reInput = reInput"Missing to layer parameter!"
+          button,tRes,reInput = rewindow.text"Missing to layer parameter!"
         elseif from > to
         or from < 1 then
-          button,tRes,reInput = reInput("Invalid layer range "..from.."-"..to)
+          button,tRes,reInput = rewindow.text("Invalid layer range "..from.."-"..to)
         elseif not tBlueprint[to] then
-          button,tRes,reInput = reInput("Non-existant layer range "..from.."-"..to..".\nCurrent top layer: "..#tBlueprint)
+          button,tRes,reInput = rewindow.text("Non-existant layer range "..from.."-"..to..".\nCurrent top layer: "..#tBlueprint)
         else
           for i=tRes.From+1,tRes.To do
             tBlueprint[tRes.From]:paste(tBlueprint[tRes.From+1])
@@ -659,11 +659,11 @@ menu = {
     name = "Flip...",
     enabled = true,
     help = function()
-      input"Flip the currently selected layer horizontally or vertically"
+      window.text"Flip the currently selected layer horizontally or vertically"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button = input(
+      local button = window.text(
         "Flip current layer",
         {
           "Cancel",
@@ -686,11 +686,11 @@ menu = {
     name = "Mark built",
     enabled = true,
     help = function()
-      input"Mark the entire current layer as built, meaning the turtle will skip it"
+      window.text"Mark the entire current layer as built, meaning the turtle will skip it"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Mark the current layer("..curLayer..") as built. This means the turtle will not build it",
         {
           "Cancel",
@@ -710,11 +710,11 @@ menu = {
     name = "Mark unbuilt",
     enabled = true,
     help = function()
-      input"Reset all build progress made on current layer"
+      window.text"Reset all build progress made on current layer"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Mark the current layer("..curLayer..") as unbuilt. This will reset any progress the turtle has made on this layer",
         {
           "Cancel",
@@ -734,10 +734,10 @@ menu = {
     name = "Goto...",
     enabled = true,
     help = function()
-      input"Scroll to given layer"
+      window.text"Scroll to given layer"
     end,
     func = function()
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Goto layer number...",
         {
           "Cancel",
@@ -754,7 +754,7 @@ menu = {
       if button == "Ok" then
         local newLayer = tRes.Layer
         while not tBlueprint[newLayer] do
-          local button, tRes = input(
+          local button, tRes = window.text(
             "The layer "..newLayer.." does not exist!\nCurrent top layer: "..#tBlueprint,
             {
               "Cancel",

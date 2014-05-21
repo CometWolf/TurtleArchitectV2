@@ -31,10 +31,10 @@ end
 
 local tool
 tool = {
-  menuOrder = 4, --menu order, 1 being top
+  menuOrder = 5, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
-    local button = input(
+    local button = window.text(
       "The hollow circle tool lets you draw a hollow circle by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
       {
         "Ok",

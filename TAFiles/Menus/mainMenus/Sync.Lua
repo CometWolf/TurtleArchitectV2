@@ -9,7 +9,7 @@ menu = {
       return tMode.sync.turtles > 0 and true
     end,
     help = function()
-      input"Move a synced turtle to the given coordinates"
+      window.text"Move a synced turtle to the given coordinates"
     end,
     func = function()
       local turtles = ""
@@ -23,7 +23,7 @@ menu = {
           end
         end
       end
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Move to coordinates...".."/nTurtle IDs: "..(turtles or ""),
         {
           "Cancel",
@@ -60,17 +60,17 @@ menu = {
       while button ~= "Cancel" do
         local id = tRes.ID or id
         if not tRes.X then
-          button,tRes,reInput = reInput"Missing X Coordinate!"
+          button,tRes,reInput = rewindow.text"Missing X Coordinate!"
         elseif not tRes.Y then
-          button,tRes,reInput = reInput"Missing Y Coordinate!"
+          button,tRes,reInput = rewindow.text"Missing Y Coordinate!"
         elseif not tRes.Z then
-          button,tRes,reInput = reInput"Missing Z Coordinate!"
+          button,tRes,reInput = rewindow.text"Missing Z Coordinate!"
         elseif not id then
-          button,tRes,reInput = reInput"Missing Turtle ID!"
+          button,tRes,reInput = rewindow.text"Missing Turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reInput"The ID "..id.." is not connected!"
+          button,tRes,reInput = rewindow.text"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reInput"The ID "..id.." is not a turtle!"
+          button,tRes,reInput = rewindow.text"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             id,
@@ -93,7 +93,7 @@ menu = {
       return tMode.sync.turtles > 0 and true
     end,
     help = function()
-      input"Turn a synced turtle in the given direction. Most forms of directions are supported, like x+,north or right"
+      window.text"Turn a synced turtle in the given direction. Most forms of directions are supported, like x+,north or right"
     end,
     func = function()
       local turtles = ""
@@ -107,7 +107,7 @@ menu = {
           end
         end
       end
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Turn to.../nTurtle IDs: "..(turtles or ""),
         {
           "Cancel",
@@ -134,15 +134,15 @@ menu = {
       while button ~= "Cancel" do
         local id = tRes.ID or id
         if not tRes.Direction then
-          button,tRes,reInput = reInput"Missing turn direction!"
+          button,tRes,reInput = rewindow.text"Missing turn direction!"
         elseif not cTurtle.dirStandardize(tRes.Direction) then
-          button,tRes,reInput = reInput"Invalid turn direction!"
+          button,tRes,reInput = rewindow.text"Invalid turn direction!"
         elseif not id then
-          button,tRes,reInput = reInput"Missing turtle ID!"
+          button,tRes,reInput = rewindow.text"Missing turtle ID!"
         elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reInput"The ID "..id.." is not connected!"
+          button,tRes,reInput = rewindow.text"The ID "..id.." is not connected!"
         elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reInput"The ID "..id.." is not a turtle!"
+          button,tRes,reInput = rewindow.text"The ID "..id.." is not a turtle!"
         else
           rednet.send(
             tRes.ID,
@@ -163,11 +163,11 @@ menu = {
       return tMode.sync.turtles > 0 and true
     end,
     help = function()
-      input"Makes synced turtles build the currently loaded blueprint"
+      window.text"Makes synced turtles build the currently loaded blueprint"
     end,
     func = function()
       if not dialogue.save"Blueprint must be saved locally prior to building!" then
-        input"Construction cancelled"
+        window.text"Construction cancelled"
         return
       end
       local turtles = ""
@@ -184,7 +184,7 @@ menu = {
         end
       end
       if turtleAmount < 1 then
-        local button, tRes, reInput = input(
+        local button, tRes, reInput = window.text(
           "Input turtle IDs to use for building\nTurtle IDs: "..turtles,
           {
             "Cancel",
@@ -208,11 +208,11 @@ menu = {
           for id in string.gmatch(string.format(tRes["IDs"]),"%d+") do
             id = tonumber(id)
             if not tMode.sync.ids[id] then
-              button,tRes,reInput = reInput"The ID("..id..") is not connected"
+              button,tRes,reInput = rewindow.text"The ID("..id..") is not connected"
               faultyId = true
               break
             elseif tMode.sync.ids[id] ~= "turtle" then
-              button,tRes,reInput = reInput"The ID("..id..") is not a turtle"
+              button,tRes,reInput = rewindow.text"The ID("..id..") is not a turtle"
               faultyId = true
               break
             else
@@ -221,7 +221,7 @@ menu = {
             end
           end
           if turtleAmount < 1 and not faultyId then
-            button,tRes,reInput = reInput"Faulty ID input! Separate IDs with ,"
+            button,tRes,reInput = rewindow.text"Faulty ID input! Separate IDs with ,"
           elseif not faultyId then
             turtleIds = ids
             break

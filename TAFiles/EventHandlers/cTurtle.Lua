@@ -5,7 +5,7 @@ handler = { --cTurtle only events
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Fuel required",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
     end
     tTimers.restockRetry.start()
-    local button,tRes,reInput = input(
+    local button,tRes,reInput = window.text(
       "Fuel required, please input slot to refuel from and press Ok",
       nil,
       {
@@ -39,11 +39,11 @@ handler = { --cTurtle only events
       local slot = tRes.Slot
       if not slot then
         tTimers.restockRetry.start()
-        button,tRes,reInput = reInput("Missing refuel slot number!")
+        button,tRes,reInput = rewindow.text("Missing refuel slot number!")
       elseif slot > 16
       or slot < 1 then
         tTimers.restockRetry.start()
-        button,tRes,reInput = reInput("Invalid slot number "..slot.."!")
+        button,tRes,reInput = rewindow.text("Invalid slot number "..slot.."!")
       else
         turtle.select(slot)
         turtle.refuel(64)

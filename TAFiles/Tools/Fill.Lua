@@ -1,9 +1,9 @@
 local tool
 tool = {
-  menuOrder = 6, --menu order, 1 being top
+  menuOrder = 7, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
-    local button = input(
+    local button = window.text(
       "The fill tool will replace the block you click on and any block connected to it of the same color, to the color it has equipped. It will not go beyond the visible canvas however",
       {
         "Ok",

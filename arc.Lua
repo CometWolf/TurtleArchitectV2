@@ -259,11 +259,11 @@ rednet = {
         end
       end,
       function(id)
-        input("Failed to connect to computer ID "..id..".")
+        window.text("Failed to connect to computer ID "..id..".")
       end,
       time,
       function(id)
-        input("Computer ID "..id.." denied your connection request")
+        window.text("Computer ID "..id.." denied your connection request")
       end
     )
   end,
@@ -690,9 +690,9 @@ function renderBottomBar() --renders bottom bar and updates info
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function(button)
       if tTool[button].tool == "Help" then
-        input"These are the current view coordinates.\nX is left and right.\nZ is up and down.\nY is the current layer.\nClicking these without the help tool equipped will allow you to input them directly"
+        window.text"These are the current view coordinates.\nX is left and right.\nZ is up and down.\nY is the current layer.\nClicking these without the help tool equipped will allow you to input them directly"
       else
-        local button, tRes, reInput = input(
+        local button, tRes, reInput = window.text(
           "Go to",
           {
             "Ok",
@@ -720,7 +720,7 @@ function renderBottomBar() --renders bottom bar and updates info
         )
         while button ~= "Cancel" do
           if not tBlueprint[tRes.Y] then
-            button, tRes, reInput = reInput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
+            button, tRes, reInput = rewindow.text("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
           else
             scroll(tRes.Y,tRes.X,tRes.Z,true)
             return
@@ -772,20 +772,25 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
       local iMenu = nextMenu
       local sY = menu.sY+i
       local enabled = menu.items[iMenu].enabled
-      enabled = (type(enabled) == "function" and enabled() or enabled)
+      if type(enabled) == "function" then
+        enabled = enabled()
+      end
       screen:setBackgroundColor(i%2 == 0 and tColors.menuPri or tColors.menuSec)
       screen:setTextColor(enabled and tColors.enabledMenuText or tColors.disabledMenuText)
       screen:setCursorPos(sX,sY)
       screen:write(menu.items[iMenu].string)
+      local help = menu.items[iMenu].help
+      local helpFunc = (
+        help
+        and function(button)
+          return tTool[button].tool == "Help" and (help() or true)
+        end
+        or function(button)
+          return tTool[button].tool == "Help" and window.text(menu.items[iMenu].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"") and true
+        end
+      )
       local menuFunc = function(button)
-        if tTool[button].tool == "Help" then
-          local help = menu.items[iMenu].help
-          if help then
-            help(button)
-          else
-            input(menu.items[iMenu].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"")
-          end
-        else
+        if not helpFunc(button) then
           renderMenu()
           menu.items[iMenu].func(button)
         end
@@ -807,7 +812,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       screen:write" "
       tBar.touchMap[posX][posY] = function(button)
         if tTool[button].tool == "Help" then
-          input"This is the color selection. It's used to select what color your current tool draws with"
+          window.text"This is the color selection. It's used to select what color your current tool draws with"
         else
           tTool[button].color = k
           renderBottomBar()
@@ -865,7 +870,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       screen:write"/\\"
       tBar.touchMap[tTerm.screen.x][1] = function(button)
         if tTool[button].tool == "Help" then
-          input"These buttons are used to change layers up and down. This one goes up one layer, as well as create new ones if they don't exist"
+          window.text"These buttons are used to change layers up and down. This one goes up one layer, as well as create new ones if they don't exist"
         else
           tBlueprint[tTerm.scroll.layer+1] = tBlueprint[tTerm.scroll.layer+1] or class.layer.new()
           scroll(tTerm.scroll.layer+1)
@@ -876,7 +881,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
       screen:write"\\/"
       tBar.touchMap[tTerm.screen.x][2] = function(button)
         if tTool[button].tool == "Help" then
-          input"These buttons are used to change layers up and down. This one goes down one layer"
+          window.text"These buttons are used to change layers up and down. This one goes down one layer"
         else
           scroll(tTerm.scroll.layer-1)
         end
@@ -890,7 +895,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
     for i=0,1 do
       tBar.touchMap[tTerm.screen.x-i][tTerm.screen.y] = function(button)
         if tTool[button].tool == "Help" then
-          input"This is the break marker, every block you draw with this will be broken by the turtle."
+          window.text"This is the break marker, every block you draw with this will be broken by the turtle."
         else
           tTool[button].color = "X"
           renderBottomBar()
@@ -904,7 +909,7 @@ function renderSideBar() --renders sidebar and creates touchmap for sidebar butt
     screen:write("X")
     tBar.touchMap[tTerm.screen.x-2][tTerm.screen.y] = function(button)
       if tTool[button].tool == "Help" then
-        input"This is the break marker, every block you draw with this will be broken by the turtle."
+        window.text"This is the break marker, every block you draw with this will be broken by the turtle."
       else
         tTool[button].color = "X"
         renderBottomBar()
@@ -1078,7 +1083,7 @@ function drawPoint(x,z,color,layer,skipScroll,ignoreOverwrite) --renders the poi
 end
 
 --[[----------------------------------------------------------------------------------------------------------
-Input function
+Input functions
 ----------------------------------------------------------------------------------------------------------]]--
 local activeInputs = 0 --amount of windows open
 inputOpen = false --whether an input window is currently open or not
@@ -1091,324 +1096,328 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   textColor = tColors.inputText,
   nameColor = tColors.inputBoxText
 }
-function input(text,tButtonFields,tInputFields,customEvent,reInput)
-  local screenLayer = screen.layers.dialogue+activeInputs
-  inputOpen = true
-  screen:setLayer(screenLayer)
-  activeInputs = activeInputs+1
-  tInputFields = tInputFields or {}
-  --set up text
-  local lineLength = tTerm.screen.x-2 --max line length
-  local tLine = {}
-  if type(text) == "table" then --converts text to string if it's a table
-    text = table.concat(text,"\n")
-  end
-  glasses.log.write(text)
-  while #text > 0 do  --splits text into a table containing each line
-    local line = text:sub(1,lineLength)
-    local newLine = string.find(line.."","\n") --check for new line character
-    if newLine then
-      line = line:sub(1,newLine-1)
-      text = text:sub(#line+2,#text)
-    elseif #line == lineLength then
-      local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
-      line = line:sub(1,endSpace)
-      text = text:sub(#line+1,#text)
-    else
-      text = ""
-    end
-    tLine[#tLine+1] = line
-  end
-  local maxLines = tTerm.screen.y-3-#tInputFields
-  if #tLine > maxLines then
-    input(table.concat(tLine,"\n",maxLines+1),tButtonFields,tInputFields) --omg recursion
-    tLine[maxLines+1] = nil
-  end
-  --default input fields
-  local tInputs = {}
-  for i=1,#tInputFields do
-    if type(tInputFields[i]) ~= "table" then
-      tInputs[i] = {
-        name = tInputFields[i]
-      }
-      tInputFields[i] = {
-        name = tInputFields[i]
-      }
-    else
-      tInputs[i] = {}
-      for k,v in pairs(tInputFields[i]) do
-        tInputs[i][k] = v
-      end
-    end
-    local field = tInputs[i]
-    if field.value and type(field.value) == "number" then
-      field.value = string.format(field.value)
-    end
-    setmetatable(field,
-      {
-        __index = inputDefaults
-      }
-    )
-  end
-  --default buttons
-  local tButtons = {}
-  if type(tButtonFields) == "string" then
-    tButtons = {
-      [1] = tButtonFields
-    }
-  elseif not tButtonFields or #tButtonFields < 1 then
-    tButtons = {
-      [1] = "Ok"
-    }
-  else
-    for k,v in pairs(tButtonFields) do
-      tButtons[k] = v
-    end
-  end
-  local oldHandlers = {}--stores currently in use event handlers, prior to switch
-  local function endExecution(event)
-    --closes input box and returns event and the values in the input fields
-    eventHandler.switch(oldHandlers,true)
-    local tRes = {}
-    for iR=1,#tInputs do
-      tRes[tInputs[iR].name] = tInputs[iR].value ~= "-" and tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
-    end
-    screen:setCursorBlink(false)
-    if reInput then
-      for i=1,#tInputFields do
-        for k,v in pairs(tRes) do
-          if k == tInputFields[i].name then
-            tInputFields[i].value = v
-            break
-          end
-        end
-      end
-      reInput = function(reText) --set up reInput function
-        return input(reText,tButtonFields,tInputFields,customEvent,true)
-      end
-    end
-    screen:delLayer(screenLayer)
-    inputOpen = (screenLayer ~= screen.layers.dialogue)
-    activeInputs = activeInputs-1
-    return event,tRes,reInput
-  end
-  --render box
-  local buttonTouchMap,inputTouchMap
-  if tTerm.color then
-    local box = {
-      height = #tLine+2+#tInputs,
-      width = tTerm.screen.x-2
-    }
-    box.top = math.floor(tTerm.screen.yMid-(box.height/2))
-    box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
-    screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
-    screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
-    --write text
-    screen:setBackgroundColor(tColors.inputBox)
-    screen:setTextColor(tColors.inputBoxText)
-    for i=1,#tLine do
-      screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#tLine[i]/2))+1,box.top+i)
-      screen:write(tLine[i])
-    end
-    --set up & render buttons
-    local totalButtonSpace = 0
-    buttonTouchMap = class.matrix.new(2)
-    for i=1,#tButtons do
-      tButtons[i] = {
-        name = tButtons[i]
-      }
-      tButtons[i].size = #tButtons[i].name+2
-      totalButtonSpace = totalButtonSpace+tButtons[i].size+2
-    end
-    local nextButton = math.ceil(tTerm.screen.xMid-(totalButtonSpace/2)+2)
-    screen:setTextColor(tColors.inputButtonText)
-    screen:setBackgroundColor(tColors.inputButton)
-    for i=1,#tButtons do
-      tButtons[i].sX = nextButton
-      tButtons[i].eX = nextButton+tButtons[i].size
-      tButtons[i].y = box.bottom-1
-      screen:setCursorPos(tButtons[i].sX,tButtons[i].y)
-      screen:write(" "..tButtons[i].name.." ")  --add spaces for appearances
-      nextButton = nextButton+#tButtons[i].name+2
-      for iX=tButtons[i].sX,tButtons[i].eX do
-        buttonTouchMap[iX][tButtons[i].y] = tButtons[i].name
-      end
-    end
-    --set up & render input boxes
-    inputTouchMap = class.matrix.new(2)
-    if #tInputs > 0 then
-      for i=#tInputs,1,-1 do
-        local field = tInputs[i]
-        screen:setBackgroundColor(tColors.inputBox)
-        screen:setTextColor(field.nameColor)
-        screen:setCursorPos(3,box.bottom-2-#tInputs+i)
-        screen:write(field.name..":")
-        field.sX,field.y = screen:getCursorPos() -- input area start x point
-        field.eX = tTerm.screen.x-2 --end x point
-        field.lX = field.eX-field.sX --total field length
-        screen:setTextColor(field.textColor)
-        screen:setBackgroundColor(field.backgroundColor)
-        screen:write(string.sub(field.value,1,field.lX))
-        field.cX = (screen:getCursorPos())-field.sX --cursor pos
-        field.scroll = math.max(0,#field.value-field.lX) --scroll value
-        screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)
-        for iX = field.sX,field.eX do
-          inputTouchMap[iX][field.y] = i
-        end
-      end
-      screen:setCursorBlink(true)
-      tInputs.enabled = 1
-      screen:setCursorPos(tInputs[1].cX+tInputs[1].sX,tInputs[1].y)
-    end
-  end
-  local function refreshField(field)
-   --updates input fields
+window = {
+  text = function(text,tButtonFields,tInputFields,customEvent,reInput)
+    local screenLayer = screen.layers.dialogue+activeInputs
+    inputOpen = true
     screen:setLayer(screenLayer)
-    field = tInputs[field]
-    if field.cX > #field.value then
-      field.scroll = math.max(0,#field.value-field.lX+1)
-      field.cX = #field.value
+    activeInputs = activeInputs+1
+    tInputFields = tInputFields or {}
+    --set up text
+    local lineLength = tTerm.screen.x-2 --max line length
+    local tLine = {}
+    if type(text) == "table" then --converts text to string if it's a table
+      text = table.concat(text,"\n")
     end
-    field.scroll = field.cX >= field.lX and field.cX-field.lX or field.scroll
-    local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
-    screen:setCursorPos(field.sX,field.y)
-    screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
-    screen:setCursorPos(field.sX+field.cX-field.scroll,field.y)
-  end
-  local eventHandlers = {
-    mouse_click = function(tEvent)
-      local x,y = tEvent[3],tEvent[4]
-      if inputTouchMap[x][y] then --input bar clicked
-        tInputs.enabled = inputTouchMap[x][y]
-        local enabled = tInputs.enabled
-        screen:setCursorPos(math.min(#tInputs[enabled].value+tInputs[enabled].sX,x),y)
-        tInputs[enabled].cX = (screen:getCursorPos())-tInputs[enabled].sX
-      elseif buttonTouchMap[x][y] then
-        return endExecution(buttonTouchMap[x][y])
+    glasses.log.write(text)
+    while #text > 0 do  --splits text into a table containing each line
+      local line = text:sub(1,lineLength)
+      local newLine = string.find(line.."","\n") --check for new line character
+      if newLine then
+        line = line:sub(1,newLine-1)
+        text = text:sub(#line+2,#text)
+      elseif #line == lineLength then
+        local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
+        line = line:sub(1,endSpace)
+        text = text:sub(#line+1,#text)
+      else
+        text = ""
       end
-    end,
-    char = function(tEvent)
-      if tInputs.enabled then
-        local field = tInputs[tInputs.enabled]
-        if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
-          field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
-          field.cX = field.cX+1
-          refreshField(tInputs.enabled)
+      tLine[#tLine+1] = line
+    end
+    local maxLines = tTerm.screen.y-3-#tInputFields
+    if #tLine > maxLines then
+      window.text(table.concat(tLine,"\n",maxLines+1),tButtonFields,tInputFields) --omg recursion
+      tLine[maxLines+1] = nil
+    end
+    --default input fields
+    local tInputs = {}
+    for i=1,#tInputFields do
+      if type(tInputFields[i]) ~= "table" then
+        tInputs[i] = {
+          name = tInputFields[i]
+        }
+        tInputFields[i] = {
+          name = tInputFields[i]
+        }
+      else
+        tInputs[i] = {}
+        for k,v in pairs(tInputFields[i]) do
+          tInputs[i][k] = v
         end
       end
-    end,
-    key = function(tEvent)
-      local key = tEvent[2]
-      if tInputs.enabled then
-        local field = tInputs[tInputs.enabled]
-        --input box
-        if key == 14
-        and field.cX > 0 then
-          --backspace
-          local curs = field.cX
-          if field.cX >= field.lX then
-            curs = curs-1
-          end
-          field.value = field.value:sub(1,curs-1)..field.value:sub(curs+1)
-          if field.scroll > 0 then
-            field.scroll = field.scroll-1
-          else
-            field.cX = field.cX-1
-          end
-        elseif key == 205 then --right arrow
-          field.cX = field.cX+1
-        elseif key == 203 then --left arrow
-          field.cX = field.cX-1
-        elseif key == 200 then --up arrow
-          tInputs.enabled = math.max(1,tInputs.enabled-1)
-        elseif key == 208 then --down arrow
-          tInputs.enabled = math.min(#tInputs,tInputs.enabled+1)
-        elseif key == 211 then --delete
-          if #field.value <= 1 and field.cX == 0 then
-            field.value = ""
-          else
-            field.value = field.value:sub(1,field.cX)..field.value:sub(field.cX+2)
-          end
-        elseif key == 207 then --end
-          field.cX = #field.value+1
-        elseif key == 199 then --home
-          field.cX = 1
-          field.scroll = 0
-        elseif key == 28 then --enter
-          if tInputs.enabled == #tInputs then
-            return endExecution("Ok")
-          else
-            tInputs.enabled = tInputs.enabled+1
-          end
-        end
-        refreshField(tInputs.enabled)
-      else --no input boxes
-        if key == 28 then --enter
-          return endExecution("Ok")
-        end
+      local field = tInputs[i]
+      if field.value and type(field.value) == "number" then
+        field.value = string.format(field.value)
       end
-    end,
-    chat_command = function(tEvent)
-      local command = tEvent[2]:lower()
-      for i=1,#tButtons do
-        if tButtons[i].name:lower() == command then
-          return endExecution(tButtons[i].name)
-        end
+      setmetatable(field,
+        {
+          __index = inputDefaults
+        }
+      )
+    end
+    --default buttons
+    local tButtons = {}
+    if type(tButtonFields) == "string" then
+      tButtons = {
+        [1] = tButtonFields
+      }
+    elseif not tButtonFields or #tButtonFields < 1 then
+      tButtons = {
+        [1] = "Ok"
+      }
+    else
+      for k,v in pairs(tButtonFields) do
+        tButtons[k] = v
       end
-      local tCommand = {}
-      for word in command:gmatch"%S+" do
-        local num = tonumber(word)
-        if num then
-          tCommand[#tCommand+1] = num
-        else
-          tCommand[#tCommand+1] = word:lower()
-        end
+    end
+    local oldHandlers = {}--stores currently in use event handlers, prior to switch
+    local function endExecution(event)
+      --closes input box and returns event and the values in the input fields
+      eventHandler.switch(oldHandlers,true)
+      local tRes = {}
+      for iR=1,#tInputs do
+        tRes[tInputs[iR].name] = tInputs[iR].value ~= "-" and tonumber(tInputs[iR].value) or #tInputs[iR].value > 0 and tInputs[iR].value
       end
-      if tInputs.enabled then
-        local field
-        if type(tCommand[1]) == "number" then
-          field = math.max(1,math.min(#tInputs,tCommand[1]))
-          tInputs[field].value = table.concat(tCommand," ",2)
-          refreshField(field)
-        else
-          for i=1,#tInputs do
-            if command:match(tInputs[i].name:lower()) then
-              tInputs[i].value = command:match(tInputs[i].name:lower().." (.+)")
-              refreshField(i)
+      screen:setCursorBlink(false)
+      if reInput then
+        for i=1,#tInputFields do
+          for k,v in pairs(tRes) do
+            if k == tInputFields[i].name then
+              tInputFields[i].value = v
               break
             end
           end
         end
-      end
-    end
-  }
-  if customEvent then
-    for k,v in pairs(customEvent) do
-      local mainFunc = eventHandlers[k]
-      eventHandlers[k] = function(tEvent)
-        local button = v(tEvent)
-        if button then
-          return endExecution(button)
-        end
-        if mainFunc then
-          return mainFunc(tEvent)
+        reInput = function(reText) --set up reInput function
+          return window.text(reText,tButtonFields,tInputFields,customEvent,true)
         end
       end
-    end
-  end
-  for k,v in pairs(eventHandler.active) do
-    oldHandlers[k] = v
-  end
-  eventHandler.switch(eventHandlers)
-  while true do
-  --user interaction begins
-    local event,tRes,reInput = eventHandler.pull()
-    if event then
+      screen:delLayer(screenLayer)
+      inputOpen = (screenLayer ~= screen.layers.dialogue)
+      activeInputs = activeInputs-1
       return event,tRes,reInput
     end
+    --render box
+    local buttonTouchMap,inputTouchMap
+    if tTerm.color then
+      local box = {
+        height = #tLine+2+#tInputs,
+        width = tTerm.screen.x-2
+      }
+      box.top = math.floor(tTerm.screen.yMid-(box.height/2))
+      box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
+      screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
+      screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
+      --write text
+      screen:setBackgroundColor(tColors.inputBox)
+      screen:setTextColor(tColors.inputBoxText)
+      for i=1,#tLine do
+        screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#tLine[i]/2))+1,box.top+i)
+        screen:write(tLine[i])
+      end
+      --set up & render buttons
+      local totalButtonSpace = 0
+      buttonTouchMap = class.matrix.new(2)
+      for i=1,#tButtons do
+        tButtons[i] = {
+          name = tButtons[i]
+        }
+        tButtons[i].size = #tButtons[i].name+2
+        totalButtonSpace = totalButtonSpace+tButtons[i].size+2
+      end
+      local nextButton = math.ceil(tTerm.screen.xMid-(totalButtonSpace/2)+2)
+      screen:setTextColor(tColors.inputButtonText)
+      screen:setBackgroundColor(tColors.inputButton)
+      for i=1,#tButtons do
+        tButtons[i].sX = nextButton
+        tButtons[i].eX = nextButton+tButtons[i].size
+        tButtons[i].y = box.bottom-1
+        screen:setCursorPos(tButtons[i].sX,tButtons[i].y)
+        screen:write(" "..tButtons[i].name.." ")  --add spaces for appearances
+        nextButton = nextButton+#tButtons[i].name+2
+        for iX=tButtons[i].sX,tButtons[i].eX do
+          buttonTouchMap[iX][tButtons[i].y] = tButtons[i].name
+        end
+      end
+      --set up & render input boxes
+      inputTouchMap = class.matrix.new(2)
+      if #tInputs > 0 then
+        for i=#tInputs,1,-1 do
+          local field = tInputs[i]
+          screen:setBackgroundColor(tColors.inputBox)
+          screen:setTextColor(field.nameColor)
+          screen:setCursorPos(3,box.bottom-2-#tInputs+i)
+          screen:write(field.name..":")
+          field.sX,field.y = screen:getCursorPos() -- input area start x point
+          field.eX = tTerm.screen.x-2 --end x point
+          field.lX = field.eX-field.sX --total field length
+          screen:setTextColor(field.textColor)
+          screen:setBackgroundColor(field.backgroundColor)
+          screen:write(string.sub(field.value,1,field.lX))
+          field.cX = (screen:getCursorPos())-field.sX --cursor pos
+          field.scroll = math.max(0,#field.value-field.lX) --scroll value
+          screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)
+          for iX = field.sX,field.eX do
+            inputTouchMap[iX][field.y] = i
+          end
+        end
+        screen:setCursorBlink(true)
+        tInputs.enabled = 1
+        screen:setCursorPos(tInputs[1].cX+tInputs[1].sX,tInputs[1].y)
+      end
+    end
+    local function refreshField(field)
+     --updates input fields
+      screen:setLayer(screenLayer)
+      field = tInputs[field]
+      if field.cX > #field.value then
+        field.scroll = math.max(0,#field.value-field.lX+1)
+        field.cX = #field.value
+      end
+      field.scroll = field.cX >= field.lX and field.cX-field.lX or field.scroll
+      local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
+      screen:setCursorPos(field.sX,field.y)
+      screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
+      screen:setCursorPos(field.sX+field.cX-field.scroll,field.y)
+    end
+    local eventHandlers = {
+      mouse_click = function(tEvent)
+        local x,y = tEvent[3],tEvent[4]
+        if inputTouchMap[x][y] then --input bar clicked
+          tInputs.enabled = inputTouchMap[x][y]
+          local enabled = tInputs.enabled
+          screen:setCursorPos(math.min(#tInputs[enabled].value+tInputs[enabled].sX,x),y)
+          tInputs[enabled].cX = (screen:getCursorPos())-tInputs[enabled].sX
+        elseif buttonTouchMap[x][y] then
+          return endExecution(buttonTouchMap[x][y])
+        end
+      end,
+      char = function(tEvent)
+        if tInputs.enabled then
+          local field = tInputs[tInputs.enabled]
+          if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
+            field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
+            field.cX = field.cX+1
+            refreshField(tInputs.enabled)
+          end
+        end
+      end,
+      key = function(tEvent)
+        local key = tEvent[2]
+        if tInputs.enabled then
+          local field = tInputs[tInputs.enabled]
+          --input box
+          if key == 14
+          and field.cX > 0 then
+            --backspace
+            local curs = field.cX
+            if field.cX >= field.lX then
+              curs = curs-1
+            end
+            field.value = field.value:sub(1,curs-1)..field.value:sub(curs+1)
+            if field.scroll > 0 then
+              field.scroll = field.scroll-1
+            else
+              field.cX = field.cX-1
+            end
+          elseif key == 205 then --right arrow
+            field.cX = field.cX+1
+          elseif key == 203 then --left arrow
+            field.cX = field.cX-1
+          elseif key == 200 then --up arrow
+            tInputs.enabled = math.max(1,tInputs.enabled-1)
+          elseif key == 208 then --down arrow
+            tInputs.enabled = math.min(#tInputs,tInputs.enabled+1)
+          elseif key == 211 then --delete
+            if #field.value <= 1 and field.cX == 0 then
+              field.value = ""
+            else
+              field.value = field.value:sub(1,field.cX)..field.value:sub(field.cX+2)
+            end
+          elseif key == 207 then --end
+            field.cX = #field.value+1
+          elseif key == 199 then --home
+            field.cX = 1
+            field.scroll = 0
+          elseif key == 28 then --enter
+            if tInputs.enabled == #tInputs then
+              return endExecution("Ok")
+            else
+              tInputs.enabled = tInputs.enabled+1
+            end
+          end
+          refreshField(tInputs.enabled)
+        else --no input boxes
+          if key == 28 then --enter
+            return endExecution("Ok")
+          end
+        end
+      end,
+      chat_command = function(tEvent)
+        local command = tEvent[2]:lower()
+        for i=1,#tButtons do
+          if tButtons[i].name:lower() == command then
+            return endExecution(tButtons[i].name)
+          end
+        end
+        local tCommand = {}
+        for word in command:gmatch"%S+" do
+          local num = tonumber(word)
+          if num then
+            tCommand[#tCommand+1] = num
+          else
+            tCommand[#tCommand+1] = word:lower()
+          end
+        end
+        if tInputs.enabled then
+          local field
+          if type(tCommand[1]) == "number" then
+            field = math.max(1,math.min(#tInputs,tCommand[1]))
+            tInputs[field].value = table.concat(tCommand," ",2)
+            refreshField(field)
+          else
+            for i=1,#tInputs do
+              if command:match(tInputs[i].name:lower()) then
+                tInputs[i].value = command:match(tInputs[i].name:lower().." (.+)")
+                refreshField(i)
+                break
+              end
+            end
+          end
+        end
+      end
+    }
+    if customEvent then
+      for k,v in pairs(customEvent) do
+        local mainFunc = eventHandlers[k]
+        eventHandlers[k] = function(tEvent)
+          local button = v(tEvent)
+          if button then
+            return endExecution(button)
+          end
+          if mainFunc then
+            return mainFunc(tEvent)
+          end
+        end
+      end
+    end
+    for k,v in pairs(eventHandler.active) do
+      oldHandlers[k] = v
+    end
+    eventHandler.switch(eventHandlers)
+    while true do
+    --user interaction begins
+      local event,tRes,reInput = eventHandler.pull()
+      if event then
+        return event,tRes,reInput
+      end
+    end
+  end,
+  scroll = function()
+    
   end
-end
-
+}
 --[[----------------------------------------------------------------------------------------------------------
 Common inputs
 ----------------------------------------------------------------------------------------------------------]]--
@@ -1417,7 +1426,7 @@ dialogue = {
     local fileName = tFile.blueprint
     local button,tRes,reInput
     if not fileName then
-      button, tRes, reInput = input(
+      button, tRes, reInput = window.text(
         text or "No file name for current blueprint,",
         {
           "Cancel",
@@ -1437,9 +1446,9 @@ dialogue = {
     while button and button ~= "Cancel" do
       fileName = not tFile.blueprint and tRes["File name"] or fileName
       if not fileName then
-        button,tRes,reInput = reInput("Invalid file name!")
+        button,tRes,reInput = rewindow.text("Invalid file name!")
       elseif fs.exists(fileName..".TAb") then
-        button = input(
+        button = window.text(
           fileName.." already exists!\n Overwrite?",
           {
             "Cancel",
@@ -1449,7 +1458,7 @@ dialogue = {
         if button == "Overwrite" then
           break
         end
-        button,tRes,reInput = reInput("Overwrite of "..fileName.." cancelled. Input new file name.")
+        button,tRes,reInput = rewindow.text("Overwrite of "..fileName.." cancelled. Input new file name.")
       else
         break
       end
@@ -1459,7 +1468,7 @@ dialogue = {
     end
     tBlueprint:save(fileName)
     tFile.blueprint = fileName
-    input("Successfully saved "..fileName..".TAb.")
+    window.text("Successfully saved "..fileName..".TAb.")
     return true
   end
 }
@@ -1533,7 +1542,7 @@ function selectColor(color,threshold)
     if tMode.sync.amount > 0 then
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocks required",color = color, slots = tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]]})
     end
-    local button,tRes = input(
+    local button,tRes = window.text(
       keyColor[color].." blocks required in slots "..tBlueprint.colorSlots[color][1].."-"..tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]],
       {
         "Cancel",
@@ -1633,7 +1642,7 @@ function checkUsage(blueprint,sLayer,eLayer)
 end
 
 function assignColorSlots(color)
-  local button, tRes, reInput = input(
+  local button, tRes, reInput = window.text(
     "Input slot range for "..keyColor[color],
     {
       "Cancel",
@@ -1658,12 +1667,12 @@ function assignColorSlots(color)
   )
   while button ~= "Cancel" do
     if not tRes.From then
-      button,tRes,reInput = reInput("Missing parameter From!")
+      button,tRes,reInput = rewindow.text("Missing parameter From!")
     elseif not tRes.To then
-      button,tRes,reInput = reInput("Missing parameter To!")
+      button,tRes,reInput = rewindow.text("Missing parameter To!")
     elseif tRes.From < 1 or tRes.From > tRes.To
     or tRes.To > 16 then
-      button,tRes,reInput = reInput("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
+      button,tRes,reInput = rewindow.text("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
     elseif button == "Ok" then
       tBlueprint.colorSlots[color] = {}
       for i=tRes.From,tRes.To do
@@ -1684,7 +1693,7 @@ function checkProgress(fileName,tProgress,blueprint,auto)
     if auto then
       return tProgress
     else
-      local button = input(
+      local button = window.text(
         [[In-progress build of current blueprint found.
 layers ]]..tProgress.sLayer..[[-]]..tProgress.eLayer..[[ 
 X: ]]..tProgress.x..[[ "]]..tProgress.dir.x..[["
@@ -1710,7 +1719,7 @@ Load?]],
     }
   end
   if not (tProgress.sLayer and tProgress.eLayer) then
-    local button, tRes, reInput = input(
+    local button, tRes, reInput = window.text(
       "Input layer range to build",
       {
         "Cancel",
@@ -1733,12 +1742,12 @@ Load?]],
     )
     while true do
       if button == "Cancel" then
-        input("Construction cancelled.")
+        window.text("Construction cancelled.")
         return
       elseif not tRes.Start then
-        button,tRes,reInput = reInput("Missing start layer!")
+        button,tRes,reInput = rewindow.text("Missing start layer!")
       elseif not tRes.End then
-        button,tRes,reInput = reInput("Missing end layer!")
+        button,tRes,reInput = rewindow.text("Missing end layer!")
       elseif button == "Ok" then
         tProgress.sLayer = tRes.Start
         tProgress.eLayer = tRes.End
@@ -1752,14 +1761,14 @@ Load?]],
   for k,v in pairs(tUsage) do
     if not tBlueprint.colorSlots[k][1] then
       if not assignColorSlots(k) then
-        input("Construction cancelled.")
+        window.text("Construction cancelled.")
         return false
       end
     end
   end
   blueprint:save(fileName or tFile.blueprint)
   if not tProgress.x then
-    local button, tRes, reInput = input(
+    local button, tRes, reInput = window.text(
       "Input build coordinates",
       {
         "Cancel",
@@ -1788,7 +1797,7 @@ Load?]],
     )
     while true do
       if button == "Cancel" then
-        input("Construction cancelled.")
+        window.text("Construction cancelled.")
         return
       elseif button == "Cur pos" then
         tRes.X = cTurtle.tPos.x
@@ -1796,11 +1805,11 @@ Load?]],
         tRes.Z = cTurtle.tPos.z
       end
       if not tRes.X then
-        button,tRes,reInput = reInput("Missing parameter X!")
+        button,tRes,reInput = rewindow.text("Missing parameter X!")
       elseif not tRes.Y then
-        button,tRes,reInput = reInput("Missing parameter Y!")
+        button,tRes,reInput = rewindow.text("Missing parameter Y!")
       elseif not tRes.Z then
-        button,tRes,reInput = reInput("Missing parameter Z!")
+        button,tRes,reInput = rewindow.text("Missing parameter Z!")
       elseif button == "Ok" or button == "Cur pos" then
         tProgress.x = tRes.X
         tProgress.y = tRes.Y
@@ -1810,7 +1819,7 @@ Load?]],
     end
   end
   if not tProgress.dir.x then
-    local button, tRes, reInput = input(
+    local button, tRes, reInput = window.text(
       "Input build directions",
       {
         "Cancel",
@@ -1841,14 +1850,14 @@ Load?]],
     )
     while true do
       if button == "Cancel" then
-        input("Construction cancelled.")
+        window.text("Construction cancelled.")
         return
       elseif not tRes.X then
-        button,tRes,reInput = reInput("Missing X direction!")
+        button,tRes,reInput = rewindow.text("Missing X direction!")
       elseif not tRes.Y then
-        button,tRes,reInput = reInput("Missing Y direction!")
+        button,tRes,reInput = rewindow.text("Missing Y direction!")
       elseif not tRes.Z then
-        button,tRes,reInput = reInput("Missing Z direction!")
+        button,tRes,reInput = rewindow.text("Missing Z direction!")
       elseif button == "Ok" then
         tProgress.dir.x = tRes.X
         tProgress.dir.y = tRes.Y
@@ -1858,7 +1867,7 @@ Load?]],
     end
   end
   if not tProgress.enderChest and not auto then
-    local button, tRes, reInput = input(
+    local button, tRes, reInput = window.text(
       "Enable ender chest?",
       {
         "No",
@@ -1880,7 +1889,7 @@ Load?]],
       if not tRes.Slot then
         break
       elseif tRes.Slot and (tRes.Slot > 16 or tRes.Slot < 1 ) then
-        button,tRes,reInput = reInput("Invalid slot "..tRes.Slot)
+        button,tRes,reInput = rewindow.text("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
         tProgress.enderChest = tRes.Slot
         cTurtle.tSettings.enderFuel = tRes.Slot
@@ -1894,7 +1903,7 @@ Load?]],
     end
   end
   if not tProgress.breakMode and not auto then
-    local button = input(
+    local button = window.text(
       "Enable break mode?",
       {
         "Cancel",
@@ -1911,7 +1920,7 @@ function build(blueprint,auto)
   --builds the given blueprint layers
   if not (tFile.blueprint or blueprint) then
     if not dialogue.save"Blueprint must be saved locally prior to building" then
-      input"Construction cancelled"
+      window.text"Construction cancelled"
       return
     end
   end
@@ -1936,7 +1945,7 @@ function build(blueprint,auto)
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
             cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
             if not selectColor(block,2) then
-              input("Construction cancelled.")
+              window.text("Construction cancelled.")
               return
             end
             cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
@@ -2071,7 +2080,7 @@ while true do
       --recovery mode ignores errors
     elseif tTerm.color then --color supported crash
       local errors = ""
-      local button = input(
+      local button = window.text(
         "Turtle Architect has encountered an unexpected error:\n"..tostring(tRes[2]).."\n\nPlease report this to CometWolf immediately!",
         {
           "Ignore",

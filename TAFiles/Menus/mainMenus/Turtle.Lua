@@ -5,10 +5,10 @@ menu = {
     name = "Move to...",
     enabled = true,
     help = function()
-      input"Moves the turtle to the given coordinates"
+      window.text"Moves the turtle to the given coordinates"
     end,
     func = function()
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Move to coordinates...",
         {
           "Cancel",
@@ -42,10 +42,10 @@ menu = {
     name = "Turn",
     enabled = true,
     help = function()
-      input"Turns the turtle in the given direction. Supports most forms of direction input like x+, north, right"
+      window.text"Turns the turtle in the given direction. Supports most forms of direction input like x+, north, right"
     end,
     func = function()
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Turn to...",
         {
           "Cancel",
@@ -65,7 +65,7 @@ menu = {
     name = "Build blueprint...",
     enabled = true,
     help = function()
-      input"Begins construction of the currently loaded blueprint, missing build parameters will be requested as well"
+      window.text"Begins construction of the currently loaded blueprint, missing build parameters will be requested as well"
     end,
     func = function()
       build(tBlueprint)

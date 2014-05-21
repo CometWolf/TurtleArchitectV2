@@ -65,10 +65,10 @@ codeEnv.debug = debug
 
 local tool  
 tool = {
-  menuOrder = 8, --menu order, 1 being top
+  menuOrder = 9, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
-    local button = input(
+    local button = window.text(
       "The code tool is a very unique tool. Using regular Lua code, you can code your own tool directly. This code can either be input directly into the dialogue window, or loaded from a file",
       {
         "Ok",
@@ -79,7 +79,7 @@ tool = {
       tool.selectFunc(clickButton)
       return
     end
-    button = input(
+    button = window.text(
       "Click information is stored in the click table under the keys:\nx,z,color,layer,button and event.\n",
       {
         "Ok",
@@ -90,7 +90,7 @@ tool = {
       tool.selectFunc(clickButton)
       return
     end
-    input(
+    window.text(
       "Most of the default tools may be called from this code as well, indexed in the tool table.\ntool.hSquare(x1,z1,x2,z2,color,layer)\nIf not specified, click.color and click.layer is used for the color and layer respectively",
       {
         "Ok",
@@ -102,7 +102,7 @@ tool = {
     end
   end,
   selectFunc = function(clickButton)
-    local button,tRes,reInput = input(
+    local button,tRes,reInput = window.text(
       "Input path to code tool file",
       {
         "Cancel",
@@ -125,7 +125,7 @@ tool = {
       if button == "Compile" then
         local loadRes = {loadstring(path)}
         if not loadRes[1] then
-          button,tRes,reInput = reInput("Error: "..loadRes[2])
+          button,tRes,reInput = rewindow.text("Error: "..loadRes[2])
         else
           setfenv(loadRes[1],codeEnv)
           codeEnv.code = path
@@ -142,7 +142,7 @@ tool = {
             codeEnv.blueprint = class.blueprint.new(nil,true)
             local tCallRes = {pcall(loadRes[1])}
             if not tCallRes[1] then
-              local button = input(
+              local button = window.text(
                 "Code tool error:\n"..(tCallRes[2]:match"string:1: (.+)" or tCallRes[2]),
                 {
                   "Ok",
@@ -185,14 +185,14 @@ tool = {
         for i=1,#events do
           os.queueEvent(unpack(events[i]))
         end
-        button,tRes,reInput = reInput"Input path to code tool file"
+        button,tRes,reInput = rewindow.text"Input path to code tool file"
       else --button == Load, load code
         if not fs.exists(path) then
-          button,tRes,reInput = reInput(path.." does not exist!")
+          button,tRes,reInput = rewindow.text(path.." does not exist!")
         else
           local loadRes = {loadfile(path)}
           if not loadRes[1] then
-            button,tRes,reInput = reInput("Error: "..loadRes[2])
+            button,tRes,reInput = rewindow.text("Error: "..loadRes[2])
           else
             setfenv(loadRes[1],codeEnv)
             codeEnv.code = path
@@ -209,7 +209,7 @@ tool = {
               codeEnv.blueprint = class.blueprint.new(nil,true)
               local tCallRes = {pcall(loadRes[1])}
               if not tCallRes[1] then
-                local button = input(
+                local button = window.text(
                   "Code tool error:\n"..tCallRes[2],
                   {
                     "Ok",

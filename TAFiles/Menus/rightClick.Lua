@@ -3,6 +3,9 @@ menu = {
   [1] = {
     name = "Cut",
     select = true,
+    help = function()
+      window.text"Copies the current selection into the clipboard, and deletes it from the canvas"
+    end,
     func = function()
       local t = tTool.select
       tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
@@ -15,6 +18,9 @@ menu = {
   [2] = {
     name = "Copy",
     select = true,
+    help = function()
+      window.text"Copies the current selection into the clipboard"
+    end,
     func = function()
       local t = tTool.select
       tTool.clipboard = tBlueprint[t.layer]:copy(t.sX,t.sZ,t.eX,t.eZ,true)
@@ -31,6 +37,9 @@ menu = {
   [3] = {
     name = "Paste",
     clipboard = true,
+    help = function()
+      window.text"Draws the current clipboard to the blueprint"
+    end,
     func = function()
       local c = tTool.clipboard
       c.layer = tTerm.scroll.layer
@@ -48,6 +57,9 @@ menu = {
     name = "Recolor",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Recolors the currently selected area or the clipboard, to color equipped on the button you pressed with"
+    end,
     func = function(button)
       local c = tTool.clipboard
       local color = tTool[button].color
@@ -66,6 +78,9 @@ menu = {
     name = "Flip vert",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Flips the current selection or clipboard vertically(Z)"
+    end,
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
@@ -84,6 +99,9 @@ menu = {
     name = "Flip hori",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Flips the current selection or clipboard horizontally(X)"
+    end,
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
@@ -102,6 +120,9 @@ menu = {
     name = "Mark built",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Marks the current selection or clipboard as built, thus making the turtle skip it"
+    end,
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
@@ -121,6 +142,9 @@ menu = {
     name = "Mark unbuilt",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Resets any build progress made within the current selection or clipboard"
+    end,
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
@@ -140,6 +164,9 @@ menu = {
     name = "Delete",
     select = true,
     clipboard = true,
+    help = function()
+      window.text"Removes the current selection from the blueprint, or clears the clipbord"
+    end,
     func = function()
       local t = tTool.select
       local c = tTool.clipboard
@@ -175,20 +202,33 @@ menu = {
       local z = z+i-1
       screen:setCursorPos(x,z)
       screen:setBackgroundColor((i%2 == 0 and tColors.rightClickPri) or tColors.rightClickSec)
+      local help = menu[i].help
+      local helpFunc = (
+        help
+        and function(button)
+          return tTool[button].tool == "Help" and (help() or true)
+        end
+        or function(button)
+          return tTool[button].tool == "Help" and window.text(menu[i].name.."\ndosen't have a help function. Please define it in the menu file as \"help\"") and true
+        end
+      )
       if menu[i].select and tTool.select.eX
       or menu[i].clipboard and tTool.clipboard
       or not (menu[i].clipboard or menu[i].select) then
         screen:setTextColor(tColors.rightClickUseable)
-        for iX = x,eX do
-          tMenu.touchMap[iX][z] = function(button)
+        local function menuFunc(button)
+          if not helpFunc(button) then
             renderMenu()
             menu[i].func(button)
           end
         end
+        for iX = x,eX do
+          tMenu.touchMap[iX][z] = menuFunc
+        end
       else
         screen:setTextColor(tColors.rightClickUnuseable)
         for iX = x,eX do
-          tMenu.touchMap[iX][z] = true
+          tMenu.touchMap[iX][z] = helpFunc
         end
       end
       screen:write(menu[i].string)

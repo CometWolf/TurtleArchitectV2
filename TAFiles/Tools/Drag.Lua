@@ -1,9 +1,9 @@
 local tool
 tool = {
-  menuOrder = 9, --menu order, 1 being top
+  menuOrder = 10, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
-    local button = input(
+    local button = window.text(
       "The drag tool lets you drag the view around, instead of having to use the arrow keys or mouse wheel",
       {
         "Ok",

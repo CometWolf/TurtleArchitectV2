@@ -16,11 +16,13 @@ screenBuffer = {
       {
         __index = function(t,k)
           if not screenBuffer[k] then
-            for i = #t+1,k do
-              t[i] = rawget(t,layer) or class.matrix.new(2)
+            if type(k) == "number" then
+              for i = #t+1,k do
+                t[i] = rawget(t,layer) or class.matrix.new(2)
+              end
+              buffer.layer = k
+              return t[k]
             end
-            buffer.layer = k
-            return t[k]
           end
           return screenBuffer[k]
         end
@@ -70,7 +72,7 @@ screenBuffer = {
   end,
   getTop = function(buffer,x,y,from)
     for iL = (from or #buffer),1,-1 do
-	  local xLine = rawget(buffer[iL][x])
+	  local xLine = rawget(buffer[iL],x)
       if xLine and xLine[y] then
         return iL
       end
@@ -114,9 +116,9 @@ screenBuffer = {
   drawPoint = function(buffer,x,y,color,marker,mColor)
     marker = marker or buffer.marker
     color = color or buffer.bColor
-	x = x or buffer.x
-	y = y or buffer.y
-	mColor = mColor or color
+    x = x or buffer.x
+    y = y or buffer.y
+    mColor = mColor or color
     local p = buffer[buffer.layer][x][y]
     if not p
     or p.bColor ~= color
@@ -253,7 +255,7 @@ screenBuffer = {
   end,
   glassInit = function(buffer,bridge,sizeX,sizeY,posX,posY)
     bridge = bridge or buffer.bridge
-    if buffer.glass then
+    if rawget(buffer,glass) then
       buffer:glassClose()
     end
     buffer.glass = {
@@ -330,8 +332,9 @@ screenBuffer = {
       return
     end
     for x,vX in pairs(buffer.changed) do
+      local xLine = buffer.glass.text[x]
       for y,layer in pairs(vX) do
-        local text = buffer.glass.text[x][y]
+        local text = xLine[y]
         if text then
           local pixel = buffer[layer][x][y]
           buffer.glass.pixel[x][y].setColor(glasses.colors[pixel.bColor])

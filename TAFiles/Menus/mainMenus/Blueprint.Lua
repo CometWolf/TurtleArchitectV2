@@ -5,10 +5,10 @@ menu = {
     name = "Create new...",
     enabled = true,
     help = function()
-      input"Creates a new blueprint and unloads the current one."
+      window.text"Creates a new blueprint and unloads the current one."
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Create new blueprint file...",
         {
           "Cancel",
@@ -27,14 +27,14 @@ menu = {
       while button ~= "Cancel" do
         local fileName = tRes["File name"]
         if not fileName then
-          button,tRes,reInput = reInput("Invalid file name!")
+          button,tRes,reInput = rewindow.text("Invalid file name!")
         elseif fs.exists(fileName..".TAb") then
-          button,tRes,reInput = reInput(fileName.." already exists!")
+          button,tRes,reInput = rewindow.text(fileName.." already exists!")
         else
           tBlueprint = class.blueprint.new()
           tFile.blueprint = fileName
           scroll(1)
-          input("Successfully created "..fileName..".TAb.")
+          window.text("Successfully created "..fileName..".TAb.")
           return
         end
       end
@@ -44,10 +44,10 @@ menu = {
     name = "Load...",
     enabled = true,
     help = function()
-      input"Loads a previously saved blueprint."
+      window.text"Loads a previously saved blueprint."
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Load blueprint file",
         {
           "Cancel",
@@ -68,21 +68,21 @@ menu = {
         local fileName = tRes["File name"]
         if button == "Pastebin" then
           if not fileName then
-            button,tRes,reInput = reInput("Missing pastebin code parameter!")
+            button,tRes,reInput = rewindow.text("Missing pastebin code parameter!")
           else
             fileName = fileName:match"[^/]+"
             local paste = http.paste.get(fileName,true)
             if not paste then
-              button,tRes,reInput = reInput("Pastebin download of "..fileName.." failed!")
+              button,tRes,reInput = rewindow.text("Pastebin download of "..fileName.." failed!")
             else
               local blueprint = tBlueprint.load(paste)
               if not blueprint then
-                button,tRes,reInput = reInput(fileName.." was not a Turtle Architect file!")
+                button,tRes,reInput = rewindow.text(fileName.." was not a Turtle Architect file!")
               else
                 tBlueprint = blueprint
                 scroll()
                 sync({blueprint = tBlueprint,blueprintName = false},"Blueprint load")
-                input("Successfully downloaded "..fileName.."!")
+                window.text("Successfully downloaded "..fileName.."!")
                 return
               end
             end
@@ -90,17 +90,17 @@ menu = {
         else
           local blueprint = tBlueprint.load(fileName)
           if not fileName then
-            button,tRes,reInput = reInput("Missing blueprint file name parameter!")
+            button,tRes,reInput = rewindow.text("Missing blueprint file name parameter!")
           elseif not fs.exists(fileName..".TAb") then
-            button,tRes,reInput = reInput(fileName.." does not exist!")
+            button,tRes,reInput = rewindow.text(fileName.." does not exist!")
           elseif not blueprint then
-            button,tRes,reInput = reInput(fileName.." is not a blueprint file!")
+            button,tRes,reInput = rewindow.text(fileName.." is not a blueprint file!")
           elseif button == "Ok" then
             tFile.blueprint = fileName
             tBlueprint = blueprint
             scroll()
             sync({blueprint = tBlueprint,blueprintName = fileName},"Blueprint load")
-            input("Successfully loaded "..fileName..".TAb.")
+            window.text("Successfully loaded "..fileName..".TAb.")
             return
           end
         end
@@ -111,7 +111,7 @@ menu = {
     name = "Save",
     enabled = true,
     help = function()
-      input"Saves the current blueprint. If it has not been saved previously, a file name is requested"
+      window.text"Saves the current blueprint. If it has not been saved previously, a file name is requested"
     end,
     func = function()
       dialogue.save()
@@ -121,10 +121,10 @@ menu = {
     name = "Save as...",
     enabled = true,
     help = function()
-      input"Save the current blueprint with a new name, or upload it to pastebin"
+      window.text"Save the current blueprint with a new name, or upload it to pastebin"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
         "Save current blueprint as",
         {
           "Cancel",
@@ -144,21 +144,21 @@ menu = {
       while button ~= "Cancel" do
         local fileName = tRes["File name"]
         if not fileName then
-          button,tRes,reInput = reInput("Invalid file name!")
+          button,tRes,reInput = rewindow.text("Invalid file name!")
         elseif button == "Pastebin" then
           local response,code = http.paste.put(tBlueprint,fileName)
           if not code then
-            button,tRes,reInput = reInput("Pastebin upload failed!")
+            button,tRes,reInput = rewindow.text("Pastebin upload failed!")
           else
-            input("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..code.." \nURL: "..response)
+            window.text("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..code.." \nURL: "..response)
             return
           end
         elseif fs.exists(fileName..".TAb") then
-          button,tRes,reInput = reInput(fileName.." already exists!")
+          button,tRes,reInput = rewindow.text(fileName.." already exists!")
         else
           tBlueprint:save(fileName)
           tFile.blueprint = fileName
-          input("Successfully saved "..fileName..".TAb.")
+          window.text("Successfully saved "..fileName..".TAb.")
           return
         end
       end
@@ -166,12 +166,14 @@ menu = {
   },
   [5] = {
     name = "Send...",
-    enabled = true and modem,
+    enabled = function()
+      return modem and true or false
+    end,
     help = function()
-      input"Transfer the currently loaded blueprint via rednet. This is only enabled if a modem is connected"
+      window.text"Transfer the currently loaded blueprint via rednet. This is only enabled if a modem is connected"
     end,
     func = function()
-      local button, tRes, reInput = input(
+      local button, tRes, reInput = window.text(
       "Transfer current blueprint via rednet",
         {
           "Cancel",
@@ -192,7 +194,7 @@ menu = {
       while button ~= "Cancel" do
         local id = button ~= "All" and tRes["Computer ID"] or "All"
         if not id then
-          button,tRes,reInput = reInput"Missing receiver ID!"
+          button,tRes,reInput = rewindow.text"Missing receiver ID!"
         elseif button == "Ok"
         or button == "All" then
           rednet.send(id,"Init connection",
@@ -204,10 +206,10 @@ menu = {
                   blueprintName = tFile.blueprint or "Untitled"
                 }
               )
-              input("Successfully sent the current blueprint to computer ID "..id)
+              window.text("Successfully sent the current blueprint to computer ID "..id)
             end,
             function()
-              input("Failed to connect to computer ID "..id)
+              window.text("Failed to connect to computer ID "..id)
             end
           )
           return
@@ -219,10 +221,10 @@ menu = {
     name = "Flip...",
     enabled = true,
     help = function()
-      input"Flip the entire blueprint vertically or horizontally"
+      window.text"Flip the entire blueprint vertically or horizontally"
     end,
     func = function()
-      local button = input(
+      local button = window.text(
         "Flip the entire blueprint",
         {
           "Cancel",
@@ -245,7 +247,7 @@ menu = {
     name = "Edit slot data...",
     enabled = true,
     help = function()
-      input"Change the slots used for the color currently equipped on the button you clicked with"
+      window.text"Change the slots used for the color currently equipped on the button you clicked with"
     end,
     func = function(button)
       assignColorSlots(tTool[button].color)
@@ -256,11 +258,11 @@ menu = {
     name = "Mark built",
     enabled = true,
     help = function()
-      input"Marks the entire blueprint as built, meaning the turtle will not build any of the currently drawn blocks"
+      window.text"Marks the entire blueprint as built, meaning the turtle will not build any of the currently drawn blocks"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Mark the entire blueprint as built. This means the turtle will not build it",
         {
           "Cancel",
@@ -280,11 +282,11 @@ menu = {
     name = "Mark unbuilt",
     enabled = true,
     help = function()
-      input"Resets all build progress made on the blueprint, by marking every block as un-built"
+      window.text"Resets all build progress made on the blueprint, by marking every block as un-built"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Mark the entire blueprint as unbuilt. This will reset any progress the turtle has made",
         {
           "Cancel",
@@ -304,10 +306,10 @@ menu = {
     name = "Check usage",
     enabled = true,
     help = function()
-      input"Check the materials required to build a given layer range"
+      window.text"Check the materials required to build a given layer range"
     end,
     func = function()
-      local button, tRes = input(
+      local button, tRes = window.text(
         "Check material requirements for the layer range",
         {
           "Cancel",
@@ -328,12 +330,12 @@ menu = {
       )
       while button ~= "Cancel" do
         if not tRes.From then
-          button,tRes,reInput = reInput("Missing parameter From!")
+          button,tRes,reInput = rewindow.text("Missing parameter From!")
         elseif not tRes.To then
-          button,tRes,reInput = reInput("Missing parameter To!")
+          button,tRes,reInput = rewindow.text("Missing parameter To!")
         elseif not tBlueprint[tRes.From]
         or not tBlueprint[tRes.To] then
-          button,tRes,reInput = reInput("Invalid slot range "..tRes.From.."-"..tRes.To)
+          button,tRes,reInput = rewindow.text("Invalid slot range "..tRes.From.."-"..tRes.To)
         else
           local tLines = {
             [1] = "Materials required to build current blueprint"
@@ -341,7 +343,7 @@ menu = {
           for k,v in pairs(checkUsage(tBlueprint,tRes.From,tRes.To)) do
             tLines[#tLines+1] = (keyColor[k] or k)..": "..v
           end
-          input(tLines)
+          window.text(tLines)
           return
         end
       end

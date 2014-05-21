@@ -18,7 +18,7 @@ main = {
       elseif tMenu.rightClick.open then
         renderBottomBar()
         renderSideBar()
-      elseif button ~= 3 then
+      else
         --executes tool function
         local tool = tTool[button].tool
         local color = tTool[button].color
