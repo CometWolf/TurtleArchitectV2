@@ -1,5 +1,5 @@
 local tArgs = {...}
-local folder = tArgs[1] or ""
+local folder = tArgs[1] or string.match(shell.getRunningProgram,"(.+)/.-$"
 local tContents = {}
 local getContents
 getContents = function(path,main)
@@ -61,4 +61,3 @@ for file,url in pairs(tContents) do
   saveFile.close()
   webFile.close()
 end
-print("Sucessfully installed Turtle Architect V2")

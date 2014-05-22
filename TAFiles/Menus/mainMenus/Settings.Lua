@@ -318,9 +318,13 @@ Developed by CometWolf.
   },
   [9] = {
     name = "Scroll test",
-    enabled = false,
+    enabled = true,
     func = function()
-      window.scroll("Testing",{"scroll 1","scroll 2"})
+      local options = {}
+      for i=1,40 do
+        options[i] = "This is a selection "..i
+      end
+      window.scroll("Testing",options)
     end
   }
 }

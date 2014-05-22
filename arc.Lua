@@ -413,8 +413,8 @@ tTerm = { --screen size and canvas area
   viewable = {} --currently visible canvas area
 }
 tTerm.screen.x,tTerm.screen.y = term.getSize()
-tTerm.screen.xMid = tTerm.screen.x/2
-tTerm.screen.yMid = tTerm.screen.y/2
+tTerm.screen.xMid = math.floor(tTerm.screen.x/2)
+tTerm.screen.yMid = math.floor(tTerm.screen.y/2)
 tTerm.canvas.sX = 1
 tTerm.canvas.eX = tTerm.screen.x-2
 tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
@@ -796,7 +796,7 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
         end
       end
       for iX = sX,sX+menu.lX do
-        tMenu.touchMap[iX][sY] = enabled and menuFunc or true --true prevents the touchmap func from closing the menu
+        tMenu.touchMap[iX][sY] = enabled and menuFunc or helpFunc --true prevents the touchmap func from closing the menu
       end
     end
   end
@@ -1417,6 +1417,17 @@ window = {
     inputOpen = true
     screen:setLayer(screenLayer)
     activeInputs = activeInputs+1
+    local scroll = 0
+    local selected = 1
+    local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
+    local function endExecution(event,selection)
+      --closes input box and returns event and the values in the input fields
+      eventHandler.switch(oldHandlers,true)
+      screen:delLayer(screenLayer)
+      inputOpen = (screenLayer ~= screen.layers.dialogue)
+      activeInputs = activeInputs-1
+      return event, selection
+    end
     --set up text
     local lineLength = tTerm.screen.x-2 --max line length
     local tLine = {}
@@ -1444,6 +1455,13 @@ window = {
       window.text(table.concat(tLine,"\n",maxLines+1))
       tLine[maxLines+1] = nil
     end
+    local selectionStrings = {}
+    local selectionLength = tTerm.screen.x-5
+    for i,selection in ipairs(tItems) do
+      selection = string.rep(" ",math.floor((selectionLength-#selection)/2))..selection
+      selectionStrings[i] = selection..string.rep(" ",math.max(selectionLength-#selection,0))
+    end
+    local touchMap = class.matrix.new(2)
     local box = {
       height = 2+math.min(#tItems+#tLine,tTerm.screen.y-5),
       width = tTerm.screen.x
@@ -1452,18 +1470,91 @@ window = {
     box.bottom = box.top+box.height
     screen:drawBox(2,box.top+1,box.width-1,box.bottom-1,tColors.inputBox)
     screen:drawFrame(1,box.top,box.width,box.bottom,tColors.inputBoxBorder)
-    local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
+    screen:setBackgroundColor(tColors.inputBox)
+    screen:setTextColor(tColors.inputBoxText)
+    for i,line in ipairs(tLine) do
+      screen:setCursorPos(tTerm.screen.xMid-math.ceil(#line/2),box.top+i)
+      screen:write(line)
+    end
+    local visibleSelections = tTerm.screen.y-6-#tLine
+    local selFunc = function(clickX,clickY)
+      local newSelection = clickY-box.top-#tLine+scroll
+      if newSelection == selected then
+        return
+      end
+      screen:setLayer(screenLayer)
+      screen:setTextColor(tColors.scrollBoxSelectText)
+      if visibleSelections+scroll >= selected
+      and scroll < selected then
+        screen:setBackgroundColor(tColors.scrollBoxUnselected)
+        screen:setCursorPos(4,box.top+#tLine+selected-scroll)
+        screen:write(selectionStrings[selected])
+      end
+      screen:setCursorPos(4,box.top+#tLine+newSelection-scroll)
+      screen:setBackgroundColor(tColors.scrollBoxSelected)
+      screen:write(selectionStrings[newSelection])
+      selected = newSelection
+    end
+    for iY = box.top+#tLine+1,box.top+#tLine+visibleSelections do
+      local selString = selectionStrings[iY]
+      if not selString then
+        return
+      end
+      for iX = 4,#selString+4 do
+        touchMap[iX][iY] = selFunc
+      end
+    end
+    local function refresh()
+      screen:setLayer(screenLayer)
+      screen:setTextColor(tColors.scrollBoxSelectText)
+      for iY=1+scroll,scroll+visibleSelections do
+        local selString = selectionStrings[iY]
+        if not selString then
+          return
+        end
+        local y = box.top+#tLine+iY-scroll
+        screen:setCursorPos(4,y)
+        screen:setBackgroundColor(selected == iY and tColors.scrollBoxSelected or tColors.scrollBoxUnselected)
+        screen:write(selString)
+      end
+    end
+    refresh()
+    local buttonString = " Cancel  Ok "
+    local y = box.bottom-1
+    local x = tTerm.screen.xMid-math.floor(#buttonString/2)
+    screen:setCursorPos(x,y)
+    screen:setBackgroundColor(tColors.inputButton)
+    screen:setTextColor(tColors.inputButtonText)
+    screen:write(buttonString)
+    for i = x,x+#" Cancel " do
+      touchMap[i][y] = function()
+        return endExecution("Cancel")
+      end
+    end
+    for i = x+#" Cancel ",x+#buttonString do
+      touchMap[i][y] = function()
+        return endExecution("Ok",tItems[selected])
+      end
+    end
     local eventHandlers = {
       mouse_click = function(tEvent)
-        
+        local x,y = tEvent[3],tEvent[4]
+        local func = touchMap[x][y]
+        if func then
+          return func(x,y)
+        end
       end,
       mouse_scroll = function(tEvent)
-        
+        local oldScroll = scroll
+        scroll = math.max(0,math.min(scroll+tEvent[2],#tItems-visibleSelections))
+        if scroll ~= oldScroll then
+          refresh()
+        end
       end,
       key = function(tEvent)
         local key = tEvent[2]
         if key == 28 then
-          return endExecution("Ok",tItems[curSelection])
+          return endExecution("Ok",tItems[selected])
         end
       end
     }
@@ -1482,14 +1573,6 @@ window = {
       end
     end
     eventHandler.switch(eventHandlers)
-    local function endExecution(event,selection)
-      --closes input box and returns event and the values in the input fields
-      eventHandler.switch(oldHandlers,true)
-      screen:delLayer(screenLayer)
-      inputOpen = (screenLayer ~= screen.layers.dialogue)
-      activeInputs = activeInputs-1
-      return event, selection
-    end
     while true do
     --user interaction begins
       local event,selection = eventHandler.pull()

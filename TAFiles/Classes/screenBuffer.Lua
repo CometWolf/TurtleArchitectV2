@@ -72,7 +72,7 @@ screenBuffer = {
   end,
   getTop = function(buffer,x,y,from)
     for iL = (from or #buffer),1,-1 do
-	  local xLine = rawget(buffer[iL],x)
+	    local xLine = rawget(buffer[iL],x)
       if xLine and xLine[y] then
         return iL
       end
