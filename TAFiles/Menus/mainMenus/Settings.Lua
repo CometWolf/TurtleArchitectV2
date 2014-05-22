@@ -8,13 +8,6 @@ menu = {
       window.text"Updates Turtle Architect to the latest version"
     end,
     func = function()
-      if not fs.exists(tFile.installer) then
-        local res = http.paste.get(tPaste.program,tFile.installer)
-        if not res then
-          window.text"Failed to download installer script from pastebin!"
-          return
-        end
-      end
       local button = window.text(
         "All un-saved progress will be lost, continue?",
         {
@@ -25,17 +18,9 @@ menu = {
       if button == "No" then
         return
       end
-      fs.delete(tFile.menuFolder)
-      fs.delete(tFile.classFolder)
-      fs.delete(tFile.toolFolder)
-      fs.delete(tFile.settings)
-      fs.delete(tFile.program)
-      term.clear()
-      term.setCursorPos(1,1)
-      term.setTextColor(colors.white)
-      term.setBackgroundColor(colors.black)
-      shell.run(tFile.installer,tFile.program:match"^(.+/).-$")
-      error"Update"
+      if loadFile(tFile.installer) then
+        error"Update"
+      end
     end
   },
   [2] = {
