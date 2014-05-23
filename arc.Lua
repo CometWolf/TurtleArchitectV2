@@ -1120,10 +1120,15 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   nameColor = tColors.inputBoxText
 }
 local animationDefaults = { --default animation values for animated text
-  text = "",
-  bColor = tColors.inputBox,
-  tColor = tColors.inputBoxText,
-  renderTime = 1
+  bColor = tColors.inputBox, --backgroundColor
+  tColor = tColors.inputBoxText, --textColor
+  renderTime = 1 --time before next frame
+}
+local scrollDefaults = { --default values for scroll selections
+  selectedTextColor = tColors.scrollBoxSelectText, --selected text color
+  selectedBackgroundColor = tColors.scrollBoxSelected, --selected text background
+  unselectedTextColor = tColors.scrollBoxSelectText, --unselected text color
+  unselectedBackground = tColors.scrollBoxUnselected --unselected text background
 }
 window = {
   text = function(text,tButtonFields,tInputFields,customEvent,reInput)
@@ -1503,11 +1508,17 @@ window = {
       window.text(table.concat(tLine,"\n",maxLines+1))
       tLine[maxLines+1] = nil
     end
-    local selectionStrings = {}
     local selectionLength = tTerm.screen.x-5
     for i,selection in ipairs(tItems) do
-      selection = string.rep(" ",math.floor((selectionLength-#selection)/2))..selection
-      selectionStrings[i] = selection..string.rep(" ",math.max(selectionLength-#selection,0))
+      tItems[i] = (
+        type(selection) == "table"
+        and selection
+        or {text = selection}
+      )
+      selection = tItems[i]
+      setmetatable(selection,{__index = scrollDefaults})
+      local text = string.rep(" ",math.floor((selectionLength-#selection.text)/2))..selection.text
+      selection.string = text..string.rep(" ",math.max(selectionLength-#text,0))
     end
     local touchMap = class.matrix.new(2)
     local box = {
@@ -1531,39 +1542,40 @@ window = {
         return
       end
       screen:setLayer(screenLayer)
-      screen:setTextColor(tColors.scrollBoxSelectText)
       if visibleSelections+scroll >= selected
       and scroll < selected then
-        screen:setBackgroundColor(tColors.scrollBoxUnselected)
+        local selection = tItems[selected]
+        screen:setTextColor(selection.unselectedTextColor)
+        screen:setBackgroundColor(selection.unselectedBackgroundColor)
         screen:setCursorPos(4,box.top+#tLine+selected-scroll)
-        screen:write(selectionStrings[selected])
+        screen:write(selection.string)
       end
-      screen:setCursorPos(4,box.top+#tLine+newSelection-scroll)
-      screen:setBackgroundColor(tColors.scrollBoxSelected)
-      screen:write(selectionStrings[newSelection])
+      local selection = tItems[newSelection]
+      screen:setTextColor(selection.selectedTextColor)
+      screen:setBackgroundColor(selection.selectedBackgroundColor)
+      screen:setCursorPos(4,box.top+#tLine+selected-scroll)
+      screen:write(selection.string)
       selected = newSelection
     end
     for iY = box.top+#tLine+1,box.top+#tLine+visibleSelections do
-      local selString = selectionStrings[iY]
-      if not selString then
+      if not tItems[iY] then
         return
       end
-      for iX = 4,#selString+4 do
+      for iX = 4,#tItems[iY].string+4 do
         touchMap[iX][iY] = selFunc
       end
     end
     local function refresh()
       screen:setLayer(screenLayer)
-      screen:setTextColor(tColors.scrollBoxSelectText)
       for iY=1+scroll,scroll+visibleSelections do
-        local selString = selectionStrings[iY]
-        if not selString then
+        if not tItems[iY] then
           return
         end
         local y = box.top+#tLine+iY-scroll
         screen:setCursorPos(4,y)
-        screen:setBackgroundColor(selected == iY and tColors.scrollBoxSelected or tColors.scrollBoxUnselected)
-        screen:write(selString)
+        screen:setBackgroundColor(selected == iY and tItems[iY].selectedBackgroundColor or tItems[iY].unselectedBackgroundColor)
+        screen:setTextColor(selected == iY and tItems[iY].selectedTextColor or tItems[iY].unselectedTextColor)
+        screen:write(tItems[iY].string)
       end
     end
     refresh()

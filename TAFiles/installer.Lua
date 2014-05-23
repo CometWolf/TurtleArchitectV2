@@ -15,7 +15,6 @@ getContents = function(path)
   tActive[#tActive+1] = true
   path = path or ""
   success = function(tEvent)
-    table.remove(tActive,1)
     local web = tEvent[3]
     local sContents = web.readAll()
     web.close()
@@ -37,6 +36,7 @@ getContents = function(path)
             fs.makeDir(newFolder)
           end
           if not getContents(path.."/"..name) then
+            table.remove(tActive,1)
             return false
           end
         end
@@ -44,6 +44,7 @@ getContents = function(path)
       _s,remainder = sContents:find'"name":"'
       name = sContents:match'"name":"(.-)"'
     end
+    table.remove(tActive,1)
   end
   failure = function(tEvent)
     table.remove(tActive,1)
