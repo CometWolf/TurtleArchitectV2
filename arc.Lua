@@ -1127,7 +1127,7 @@ window = {
     end
     local maxLines = tTerm.screen.y-3-#tInputFields
     if #tLine > maxLines then
-      window.text(table.concat(tLine,"\n",maxLines+1),tButtonFields,tInputFields) --omg recursion
+      window.text(table.concat(tLine,"\n",maxLines+1),{Ok},tInputFields) --omg recursion
       tLine[maxLines+1] = nil
     end
     --default input fields

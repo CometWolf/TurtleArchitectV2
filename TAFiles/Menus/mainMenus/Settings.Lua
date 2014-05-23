@@ -19,7 +19,7 @@ menu = {
         return
       end
       if loadFile(tFile.installer) then
-        error"Update"
+        error("Update",0)
       end
     end
   },

@@ -1,7 +1,12 @@
 local folder = tFile.folder
-local file = fs.open(folder.."/"..gitSha)
-local tGitSha = file and textutils.unserialize(file.readAll()) or {}
-file.close()
+local tGitSha
+local file = fs.open(folder.."/".."gitSha","r")
+if file then
+  tGitSha = file and textutils.unserialize(file.readAll()) or {}
+  file.close()
+else
+  tGitSha = {}
+end
 local tContents = {}
 local getContents
 getContents = function(path,main)
@@ -9,20 +14,22 @@ getContents = function(path,main)
   local web
   while not web do
     web = http.get("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
-    if path ~= "" then
-      local button = window.text(
-        "Error: Failed to get contents of "..path..". Retry?",
-        {
-          "No",
-          "Yes"
-        }
-      )
-      if button == "No" then
+    if not web then
+      if path ~= "" then
+        local button = window.text(
+          "Error: Failed to get contents of "..path..". Retry?",
+          {
+            "No",
+            "Yes"
+          }
+        )
+        if button == "No" then
+          return false
+        end
+      else
+        window.text"Error: Github download limit exceeded"
         return false
       end
-    else
-      window.text"Error: Github download limit exceeded"
-      return false
     end
   end
   local sContents = web.readAll()
@@ -31,7 +38,7 @@ getContents = function(path,main)
   local name = sContents:match'"name":"(.-)"'
   while name do
     sContents = sContents:sub(remainder)..""
-    local sha = sContents:match'"sha": "(.-)"'
+    local sha = sContents:match'"sha":"(.-)"'
     if tGitSha[path.."/"..name] ~= sha then
       tGitSha[path.."/"..name] = sha
       local url = sContents:match'html_url":"(.-)"'
@@ -55,7 +62,10 @@ getContents = function(path,main)
   return true
 end
 
-getContents()
+if not getContents() then
+  return false
+end
+
 local updated = false
 for file,url in pairs(tContents) do
   updated = true
@@ -83,14 +93,15 @@ for file,url in pairs(tContents) do
 end
 if updated then
   local tUpdated = {}
-  for k,v in pairs tContents do
+  for k,v in pairs(tContents) do
     tUpdated[#tUpdated+1] = k
   end
-  local file = fs.open(folder.."/"..gitSha)
-  file.write(table.serialize(tGitSha))
+  local file = fs.open(folder.."/".."gitSha","w")
+  file.write(textutils.serialize(tGitSha))
   file.close()
-  window.text("Updated:\n"..table.concat(tUpdated,"\n")
+  window.text("Updated:\n"..table.concat(tUpdated,"\n"))
+  return true
 else
   window.text("No update available")
+  return false
 end
-return true
