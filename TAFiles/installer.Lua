@@ -37,6 +37,7 @@ getContents = function(path)
           if not fs.exists(newFolder) then
             fs.makeDir(newFolder)
           end
+          getContents(path.."/"..name)
         end
       end
       _s,remainder = sContents:find'"name":"'
