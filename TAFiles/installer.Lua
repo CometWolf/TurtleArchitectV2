@@ -7,11 +7,10 @@ if file then
 else
   tGitSha = {}
 end
-local tContents = {}
+local updateFiles = {}
 local getContents
 local tActive = {}
 local success,failure
-local update
 getContents = function(path)
   tActive[#tActive+1] = true
   path = path or ""
@@ -30,8 +29,10 @@ getContents = function(path)
         url = url:gsub("https://","https://raw.")
         url = url:gsub("blob/","")
         if sContents:match'"type":"(.-)"' == "file" then
-          tContents[folder..path.."/"..name] = url
-          update = true
+          updateFiles[#updateFiles+1] = {
+            file = folder..path.."/"..name,
+            url = url
+          }
         else
           local newFolder = folder..path.."/"..name
           if not fs.exists(newFolder) then
@@ -56,13 +57,13 @@ getContents = function(path)
         }
       )
       if button == "No" then
-        return false
+        return "Cancel"
       else
         getContents("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
       end
     else
       window.text"Error: Github download limit exceeded"
-      return false
+      return "Cancel"
     end
   end
   http.request("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
@@ -107,17 +108,52 @@ local button = window.text(
   }
 )
 if button == "Done" then
-  if update then
-    local button = window.text("Update found!\nInstall?")
+  if #updateFiles > 0 then
+    local button = window.text("Update found!\nInstall?\nAll unsaved progress will be lost.")
     if button == "Ok" then
-      for file,url in pairs(tContents) do
-        local saveFile = fs.open(file,"w")
-        local webFile
-        while not webFile do
-          webFile = http.get(url)
-          if not webFile then
+      local updatingFile = 1
+      local tUpdated = {}
+      http.request(updateFiles[updatingFile].url)
+      local button = window.text(
+        {
+          {
+            text = "Updating",
+            renderTime = 0.2
+          },
+          {
+            text = "Updating.",
+            renderTime = 0.2
+          },
+          {
+            text = "Updating..",
+            renderTime = 0.2
+          },
+          {
+            text = "Updating...",
+            renderTime = 0.2
+          }
+        },
+        {
+          "Cancel"
+        },
+        false,
+        {
+          http_success = function(tEvent)
+            local saveFile = fs.open(updateFiles[updatingFile].file,"w")
+            local webFile = tEvent[3]
+            saveFile.write(webFile.readAll())
+            saveFile.close()
+            webFile.close()
+            tUpdated[#tUpdated+1] = updateFiles[updatingFile].file
+            updatingFile = updatingFile+1
+            if updatingFile > #updateFiles then
+              return "Done"
+            end
+            http.request(updateFiles[updatingFile].url)
+          end,
+          http_failure = function()
             local button = window.text(
-              "Update of "..file.." failed. Retry?",
+              "Update of "..updateFiles[updatingFile].file.." failed. Retry?",
               {
                 "No",
                 "Yes"
@@ -125,17 +161,13 @@ if button == "Done" then
             )
             if button == "No" then
               saveFile.close()
-              return false
+              return "Cancel"
             end
           end
-        end   
-        saveFile.write(webFile.readAll())
-        saveFile.close()
-        webFile.close()
-      end
-      local tUpdated = {}
-      for k,v in pairs(tContents) do
-        tUpdated[#tUpdated+1] = k
+        }
+      )
+      if button == "Cancel" then
+        return false
       end
       local file = fs.open(folder.."/".."gitSha","w")
       file.write(textutils.serialize(tGitSha))
