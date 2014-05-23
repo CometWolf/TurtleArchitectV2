@@ -11,6 +11,7 @@ local tContents = {}
 local getContents
 local tActive = {}
 local success,failure
+local update
 getContents = function(path)
   tActive[#tActive+1] = true
   path = path or ""
@@ -30,14 +31,11 @@ getContents = function(path)
         url = url:gsub("blob/","")
         if sContents:match'"type":"(.-)"' == "file" then
           tContents[folder..path.."/"..name] = url
+          update = true
         else
           local newFolder = folder..path.."/"..name
           if not fs.exists(newFolder) then
             fs.makeDir(newFolder)
-          end
-          if not getContents(path.."/"..name) then
-            table.remove(tActive,1)
-            return false
           end
         end
       end
@@ -77,16 +75,20 @@ getContents(nil,true)
 local button = window.text(
   {
     {
-      text = "Looking for updates"
+      text = "Looking for updates",
+      renderTime = 0.2
     },
     {
-      text = "Looking for updates."
+      text = "Looking for updates.",
+      renderTime = 0.2
     },
     {
-      text = "Looking for updates.."
+      text = "Looking for updates..",
+      renderTime = 0.2
     },
     {
-      text = "Looking for updates..."
+      text = "Looking for updates...",
+      renderTime = 0.2
     }
   },
   {
@@ -104,41 +106,43 @@ local button = window.text(
   }
 )
 if button == "Done" then
-  local updated = false
-  for file,url in pairs(tContents) do
-    updated = true
-    local saveFile = fs.open(file,"w")
-    local webFile
-    while not webFile do
-      webFile = http.get(url)
-      if not webFile then
-        local button = window.text(
-          "Update of "..file.." failed. Retry?",
-          {
-            "No",
-            "Yes"
-          }
-        )
-        if button == "No" then
-          saveFile.close()
-          return false
-        end
+  if update then
+    local button = window.text("Update found!\nInstall?")
+    if button == "Ok" then
+      for file,url in pairs(tContents) do
+        local saveFile = fs.open(file,"w")
+        local webFile
+        while not webFile do
+          webFile = http.get(url)
+          if not webFile then
+            local button = window.text(
+              "Update of "..file.." failed. Retry?",
+              {
+                "No",
+                "Yes"
+              }
+            )
+            if button == "No" then
+              saveFile.close()
+              return false
+            end
+          end
+        end   
+        saveFile.write(webFile.readAll())
+        saveFile.close()
+        webFile.close()
       end
-    end   
-    saveFile.write(webFile.readAll())
-    saveFile.close()
-    webFile.close()
-  end
-  if updated then
-    local tUpdated = {}
-    for k,v in pairs(tContents) do
-      tUpdated[#tUpdated+1] = k
+      local tUpdated = {}
+      for k,v in pairs(tContents) do
+        tUpdated[#tUpdated+1] = k
+      end
+      local file = fs.open(folder.."/".."gitSha","w")
+      file.write(textutils.serialize(tGitSha))
+      file.close()
+      window.text("Updated:\n"..table.concat(tUpdated,"\n"))
+      return true
     end
-    local file = fs.open(folder.."/".."gitSha","w")
-    file.write(textutils.serialize(tGitSha))
-    file.close()
-    window.text("Updated:\n"..table.concat(tUpdated,"\n"))
-    return true
+    return false
   else
     window.text("No update available")
     return false

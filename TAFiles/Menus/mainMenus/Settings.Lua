@@ -8,16 +8,6 @@ menu = {
       window.text"Updates Turtle Architect to the latest version"
     end,
     func = function()
-      local button = window.text(
-        "All un-saved progress will be lost, continue?",
-        {
-          "No",
-          "Yes"
-        }
-      )
-      if button == "No" then
-        return
-      end
       if loadFile(tFile.installer) then
         error("Update",0)
       end
