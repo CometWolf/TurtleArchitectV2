@@ -2284,7 +2284,7 @@ while true do
   local tRes = {pcall(execution)}
   if not tRes[1] then
     if tRes[2] == "Update" then
-      return
+      return shell.run(tFile.folder.."/arc.Lua")
     elseif tRes[2] == "Exit"
     or tRes[2] == "Terminated" then
       return Quit()

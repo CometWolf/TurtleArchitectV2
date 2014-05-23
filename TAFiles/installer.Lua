@@ -58,11 +58,7 @@ getContents = function(path)
       if button == "No" then
         return false
       else
-        http.get(
-          "https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path,
-          success,
-          failure
-        )
+        getContents("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
       end
     else
       window.text"Error: Github download limit exceeded"
@@ -76,7 +72,7 @@ getContents = function(path)
   end
 end
 
-getContents()
+getContents(nil,true)
 local button = window.text(
   {
     {
