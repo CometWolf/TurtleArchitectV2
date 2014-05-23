@@ -302,8 +302,8 @@ Developed by CometWolf.
     end
   },
   [9] = {
-    name = "Scroll test",
-    enabled = true,
+    name = "test",
+    enabled = false,
     func = function()
       local options = {}
       for i=1,40 do

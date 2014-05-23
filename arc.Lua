@@ -85,6 +85,25 @@ string = setmetatable(
         end
       end
       return tRes
+    end,
+    lineFormat = function(text,lineLength)
+      local tLines = {}
+      while #text > 0 do  --splits text into a table containing each line
+        local line = text:sub(1,lineLength)
+        local newLine = string.find(line.."","\n") --check for new line character
+        if newLine then
+          line = line:sub(1,newLine-1)
+          text = text:sub(#line+2,#text)
+        elseif #line == lineLength then
+          local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
+          line = line:sub(1,endSpace)
+          text = text:sub(#line+1)
+        else
+          text = ""
+        end
+        tLines[#tLines+1] = line
+      end
+      return tLines
     end
   },
   {
@@ -1096,6 +1115,12 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   textColor = tColors.inputText,
   nameColor = tColors.inputBoxText
 }
+local animationDefaults = { --default animation values for animated text
+  text = "",
+  bColor = tColors.inputBox,
+  tColor = tColors.inputBoxText,
+  renderTime = 1
+}
 window = {
   text = function(text,tButtonFields,tInputFields,customEvent,reInput)
     local screenLayer = screen.layers.dialogue+activeInputs
@@ -1105,30 +1130,47 @@ window = {
     tInputFields = tInputFields or {}
     --set up text
     local lineLength = tTerm.screen.x-2 --max line length
-    local tLine = {}
-    if type(text) == "table" then --converts text to string if it's a table
-      text = table.concat(text,"\n")
-    end
-    glasses.log.write(text)
-    while #text > 0 do  --splits text into a table containing each line
-      local line = text:sub(1,lineLength)
-      local newLine = string.find(line.."","\n") --check for new line character
-      if newLine then
-        line = line:sub(1,newLine-1)
-        text = text:sub(#line+2,#text)
-      elseif #line == lineLength then
-        local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
-        line = line:sub(1,endSpace)
-        text = text:sub(#line+1,#text)
-      else
-        text = ""
-      end
-      tLine[#tLine+1] = line
-    end
+    local animated = false
+    local textColor
     local maxLines = tTerm.screen.y-3-#tInputFields
-    if #tLine > maxLines then
-      window.text(table.concat(tLine,"\n",maxLines+1),{Ok},tInputFields) --omg recursion
-      tLine[maxLines+1] = nil
+    if type(text) == "table" then
+      if type(text[1]) == "table" then --animation
+        animated = true
+        text.activeFrame = 1
+        for i,frame in ipairs(text) do
+          setmetatable(frame,animationDefaults)
+          frame.lines = window.lineFormat(frame.text,lineLength)
+        end
+      else --plain text
+        text = {
+          lines = string.lineFormat(table.concat(text,"\n"),lineLength),
+          tColor = text.tColor or tColors.inputBoxText,
+          bColor = text.bColor or tColors.inputBox
+        }
+      end
+    else--converts to table if it's not a table
+      text = {
+        lines = string.lineFormat(text,lineLength),
+        tColor = tColors.inputBoxText,
+        bColor = tColors.inputBox
+      }
+    end
+    local tLine = ""
+    if animated then 
+      for k,frame in pairs(text) do
+        if #frame.lines > tLine then
+          tLine = frame.lines
+        end
+      end
+      if #tLine > maxLines then
+        error("Screen too small for animation",2)
+      end
+      glasses.log.write(table.concat(tLine,"\n"))
+    else
+      tLine = text.lines
+      if #tLine > maxLines then
+        window.text(table.concat(tLine,"\n",maxLines+1),{"Ok"}) --omg recursion
+      end
     end
     --default input fields
     local tInputs = {}
@@ -1212,9 +1254,9 @@ window = {
       --write text
       screen:setBackgroundColor(tColors.inputBox)
       screen:setTextColor(tColors.inputBoxText)
-      for i=1,#tLine do
-        screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#tLine[i]/2))+1,box.top+i)
-        screen:write(tLine[i])
+      for i,line in ipairs(tLine) do
+        screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#line/2))+1,box.top+i)
+        screen:write(line)
       end
       --set up & render buttons
       local totalButtonSpace = 0
@@ -1388,6 +1430,24 @@ window = {
         end
       end
     }
+    if animated then
+      text.timerId = os.startTimer(text[1].renderTime)
+      eventHandlers.timer = function(tEvent)
+        if tEvent[2] == text.timerId then
+          text.activeFrame = text.activeFrame+1
+          if text.activeFrame > #text then
+            text.activeFrame = 1
+          end
+          screen:setBackgroundColor(tColors.inputBox)
+          screen:setTextColor(tColors.inputBoxText)
+          for i,line in ipairs(text[text.activeFrame].lines) do
+            screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#line/2))+1,box.top+i)
+            screen:write(line)
+          end
+          text.timerId = os.startTimer(text[text.activeFrame].renderTime)
+        end
+      end
+    end
     if customEvent then
       for k,v in pairs(customEvent) do
         local mainFunc = eventHandlers[k]
@@ -1430,26 +1490,11 @@ window = {
     end
     --set up text
     local lineLength = tTerm.screen.x-2 --max line length
-    local tLine = {}
     if type(text) == "table" then --converts text to string if it's a table
       text = table.concat(text,"\n")
     end
     glasses.log.write(text)
-    while #text > 0 do  --splits text into a table containing each line
-      local line = text:sub(1,lineLength)
-      local newLine = string.find(line.."","\n") --check for new line character
-      if newLine then
-        line = line:sub(1,newLine-1)
-        text = text:sub(#line+2,#text)
-      elseif #line == lineLength then
-        local endSpace = line:find"%s$" or line:find"%s%S-$" or lineLength
-        line = line:sub(1,endSpace)
-        text = text:sub(#line+1,#text)
-      else
-        text = ""
-      end
-      tLine[#tLine+1] = line
-    end
+    local tLine = string.lineFormat(text,lineLength)
     local maxLines = 3
     if #tLine > maxLines then
       window.text(table.concat(tLine,"\n",maxLines+1))
