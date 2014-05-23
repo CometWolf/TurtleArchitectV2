@@ -53,6 +53,8 @@ common = { --common event handlers, these are always active
       if func then
         return func()
       end
+    elseif os.sleepTimer[timerID] then
+      os.sleepTimer[timerID]()
     end
   end,
   peripheral = function(tEvent)

@@ -42,15 +42,15 @@ local API mods
 ----------------------------------------------------------------------------------------------------------]]--
 os = setmetatable(
   {
-    sleepTime = 0,
+    sleepTimer = {},
     sleep = function(time)
-    --refreshes screen if more than 1 second of sleep time has elapsed
-      os.sleepTime = os.sleepTime+time
-      if os.sleepTime > 1 then
-        screen:refresh()
-        os.sleepTime = 0
+      local sleeping = true
+      os.sleepTimer[os.startTimer(time)] = function()
+        sleeping = false
       end
-      G.sleep(time)
+      while sleeping do
+        eventHandler.pull()
+      end
     end,
     id = _G.os.getComputerID()
   },
@@ -86,7 +86,7 @@ string = setmetatable(
       end
       return tRes
     end,
-    lineFormat = function(text,lineLength)
+    lineFormat = function(text,lineLength,center)
       local tLines = {}
       while #text > 0 do  --splits text into a table containing each line
         local line = text:sub(1,lineLength)
@@ -100,6 +100,10 @@ string = setmetatable(
           text = text:sub(#line+1)
         else
           text = ""
+        end
+        if center then
+          line = string.rep(" ",math.max(math.floor((lineLength-#line)/2),0))..line
+          line = line..string.rep(" ",math.max(lineLength-#line,0))
         end
         tLines[#tLines+1] = line
       end
@@ -1138,34 +1142,35 @@ window = {
         animated = true
         text.activeFrame = 1
         for i,frame in ipairs(text) do
-          setmetatable(frame,animationDefaults)
-          frame.lines = window.lineFormat(frame.text,lineLength)
+          setmetatable(frame,{__index = animationDefaults})
+          frame.lines = string.lineFormat(frame.text,lineLength,true)
         end
       else --plain text
         text = {
-          lines = string.lineFormat(table.concat(text,"\n"),lineLength),
+          lines = string.lineFormat(table.concat(text,"\n"),lineLength,true),
           tColor = text.tColor or tColors.inputBoxText,
           bColor = text.bColor or tColors.inputBox
         }
       end
     else--converts to table if it's not a table
       text = {
-        lines = string.lineFormat(text,lineLength),
+        lines = string.lineFormat(text,lineLength,true),
         tColor = tColors.inputBoxText,
         bColor = tColors.inputBox
       }
     end
     local tLine = ""
     if animated then 
-      for k,frame in pairs(text) do
-        if #frame.lines > tLine then
+      for i,frame in ipairs(text) do
+        if #frame.lines > #tLine then
           tLine = frame.lines
+          tLine.text = frame.text
         end
       end
       if #tLine > maxLines then
         error("Screen too small for animation",2)
       end
-      glasses.log.write(table.concat(tLine,"\n"))
+      glasses.log.write(tLine.text)
     else
       tLine = text.lines
       if #tLine > maxLines then
@@ -1241,73 +1246,70 @@ window = {
       return event,tRes,reInput
     end
     --render box
-    local buttonTouchMap,inputTouchMap
-    if tTerm.color then
-      local box = {
-        height = #tLine+2+#tInputs,
-        width = tTerm.screen.x-2
+    local box = {
+      height = #tLine+2+#tInputs,
+      width = tTerm.screen.x-2
+    }
+    box.top = math.floor(tTerm.screen.yMid-(box.height/2))
+    box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
+    screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
+    screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
+    --write text
+    screen:setBackgroundColor(tColors.inputBox)
+    screen:setTextColor(tColors.inputBoxText)
+    for i,line in ipairs(tLine) do
+      screen:setCursorPos(2,box.top+i)
+      screen:write(line)
+    end
+    --set up & render buttons
+    local totalButtonSpace = 0
+    local buttonTouchMap = class.matrix.new(2)
+    for i=1,#tButtons do
+      tButtons[i] = {
+        name = tButtons[i]
       }
-      box.top = math.floor(tTerm.screen.yMid-(box.height/2))
-      box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
-      screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
-      screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
-      --write text
-      screen:setBackgroundColor(tColors.inputBox)
-      screen:setTextColor(tColors.inputBoxText)
-      for i,line in ipairs(tLine) do
-        screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#line/2))+1,box.top+i)
-        screen:write(line)
+      tButtons[i].size = #tButtons[i].name+2
+      totalButtonSpace = totalButtonSpace+tButtons[i].size+2
+    end
+    local nextButton = math.ceil(tTerm.screen.xMid-(totalButtonSpace/2)+2)
+    screen:setTextColor(tColors.inputButtonText)
+    screen:setBackgroundColor(tColors.inputButton)
+    for i=1,#tButtons do
+      tButtons[i].sX = nextButton
+      tButtons[i].eX = nextButton+tButtons[i].size
+      tButtons[i].y = box.bottom-1
+      screen:setCursorPos(tButtons[i].sX,tButtons[i].y)
+      screen:write(" "..tButtons[i].name.." ")  --add spaces for appearances
+      nextButton = nextButton+#tButtons[i].name+2
+      for iX=tButtons[i].sX,tButtons[i].eX do
+        buttonTouchMap[iX][tButtons[i].y] = tButtons[i].name
       end
-      --set up & render buttons
-      local totalButtonSpace = 0
-      buttonTouchMap = class.matrix.new(2)
-      for i=1,#tButtons do
-        tButtons[i] = {
-          name = tButtons[i]
-        }
-        tButtons[i].size = #tButtons[i].name+2
-        totalButtonSpace = totalButtonSpace+tButtons[i].size+2
-      end
-      local nextButton = math.ceil(tTerm.screen.xMid-(totalButtonSpace/2)+2)
-      screen:setTextColor(tColors.inputButtonText)
-      screen:setBackgroundColor(tColors.inputButton)
-      for i=1,#tButtons do
-        tButtons[i].sX = nextButton
-        tButtons[i].eX = nextButton+tButtons[i].size
-        tButtons[i].y = box.bottom-1
-        screen:setCursorPos(tButtons[i].sX,tButtons[i].y)
-        screen:write(" "..tButtons[i].name.." ")  --add spaces for appearances
-        nextButton = nextButton+#tButtons[i].name+2
-        for iX=tButtons[i].sX,tButtons[i].eX do
-          buttonTouchMap[iX][tButtons[i].y] = tButtons[i].name
+    end
+    --set up & render input boxes
+    local inputTouchMap = class.matrix.new(2)
+    if #tInputs > 0 then
+      for i=#tInputs,1,-1 do
+        local field = tInputs[i]
+        screen:setBackgroundColor(tColors.inputBox)
+        screen:setTextColor(field.nameColor)
+        screen:setCursorPos(3,box.bottom-2-#tInputs+i)
+        screen:write(field.name..":")
+        field.sX,field.y = screen:getCursorPos() -- input area start x point
+        field.eX = tTerm.screen.x-2 --end x point
+        field.lX = field.eX-field.sX --total field length
+        screen:setTextColor(field.textColor)
+        screen:setBackgroundColor(field.backgroundColor)
+        screen:write(string.sub(field.value,1,field.lX))
+        field.cX = (screen:getCursorPos())-field.sX --cursor pos
+        field.scroll = math.max(0,#field.value-field.lX) --scroll value
+        screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)
+        for iX = field.sX,field.eX do
+          inputTouchMap[iX][field.y] = i
         end
       end
-      --set up & render input boxes
-      inputTouchMap = class.matrix.new(2)
-      if #tInputs > 0 then
-        for i=#tInputs,1,-1 do
-          local field = tInputs[i]
-          screen:setBackgroundColor(tColors.inputBox)
-          screen:setTextColor(field.nameColor)
-          screen:setCursorPos(3,box.bottom-2-#tInputs+i)
-          screen:write(field.name..":")
-          field.sX,field.y = screen:getCursorPos() -- input area start x point
-          field.eX = tTerm.screen.x-2 --end x point
-          field.lX = field.eX-field.sX --total field length
-          screen:setTextColor(field.textColor)
-          screen:setBackgroundColor(field.backgroundColor)
-          screen:write(string.sub(field.value,1,field.lX))
-          field.cX = (screen:getCursorPos())-field.sX --cursor pos
-          field.scroll = math.max(0,#field.value-field.lX) --scroll value
-          screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)
-          for iX = field.sX,field.eX do
-            inputTouchMap[iX][field.y] = i
-          end
-        end
-        screen:setCursorBlink(true)
-        tInputs.enabled = 1
-        screen:setCursorPos(tInputs[1].cX+tInputs[1].sX,tInputs[1].y)
-      end
+      screen:setCursorBlink(true)
+      tInputs.enabled = 1
+      screen:setCursorPos(tInputs[1].cX+tInputs[1].sX,tInputs[1].y)
     end
     local function refreshField(field)
      --updates input fields
@@ -1438,10 +1440,11 @@ window = {
           if text.activeFrame > #text then
             text.activeFrame = 1
           end
+          screen:setLayer(screenLayer)
           screen:setBackgroundColor(tColors.inputBox)
           screen:setTextColor(tColors.inputBoxText)
           for i,line in ipairs(text[text.activeFrame].lines) do
-            screen:setCursorPos(math.ceil(tTerm.screen.xMid-(#line/2))+1,box.top+i)
+            screen:setCursorPos(2,box.top+i)
             screen:write(line)
           end
           text.timerId = os.startTimer(text[text.activeFrame].renderTime)

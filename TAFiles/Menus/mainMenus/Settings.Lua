@@ -303,13 +303,17 @@ Developed by CometWolf.
   },
   [9] = {
     name = "test",
-    enabled = false,
+    enabled = true,
     func = function()
-      local options = {}
-      for i=1,40 do
-        options[i] = "This is a selection "..i
-      end
-      window.scroll("Testing",options)
+      local animated = { --default animation values for animated text
+        { 
+          text = "Testing",
+        },
+        {
+          text = "animation"
+        }
+      }
+      window.text(animated)
     end
   }
 }
