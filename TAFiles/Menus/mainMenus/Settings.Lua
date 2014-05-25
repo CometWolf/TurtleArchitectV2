@@ -14,6 +14,65 @@ menu = {
     end
   },
   [2] = {
+    name = "Color settings",
+    enabled = true,
+    func = function()
+      local colorSelection = {}
+      for k,v in pairs(tColors) do
+        if type(v) == "number" then
+          k = k:gsub("(%u)",function(l) return " "..l:lower() end)
+          k = k:sub(1,1):upper()..k:sub(2)
+          colorSelection[#colorSelection+1] = {
+            text = k,
+            uText = v ~= tColors.scrollBoxSelectText and tColors.scrollBoxSelectText or colors.black,
+            uBackground = v
+          }
+        end
+      end
+      while true do
+        local button,selected = window.scroll("Select the color you wish to change",colorSelection)
+        if button == "Cancel" then
+          return
+        end
+        local selectedColor = dialogue.selectColor("Select new "..selected.." color")
+        if selectedColor ~= "Cancel" then
+          selectedColor = string.gsub(
+            string.lower(selectedColor:sub(1,1))..selectedColor:sub(2),
+            "%s.",
+            function(match)
+              return string.upper(match:sub(2)) 
+            end
+          )
+          for k,v in pairs(colorSelection) do
+            if v.text == selected then
+              v.uText = colors[selectedColor] ~= tColors.scrollBoxSelectText and tColors.scrollBoxSelectText or colors.black
+              v.uBackground = colors[selectedColor]
+              break
+            end
+          end
+          selected = string.gsub(
+            string.lower(selected:sub(1,1))..selected:sub(2),
+            "%s.",
+            function(match)
+              return string.upper(match:sub(2)) 
+            end
+          )
+          if selected == "canvas" then
+            colorKey[" "] = colors[selectedColor]
+            tBlueprint[tTerm.scroll.layer]:render()
+          end
+          tColors[selected] = colors[selectedColor]
+          local file = class.fileTable.new(tFile.settings)
+          local line = file:find("    "..selected.." = colors")
+          file:write("    "..selected.." = colors."..selectedColor..", --"..(file[line]:match"%-%-(.+)$" or ""),line)
+          file:save()
+          renderSideBar()
+          renderBottomBar()
+        end
+      end
+    end
+  },
+  [3] = {
     name = "Built mode",
     enabled = true,
     help = function()
@@ -43,7 +102,7 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
       end
     end
   },
-  [3] = {
+  [4] = {
     name = "Grid mode",
     enabled = true,
     help = function()
@@ -112,7 +171,7 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
       end
     end
   },
-  [4] = {
+  [5] = {
     name = "Background layer",
     enabled = true,
     help = function()
@@ -146,7 +205,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       end
     end
   },
-  [5] = {
+  [6] = {
     name = "Overwrite mode",
     enabled = true,
     help = function()
@@ -168,7 +227,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
       end
     end
   },
-  [6] = {
+  [7] = {
     name = "Sync mode",
     enabled = true,
     help = function()
@@ -270,7 +329,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
       end
     end
   },
-  [7] = {
+  [8] = {
     name = "About",
     enabled = true,
     help = function()
@@ -284,26 +343,11 @@ Developed by CometWolf.
       )
     end
   },
-  [8] = {
+  [9] = {
     name = "Quit",
     enabled = true,
     func = function()
       error("Exit",0)
-    end
-  },
-  [9] = {
-    name = "test",
-    enabled = true,
-    func = function()
-      local animated = { --default animation values for animated text
-        { 
-          text = "Testing",
-        },
-        {
-          text = "animation"
-        }
-      }
-      window.text(animated)
     end
   }
 }

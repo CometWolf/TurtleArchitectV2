@@ -40,6 +40,7 @@ tPaste = {
 --[[----------------------------------------------------------------------------------------------------------
 local API mods
 ----------------------------------------------------------------------------------------------------------]]--
+
 os = setmetatable(
   {
     sleepTimer = {},
@@ -1120,15 +1121,17 @@ local inputDefaults = { --default values for tInputFields tables passed to the i
   nameColor = tColors.inputBoxText
 }
 local animationDefaults = { --default animation values for animated text
+  text = "",
   bColor = tColors.inputBox, --backgroundColor
   tColor = tColors.inputBoxText, --textColor
   renderTime = 1 --time before next frame
 }
 local scrollDefaults = { --default values for scroll selections
-  selectedTextColor = tColors.scrollBoxSelectText, --selected text color
-  selectedBackgroundColor = tColors.scrollBoxSelected, --selected text background
-  unselectedTextColor = tColors.scrollBoxSelectText, --unselected text color
-  unselectedBackground = tColors.scrollBoxUnselected --unselected text background
+  text = "",
+  sText = tColors.scrollBoxSelectText, --selected text color
+  sBackground = tColors.scrollBoxSelected, --selected text background color
+  uText = tColors.scrollBoxSelectText, --unselected text color
+  uBackground = tColors.scrollBoxUnselected --unselected text background color
 }
 window = {
   text = function(text,tButtonFields,tInputFields,customEvent,reInput)
@@ -1488,7 +1491,7 @@ window = {
     local scroll = 0
     local selected = 1
     local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
-    local function endExecution(event,selection)
+    local function endExecution(event,selection,customEvent)
       --closes input box and returns event and the values in the input fields
       eventHandler.switch(oldHandlers,true)
       screen:delLayer(screenLayer)
@@ -1545,15 +1548,15 @@ window = {
       if visibleSelections+scroll >= selected
       and scroll < selected then
         local selection = tItems[selected]
-        screen:setTextColor(selection.unselectedTextColor)
-        screen:setBackgroundColor(selection.unselectedBackgroundColor)
+        screen:setTextColor(selection.uText)
+        screen:setBackgroundColor(selection.uBackground)
         screen:setCursorPos(4,box.top+#tLine+selected-scroll)
         screen:write(selection.string)
       end
       local selection = tItems[newSelection]
-      screen:setTextColor(selection.selectedTextColor)
-      screen:setBackgroundColor(selection.selectedBackgroundColor)
-      screen:setCursorPos(4,box.top+#tLine+selected-scroll)
+      screen:setTextColor(selection.sText)
+      screen:setBackgroundColor(selection.sBackground)
+      screen:setCursorPos(4,box.top+#tLine+newSelection-scroll)
       screen:write(selection.string)
       selected = newSelection
     end
@@ -1573,8 +1576,8 @@ window = {
         end
         local y = box.top+#tLine+iY-scroll
         screen:setCursorPos(4,y)
-        screen:setBackgroundColor(selected == iY and tItems[iY].selectedBackgroundColor or tItems[iY].unselectedBackgroundColor)
-        screen:setTextColor(selected == iY and tItems[iY].selectedTextColor or tItems[iY].unselectedTextColor)
+        screen:setBackgroundColor(selected == iY and tItems[iY].sBackground or tItems[iY].uBackground)
+        screen:setTextColor(selected == iY and tItems[iY].sText or tItems[iY].uText)
         screen:write(tItems[iY].string)
       end
     end
@@ -1593,7 +1596,7 @@ window = {
     end
     for i = x+#" Cancel ",x+#buttonString do
       touchMap[i][y] = function()
-        return endExecution("Ok",tItems[selected])
+        return endExecution("Ok",tItems[selected].text)
       end
     end
     local eventHandlers = {
@@ -1645,7 +1648,23 @@ window = {
 --[[----------------------------------------------------------------------------------------------------------
 Common inputs
 ----------------------------------------------------------------------------------------------------------]]--
+local colorSelect = {}
+for k,v in pairs(colors) do
+  if type(v) == "number" then
+    k = k:gsub("(%u)",function(l) return " "..l:lower() end)
+    k = k:sub(1,1):upper()..k:sub(2)
+    colorSelect[#colorSelect+1] = {
+      text = k,
+      uText = v ~= tColors.scrollBoxSelectText and tColors.scrollBoxSelectText or colors.black,
+      uBackground = v
+    }
+  end
+end
 dialogue = {
+  selectColor = function(text)
+    local event,selected = window.scroll(text,colorSelect)
+    return event ~= "Cancel" and selected or event
+  end,
   save = function(text)
     local fileName = tFile.blueprint
     local button,tRes,reInput

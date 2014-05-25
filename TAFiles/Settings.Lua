@@ -2,7 +2,7 @@ modemChannel = 62700 --Channel used to communicate with other computers/turtles 
 
 tColors = setmetatable(
   { -- color settings
-    canvasColor = colors.white, --changing this can cause some derps
+    canvas = colors.white, --changing this can cause some derps
     bottomBar = colors.gray,
     coordsText = colors.white,
     sideBarText = colors.white, --menu buttons text color
@@ -146,7 +146,7 @@ end
 
 colorKey = setmetatable(
   { --what character correlates to what color in the blueprint
-    [" "] = tColors.canvasColor,
+    [" "] = tColors.canvas,
     a = 2 ^ 1, --orange
     b = 2 ^ 2, --purple
     c = 2 ^ 3, --light blue
@@ -180,17 +180,8 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
     if vC == vK then
       colorLoop[vC] = kK
       colorLoop[kC] = kK
-      keyColor[kK] = kC:gsub( --capitalize first letter, add space between first and second word and decap second word
-        "^(.)%l-(%u)",
-        function(l)
-          return (
-            l:match"%u" 
-            and " "..l:lower()
-          ) or (
-            l:upper()
-          )
-        end
-      )
+      kC = kC:gsub("(%u)",function(l) return " "..l:lower() end)
+      keyColor[kK] = kC:sub(1,1):upper()..kC:sub(2)
       keyColor[kK:upper()] = keyColor[kK]
       break
     end
@@ -229,7 +220,7 @@ tMode = { -- default modes
   backgroundLayer = false,
   sync = {
     amount = 0,
-    turtles =0,
+    turtles = 0,
     ids = {
     
     }
