@@ -1,6 +1,6 @@
-local folder = tFile.folder
+local folder = tFile.folder:match"(.+)/.+$"
 local tGitSha
-local file = fs.open(folder.."/".."gitSha","r")
+local file = fs.open(tFile.folder.."/".."gitSha","r")
 if file then
   tGitSha = file and textutils.unserialize(file.readAll()) or {}
   file.close()
@@ -109,7 +109,13 @@ local button = window.text(
 )
 if button == "Done" then
   if #updateFiles > 0 then
-    local button = window.text("Update found!\nInstall?\nAll unsaved progress will be lost.")
+    local button = window.text(
+      "Update found!\nInstall?\nAll unsaved progress will be lost.",
+      {
+        "Cancel",
+        "Ok"
+      }
+    )    
     if button == "Ok" then
       local updatingFile = 1
       local tUpdated = {}

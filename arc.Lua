@@ -405,7 +405,7 @@ function loadFile(path,env,arg) --custom file loader, sets environment, handles 
   assert(fs.exists(path),"Error: Attempted to load non-existent file "..path.."!")
   local tRes = {loadfile(path)}
   if not tRes[1] then
-    error("The following error occured while loading "..path..": "..tRes[2])
+    error("The following error occured while loading "..path..": "..tRes[2],2)
   end
   local func = setfenv(tRes[1],progEnv)
   tRes = {
