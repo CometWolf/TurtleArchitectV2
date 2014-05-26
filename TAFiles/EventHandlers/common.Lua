@@ -14,8 +14,10 @@ common = { --common event handlers, these are always active
         screen:clearLayer(screen.layers.toolsOverlay)
       end
       tTimers.blink.start()
+      return true
     elseif timerID == tTimers.ctrl.id then
       tTimers.ctrl.pressed = false
+      return true
     elseif tTimers.display.ids[timerID] then
       local func = glasses.log.timers[timerID]
       if func then
@@ -24,6 +26,7 @@ common = { --common event handlers, these are always active
           glasses.log.refresh()
         end
       end
+      return true
     elseif timerID == tTimers.connectionPing.id then
       if rednet.connected.amount > 0 then
         rednet.send(
@@ -45,13 +48,16 @@ common = { --common event handlers, these are always active
         )
       end
       tTimers.connectionPing.start()
+      return true
     elseif tTimers.modemRes.ids[timerID] then
       local func = tTransmissions.failure.timeout[timerID]
       if func then
         return func()
       end
+      return true
     elseif os.sleepTimer[timerID] then
       os.sleepTimer[timerID]()
+      return true
     end
   end,
   peripheral = function(tEvent)

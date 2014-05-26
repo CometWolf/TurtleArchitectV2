@@ -1226,7 +1226,7 @@ window = {
         tButtons[k] = v
       end
     end
-    local oldHandlers = {}--stores currently in use event handlers, prior to switch
+    local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
     local function endExecution(event)
       --closes input box and returns event and the values in the input fields
       eventHandler.switch(oldHandlers,true)
@@ -1456,7 +1456,13 @@ window = {
             screen:write(line)
           end
           text.timerId = os.startTimer(text[text.activeFrame].renderTime)
+        else
+          os.queueEvent(unpack(tEvent))
         end
+      end
+    else
+      eventHandler.timer = function(tEvent)
+        os.queueEvent(unpack(tEvent))
       end
     end
     if customEvent then
@@ -1473,7 +1479,6 @@ window = {
         end
       end
     end
-    oldHandlers = eventHandler.active
     eventHandler.switch(eventHandlers)
     while true do
     --user interaction begins

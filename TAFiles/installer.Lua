@@ -59,7 +59,7 @@ getContents = function(path)
       if button == "No" then
         return "Cancel"
       else
-        getContents("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
+        http.request("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
       end
     else
       window.text"Error: Github download limit exceeded"
