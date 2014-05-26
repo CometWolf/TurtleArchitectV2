@@ -1483,7 +1483,7 @@ window = {
     while true do
     --user interaction begins
       local event,tRes,reInput = eventHandler.pull()
-      if event then
+      if type(event) == "string" then
         return event,tRes,reInput
       end
     end
