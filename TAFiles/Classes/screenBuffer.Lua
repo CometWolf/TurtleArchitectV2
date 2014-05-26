@@ -102,7 +102,7 @@ screenBuffer = {
     buffer:write(string.rep(" ",tTerm.screen.x))
   end,
   clear = function(buffer)
-    for iL = #buffer,1 do
+    for iL = #buffer,1,-1 do
       buffer:del(iL)
     end
   end,
