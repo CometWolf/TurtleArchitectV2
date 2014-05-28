@@ -1242,6 +1242,7 @@ window = {
       end
     end
     local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
+    local eventQueue = {} --unrelated events which occurred during the dialogue
     local function endExecution(event)
       --closes input box and returns event and the values in the input fields
       eventHandler.switch(oldHandlers,true)
@@ -1266,6 +1267,9 @@ window = {
       screen:delLayer(screenLayer)
       inputOpen = (screenLayer ~= screen.layers.dialogue)
       activeInputs = activeInputs-1
+      for i=1,#eventQueue do
+        os.queueEvent(unpack(eventQueue[i]))
+      end
       return event,tRes,reInput
     end
     --render box
@@ -1477,12 +1481,12 @@ window = {
           text.timerId = os.startTimer(text[text.activeFrame].renderTime)
           return true
         else
-          os.queueEvent(unpack(tEvent))
+          eventQueue[#eventQueue+1] = tEvent
         end
       end
     else
       eventHandler.timer = function(tEvent)
-        os.queueEvent(unpack(tEvent))
+        eventQueue[#eventQueue+1] = tEvent
       end
     end
     if customEvent then

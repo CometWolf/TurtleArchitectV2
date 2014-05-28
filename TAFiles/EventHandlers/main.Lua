@@ -4,10 +4,12 @@ main = {
     local button,x,y = tEvent[2],tEvent[3],tEvent[4]
     if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
       tBar.touchMap[x][y](button)
+      return true
     elseif tMenu.open and tMenu.touchMap[x][y] then
       if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
         tMenu.touchMap[x][y](button)
       end
+      return true
     elseif y <= tTerm.canvas.eZ
     and y >= tTerm.canvas.sZ 
     and x <= tTerm.canvas.eX
@@ -24,6 +26,7 @@ main = {
         local color = tTool[button].color
         tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
       end
+      return true
     end
   end,
   key = function(tEvent)
@@ -38,26 +41,35 @@ main = {
           tool.tool = "Brush"
         end
         renderBottomBar()
+        return true
       end
     elseif key == 203 then --left arrow
       scroll(false,-1,0)
+      return true
     elseif key == 205 then --right arrow
       scroll(false,1,0)
+      return true
     elseif key == 208 then --down arrow
       scroll(false,0,1)
+      return true
     elseif key == 200 then --up arrow
       scroll(false,0,-1)
+      return true
     elseif key == 209 then --page down
       scroll(tTerm.scroll.layer-1)
+      return true
     elseif key == 201 then --page up
       scroll(tTerm.scroll.layer+1)
+      return true
     elseif key == 29 then --ctrl
       tTimers.ctrl.pressed = true
       tTimers.ctrl.start()
+      return true
     end
   end,
   mouse_scroll = function(tEvent)
     scroll(false,0,tEvent[2])
+    return true
   end
 }
 main.mouse_drag = main.mouse_click

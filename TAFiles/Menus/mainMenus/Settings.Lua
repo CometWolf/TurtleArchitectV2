@@ -178,7 +178,7 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
       window.text"Background layer mode renders the specified layer in gray underneath the layer you are currently viewing. This makes comparisons a breeze."
     end,
     func = function()
-      local button,tRes = window.text(
+      local button,tRes,reInput = window.text(
         [[BGL mode renders the specified layer underneath the layer you are currently viewing. This makes comparisons a breeze.
 BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
         {
@@ -192,13 +192,19 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
             value = math.max(tTerm.scroll.layer-1,1),
             accepted = "%d"
           },
-        }
+        },
+        nil,
+        true
       )
       if button == "BGL ON"
       or button == "BGL change"
       or button == "Ok" then
-        tMode.backgroundLayer = tBlueprint[tRes.BGL]
-        scroll()
+        if not tBlueprint[tRes.BGL] then
+          button,tRes,reInput = reInput"Layer ("..tRes.BGL.." does not exist!"
+        else
+          tMode.backgroundLayer = tBlueprint[tRes.BGL]
+          scroll()
+        end
       elseif button == "BGL OFF" then
         tMode.backgroundLayer = false
         scroll()

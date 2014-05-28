@@ -2,6 +2,7 @@ local common
 common = { --common event handlers, these are always active
   turtle_response = function(tEvent)
     os.queueEvent(unpack(tEvent))
+    return true
   end,
   timer = function(tEvent)
     local timerID = tEvent[2]
@@ -66,6 +67,7 @@ common = { --common event handlers, these are always active
       modem = peripheral.wrap(side)
       modem.open(modemChannel)
       modem.side = side
+      return true
     elseif not glasses and peripheral.getType(side) == "openperipheral_glassesbridge" then
       glasses.bridge = peripheral.wrap(side)
       glasses.side = side
@@ -75,16 +77,19 @@ common = { --common event handlers, these are always active
       if glasses.screenMode:match"Log" then
 			  glasses.log.open(glasses.log.sX,glasses.log.sY,glasses.log.eX,glasses.log.eY)
       end
+      return true
     end
   end,
   peripheral_detach = function(tEvent)
     local side = tEvent[2]
     if modem and side == modem.side then
       modem = nil
+      return true
     elseif glasses.bridge and side == glasses.side then
       glasses.log.close()
       screen:glassClose()
       glasses.bridge = nil
+      return true
     end
   end,
   chat_command = function(tEvent)
@@ -530,6 +535,7 @@ common = { --common event handlers, these are always active
           end
         end
       end
+      return true
     end
   end,
 }
