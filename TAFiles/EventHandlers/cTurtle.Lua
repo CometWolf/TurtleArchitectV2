@@ -39,11 +39,11 @@ handler = { --cTurtle only events
       local slot = tRes.Slot
       if not slot then
         tTimers.restockRetry.start()
-        button,tRes,reInput = reinput("Missing refuel slot number!")
+        button,tRes,reInput = reInput("Missing refuel slot number!")
       elseif slot > 16
       or slot < 1 then
         tTimers.restockRetry.start()
-        button,tRes,reInput = reinput("Invalid slot number "..slot.."!")
+        button,tRes,reInput = reInput("Invalid slot number "..slot.."!")
       else
         turtle.select(slot)
         turtle.refuel(64)

@@ -1182,7 +1182,14 @@ window = {
     else
       tLine = text.lines
       if #tLine > maxLines then
-        window.text(table.concat(tLine,"\n",maxLines+1),{"Ok"}) --omg recursion
+        local windowLines = {}
+        for i=#tLine-maxLines+1,#tLine do
+          windowLines[#windowLines+1] = tLine[i]
+          tLine[i] = nil
+        end
+        window.text(table.concat(tLine),{"Ok"}) --omg recursion
+        screen:setLayer(screenLayer)
+        tLine = windowLines
       end
     end
     --default input fields
@@ -1258,8 +1265,12 @@ window = {
       height = #tLine+2+#tInputs,
       width = tTerm.screen.x-2
     }
-    box.top = math.floor(tTerm.screen.yMid-(box.height/2))
-    box.bottom = math.ceil(tTerm.screen.yMid+math.floor(box.height/2))
+    box.top = math.ceil(tTerm.screen.yMid-(box.height/2))
+    box.bottom = box.height+box.top
+    if box.top < 1 then
+      box.bottom = box.bottom+(1-box.top)
+      box.top = 1
+    end
     screen:drawBox(2,box.top,tTerm.screen.x-1,box.bottom,tColors.inputBox)
     screen:drawFrame(1,box.top,tTerm.screen.x,box.bottom,tColors.inputBoxBorder)
     --write text
@@ -1456,15 +1467,14 @@ window = {
             screen:write(line)
           end
           text.timerId = os.startTimer(text[text.activeFrame].renderTime)
+          return true
         else
           os.queueEvent(unpack(tEvent))
         end
-        return true
       end
     else
       eventHandler.timer = function(tEvent)
         os.queueEvent(unpack(tEvent))
-        return true
       end
     end
     if customEvent then

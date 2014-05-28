@@ -125,7 +125,7 @@ tool = {
       if button == "Compile" then
         local loadRes = {loadstring(path)}
         if not loadRes[1] then
-          button,tRes,reInput = reinput("Error: "..loadRes[2])
+          button,tRes,reInput = reInput("Error: "..loadRes[2])
         else
           setfenv(loadRes[1],codeEnv)
           codeEnv.code = path
@@ -185,14 +185,14 @@ tool = {
         for i=1,#events do
           os.queueEvent(unpack(events[i]))
         end
-        button,tRes,reInput = reinput"Input path to code tool file"
+        button,tRes,reInput = reInput"Input path to code tool file"
       else --button == Load, load code
         if not fs.exists(path) then
-          button,tRes,reInput = reinput(path.." does not exist!")
+          button,tRes,reInput = reInput(path.." does not exist!")
         else
           local loadRes = {loadfile(path)}
           if not loadRes[1] then
-            button,tRes,reInput = reinput("Error: "..loadRes[2])
+            button,tRes,reInput = reInput("Error: "..loadRes[2])
           else
             setfenv(loadRes[1],codeEnv)
             codeEnv.code = path

@@ -266,7 +266,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
             turtles = 0
           }
           if not tRes["Sync IDs"] then
-            button,tRes,reInput = reinput"Missing sync partner ID"
+            button,tRes,reInput = reInput"Missing sync partner ID"
           else
             local syncIds = {}
             local faultyIds = true
@@ -275,7 +275,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
               faultyIds = false
             end
             if faultyIds then
-              button,tRes,reInput = reinput"Faulty IDs!"
+              button,tRes,reInput = reInput"Faulty IDs!"
             else
               tMode.sync.amount = 0
               tMode.sync.ids = {}
