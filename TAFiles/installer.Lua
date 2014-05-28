@@ -13,12 +13,13 @@ local tActive = {}
 getContents = function(path,main)
   tActive[#tActive+1] = true
   local success = function(tEvent)
+    local path = path
     local web = tEvent[3]
     local sContents = web.readAll()
     web.close()
     local _s,remainder = sContents:find'"name":"'
     local name = sContents:match'"name":"(.-)"'
-    while name and name ~= "README.md" do
+    while name do
       sContents = sContents:sub(remainder)..""
       local sha = sContents:match'"sha":"(.-)"'
       if tGitSha[path.."/"..name] ~= sha then
@@ -32,7 +33,7 @@ getContents = function(path,main)
             file = folder..path.."/"..name,
             url = url
           }
-        else
+        elseif type == "folder" then
           local newFolder = folder..path.."/"..name
           if not fs.exists(newFolder) then
             fs.makeDir(newFolder)

@@ -335,11 +335,15 @@ debug = {
       local tEvent = {os.pullEventRaw()}
       if tEvent[1] == "key" then
         if tEvent[2] == 14 then
-          error()
+          error("Quit",0)
         else
           return
         end
-      elseif tEvent[2] == "timer" then
+      elseif tEvent[1] == "mouse_click"
+      or tEvent[1] == "mouse_drag"
+      or tEvent[1] == "mouse_scroll" then
+        --ignore user input
+      else
         os.queueEvent(unpack(tEvent))
       end
     end
@@ -1656,7 +1660,7 @@ window = {
     while true do
     --user interaction begins
       local event,selection = eventHandler.pull()
-      if event then
+      if type(event) == "String" then
         return event,selection
       end
     end
