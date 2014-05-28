@@ -176,7 +176,7 @@ if button == "Done" then
       if button == "Cancel" then
         return false
       end
-      local file = fs.open(folder.."/".."gitSha","w")
+      local file = fs.open(tFile.folder.."/".."gitSha","w")
       file.write(textutils.serialize(tGitSha))
       file.close()
       window.text("Updated:\n"..table.concat(tUpdated,"\n"))
