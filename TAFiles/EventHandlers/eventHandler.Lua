@@ -11,9 +11,9 @@ eventHandler = {
         eventHandler.common[k]
         and not skipCommon
         and function(tEvent)
-          local tRet = eventHandler.common[k](tEvent)
-          if tRet then
-            return unpack(tRet)
+          local var1,var2,var3,var4,var5 = eventHandler.common[k](tEvent)
+          if var1 then
+            return var1,var2,var3,var4,var5
           else
             return v(tEvent)
           end

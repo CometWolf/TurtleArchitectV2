@@ -416,7 +416,7 @@ function loadFile(path,env,arg) --custom file loader, sets environment, handles 
     )
   }
   if not tRes[1] then
-    error("The following error occured while loading "..path..":\n"..tRes[2])
+    error("The following error occured while loading "..path..":\n"..tRes[2],2)
   end
   return unpack(tRes,2)
 end
@@ -1459,10 +1459,12 @@ window = {
         else
           os.queueEvent(unpack(tEvent))
         end
+        return true
       end
     else
       eventHandler.timer = function(tEvent)
         os.queueEvent(unpack(tEvent))
+        return true
       end
     end
     if customEvent then

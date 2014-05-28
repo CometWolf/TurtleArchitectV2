@@ -10,17 +10,15 @@ end
 local updateFiles = {}
 local getContents
 local tActive = {}
-local success,failure
-getContents = function(path)
+getContents = function(path,main)
   tActive[#tActive+1] = true
-  path = path or ""
-  success = function(tEvent)
+  local success = function(tEvent)
     local web = tEvent[3]
     local sContents = web.readAll()
     web.close()
     local _s,remainder = sContents:find'"name":"'
     local name = sContents:match'"name":"(.-)"'
-    while name do
+    while name and name ~= "README.md" do
       sContents = sContents:sub(remainder)..""
       local sha = sContents:match'"sha":"(.-)"'
       if tGitSha[path.."/"..name] ~= sha then
@@ -28,7 +26,8 @@ getContents = function(path)
         local url = sContents:match'html_url":"(.-)"'
         url = url:gsub("https://","https://raw.")
         url = url:gsub("blob/","")
-        if sContents:match'"type":"(.-)"' == "file" then
+        local type = sContents:match'"type":"(.-)"'
+        if type == "file" then
           updateFiles[#updateFiles+1] = {
             file = folder..path.."/"..name,
             url = url
@@ -46,8 +45,7 @@ getContents = function(path)
     end
     table.remove(tActive,1)
   end
-  failure = function(tEvent)
-    table.remove(tActive,1)
+  local failure = function(tEvent)
     if path ~= "" then
       local button = window.text(
         "Error: Failed to get contents of "..path..". Retry?",
@@ -67,13 +65,15 @@ getContents = function(path)
     end
   end
   http.request("https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents"..path)
-  if not main then
+  if main then
+    return success,failure
+  else
     eventHandler.active.http_success = success
     eventHandler.active.http_failure = failure
   end
 end
 
-getContents(nil,true)
+local fSuccess,fFailure = getContents("",true)
 local button = window.text(
   {
     {
@@ -96,10 +96,10 @@ local button = window.text(
   {
     "Cancel"
   },
-  false,
+  nil,
   {
-    http_success = success,
-    http_failure = failure,
+    http_success = fSuccess,
+    http_failure = fFailure,
     timer = function()
       if #tActive == 0 then
         return "Done"
