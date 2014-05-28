@@ -107,7 +107,7 @@ tTimers = setmetatable( -- timer settings
     restockRetry = { --wait before re-attempting failed restock
       time = 20,
     },
-    blink = { --how often to tool overlays
+    blink = { --how often to blink tool overlays
       time = 1
     },
     modemRes = { --how long to wait for a modem response

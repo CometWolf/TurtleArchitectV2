@@ -331,12 +331,16 @@ debug = {
     term.setTextColor(colors.white)
   end,
   pause = function()
+    local tEventQueue = {}
     while true do
       local tEvent = {os.pullEventRaw()}
       if tEvent[1] == "key" then
         if tEvent[2] == 14 then
           error("Quit",0)
         else
+          for i=1,#tEventQueue do
+            os.queueEvent(unpack(tEventQueue[i]))
+          end
           return
         end
       elseif tEvent[1] == "mouse_click"
@@ -344,7 +348,7 @@ debug = {
       or tEvent[1] == "mouse_scroll" then
         --ignore user input
       else
-        os.queueEvent(unpack(tEvent))
+        tEventQueue[#tEventQueue+1] = tEvent
       end
     end
   end,

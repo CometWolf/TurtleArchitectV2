@@ -1,4 +1,4 @@
-local folder = tFile.folder:match"(.+)/.+$"
+local folder = tFile.folder:match"(.+)/?/.+$"
 local tGitSha
 local file = fs.open(tFile.folder.."/".."gitSha","r")
 if file then
@@ -13,8 +13,8 @@ local tActive = {}
 getContents = function(path,main)
   tActive[#tActive+1] = true
   local success = function(tEvent)
-    local path = path
     local web = tEvent[3]
+    local path = tEvent[2]:match"https://api.github.com/repos/CometWolf/TurtleArchitectV2/contents(.+)" or ""
     local sContents = web.readAll()
     web.close()
     local _s,remainder = sContents:find'"name":"'
@@ -22,7 +22,7 @@ getContents = function(path,main)
     while name do
       sContents = sContents:sub(remainder)..""
       local sha = sContents:match'"sha":"(.-)"'
-      if tGitSha[path.."/"..name] ~= sha then
+      if name ~= "README.md" and tGitSha[path.."/"..name] ~= sha then
         tGitSha[path.."/"..name] = sha
         local url = sContents:match'html_url":"(.-)"'
         url = url:gsub("https://","https://raw.")
@@ -33,7 +33,7 @@ getContents = function(path,main)
             file = folder..path.."/"..name,
             url = url
           }
-        elseif type == "folder" then
+        elseif type == "dir" then
           local newFolder = folder..path.."/"..name
           if not fs.exists(newFolder) then
             fs.makeDir(newFolder)
