@@ -96,28 +96,75 @@ menu = {
       )
       while button ~= "Cancel" do
         local iBlueprint
-        if not tRes.Blueprint then
+        local fileName = tRes.Blueprint
+        if not fileName then
           if button == "Pastebin" then
             button,tRes,reInput = reInput"Pastebin code parameter missing!"
           else
             button,tRes,reInput = reInput"Import blueprint parameter missing!"
           end
+        elseif not tRes.From then
+          button,tRes,reInput = reInput"From layer parameter missing!"
+        elseif not tRes.To then
+          button,tRes,reInput = reInput"To layer parameter missing!"
+        elseif not tRes.Into then
+          button,tRes,reInput = reInput"Into layer parameter missing!"
+        elseif button == "Pastebin" then
+          local paste = {}
+          http.request("http://pastebin.com/raw.php?i="..fileName)
+          local dlStatus = window.text(
+            {
+              {
+                text = "Downloading "..fileName..".",
+                renderTime = 0.2
+              },
+              {
+                text = "Downloading "..fileName.."..",
+                renderTime = 0.2
+              },
+              {
+                text = "Downloading "..fileName.."...",
+                renderTime = 0.2
+              },
+            },
+            {
+              "Cancel"
+            },
+            nil,
+            {
+              http_success = function(tEvent)
+                local web = tEvent[3]
+                local line = web.readLine()
+                while line do
+                  paste[#paste+1] = line
+                  line = web.readLine()
+                end
+                web.close()
+                return "Success"
+              end,
+              http_failure = function(tEvent)
+                button,tRes,reInput = reInput("Pastebin download of "..fileName.." failed!")
+                return "Failure"
+              end
+            }
+          )
+          if dlStatus == "Success" then
+            iBlueprint = tBlueprint.load(paste)
+            button = dlStatus
+          end
         else
-          iBlueprint = button == "Pastebin" and tBlueprint.load(http.get(fileName,true)) or loadBlueprint(tRes.Blueprint)
-          if button ~= "Pastebin" and not fs.exists(tRes.Blueprint) then
-            button,tRes,reInput = reInput(tRes.Blueprint.." does not exist!")
-          elseif not iBlueprint then
-            button,tRes,reInput = reInput(tRes.Blueprint.." is not a blueprint file!")
-          elseif not tRes.From then
-            button,tRes,reInput = reInput"From layer parameter missing!"
-          elseif not iBlueprint[tRes.From] then
-            button,tRes,reInput = reInput("The layer "..tRes.From.." does not exist in the blueprint "..tRes.Blueprint.."!")
-          elseif not tRes.To then
-            button,tRes,reInput = reInput"To layer parameter missing!"
+          iBlueprint = tBlueprint.load(fileName)
+          if not fs.exists(fileName) then
+            button,tRes,reInput = reInput(fileName.." does not exist!")
+          else
+            button = "Success"
+          end
+        end
+        if button == "Success" then
+          if not iBlueprint then
+            button,tRes,reInput = reInput(fileName.." is not a blueprint file!")
           elseif not iBlueprint[tRes.To] then
             button,tRes,reInput = reInput("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
-          elseif not tRes.Into then
-            button,tRes,reInput = reInput"Into layer parameter missing!"
           elseif tBlueprint[tRes.Into] then
             local button2 = window.text(
               "Layers already exist in the range "..tRes.Into.."-"..tRes.Into+(tRes.To-tRes.From).." in the current blueprint!",
@@ -127,10 +174,9 @@ menu = {
                 "Insert"
               }
             )
-            button = (button2 == "cancel") and "reinput" or button2
-          elseif button == "Ok"
-          or button == "Overwrite"
-          or button == "Pastebin" then
+            button = (button2 == "cancel") and reInput"Import layers from another blueprint" or button2
+          elseif button == "Overwrite"
+          or button == "Success" then
             while #tBlueprint < tRes.Into do
               tBlueprint[#tBlueprint+1] = class.layer.new()
             end

@@ -23,7 +23,8 @@ local calcFunc = function(x1,z1,x2,z2,color)
   return points
 end
 
-local tool = {
+local tool 
+tool = {
   menuOrder = 3, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)

@@ -200,7 +200,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       or button == "BGL change"
       or button == "Ok" then
         if not tBlueprint[tRes.BGL] then
-          button,tRes,reInput = reInput"Layer ("..tRes.BGL.." does not exist!"
+          button,tRes,reInput = reInput("Layer ("..tRes.BGL..") does not exist!")
         else
           tMode.backgroundLayer = tBlueprint[tRes.BGL]
           scroll()

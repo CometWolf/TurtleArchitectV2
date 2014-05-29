@@ -71,10 +71,46 @@ menu = {
             button,tRes,reInput = reInput"Missing pastebin code parameter!"
           else
             fileName = fileName:match"[^/]+"
-            local paste = http.paste.get(fileName,true)
-            if not paste then
-              button,tRes,reInput = reInput("Pastebin download of "..fileName.." failed!")
-            else
+            local paste
+            http.request("http://pastebin.com/raw.php?i="..fileName)
+            local dlStatus = window.text(
+              {
+                {
+                  text = "Downloading "..fileName..".",
+                  renderTime = 0.2
+                },
+                {
+                  text = "Downloading "..fileName.."..",
+                  renderTime = 0.2
+                },
+                {
+                  text = "Downloading "..fileName.."...",
+                  renderTime = 0.2
+                },
+              },
+              {
+                "Cancel"
+              },
+              nil,
+              {
+                http_success = function(tEvent)
+                  local web = tEvent[3]
+                  paste = {}
+                  local line = web.readLine()
+                  while line do
+                    paste[#paste+1] = line
+                    line = web.readLine()
+                  end
+                  web.close()
+                  return "Success"
+                end,
+                http_failure = function(tEvent)
+                  button,tRes,reInput = reInput("Pastebin download of "..fileName.." failed!")
+                  return "Failure"
+                end
+              }
+            )
+            if dlStatus == "Success" then
               local blueprint = tBlueprint.load(paste)
               if not blueprint then
                 button,tRes,reInput = reInput(fileName.." was not a Turtle Architect file!")
@@ -85,6 +121,8 @@ menu = {
                 window.text("Successfully downloaded "..fileName.."!")
                 return
               end
+            elseif dlStatus == "Cancel" then
+              button,tRes,reInput = reInput"Load blueprint file"
             end
           end
         else
@@ -146,12 +184,53 @@ menu = {
         if not fileName then
           button,tRes,reInput = reInput("Invalid file name!")
         elseif button == "Pastebin" then
-          local response,code = http.paste.put(tBlueprint,fileName)
-          if not code then
-            button,tRes,reInput = reInput("Pastebin upload failed!")
-          else
-            window.text("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..code.." \nURL: "..response)
+          local upload = tBlueprint:save(true)
+          http.request(
+            "http://pastebin.com/api/api_post.php",
+            "api_option=paste&"..
+            "api_dev_key="..tPaste.key.."&"..
+            "api_paste_format=text&"..
+            "api_paste_name="..textutils.urlEncode(fileName or "Untitled").."&"..
+            "api_paste_code="..textutils.urlEncode(upload)
+          )
+          local ulStatus = window.text(
+            {
+              {
+                text = "Uploading "..fileName..".",
+                renderTime = 0.2
+              },
+              {
+                text = "Uploading "..fileName.."..",
+                renderTime = 0.2
+              },
+              {
+                text = "Uploading "..fileName.."...",
+                renderTime = 0.2
+              },
+            },
+            {
+              "Cancel"
+            },
+            nil,
+            {
+              http_success = function(tEvent)
+                local web = tEvent[3]
+                local sResponse = web.readAll()
+                web.close()      
+                local sCode = string.match( sResponse, "[^/]+$" )
+                window.text("Sucsessfully uploaded the blueprint to pastebin!\nCode: "..sCode.." \nURL: "..sResponse)
+                return "Success"
+              end,
+              http_failure = function(tEvent)
+                button,tRes,reInput = reInput("Pastebin upload failed!")
+                return "Failure"
+              end
+            }
+          )
+          if ulStatus == "Success" then
             return
+          elseif ulStatus == "Cancel" then
+            button,tRes,reInput = reInput("Save current blueprint as")
           end
         elseif fs.exists(fileName..".TAb") then
           button,tRes,reInput = reInput(fileName.." already exists!")

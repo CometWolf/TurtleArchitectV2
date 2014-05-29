@@ -557,31 +557,19 @@ glasses.log.refresh = function()
       break
     end
 	  local text = glasses.log[curLog].text
-    local tLines = {}
-		while #text > 0 do  --splits text into lines
-			local line = text:sub(1,glasses.lineLength)
-			local newLine = string.find(line.."","\n") --check for new line character
-			if newLine then
-				line = line:sub(1,newLine-1)
-				text = text:sub(#line+2,#text)
-			elseif #line == glasses.lineLength then
-				local endSpace = line:find"%s$" or line:find"%s%S-$" or glasses.lineLength
-				line = line:sub(1,endSpace)
-				text = text:sub(#line+1,#text)
-			else
-				text = ""
-			end
-      tLines[#tLines+1] = line
+    if not text then 
+      break
     end
+    local tLines = string.lineFormat(text,glasses.lineLength)
     for i=#tLines,1,-1 do
       glasses.lines[curLine].setText(tLines[i])
-			curLine = curLine+1
+      curLine = curLine+1
       if not glasses.lines[curLine] then
         break
       end
-		end
-		curLog = curLog+1
-	end
+    end
+    curLog = curLog+1
+  end
   for i=curLine,#glasses.lines do
     glasses.lines[i].setText""
   end
