@@ -235,7 +235,9 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
   },
   [7] = {
     name = "Sync mode",
-    enabled = true,
+    enabled = function
+      return modem and true or false
+    end,
     help = function()
       window.text"Sync mode syncs the blueprint in real-time across multiple computers. If you sync with turtles, they can be ordered to build the blueprint together"
     end,
