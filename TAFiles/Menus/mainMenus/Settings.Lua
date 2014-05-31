@@ -235,7 +235,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
   },
   [7] = {
     name = "Sync mode",
-    enabled = function
+    enabled = function()
       return modem and true or false
     end,
     help = function()
