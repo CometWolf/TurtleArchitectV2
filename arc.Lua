@@ -1231,6 +1231,8 @@ window = {
     end
     local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
     local eventQueue = {} --unrelated events which occurred during the dialogue
+    local prevBlink = screen:getBlink()
+    screen:setCursorBlink(false)
     local function endExecution(event)
       --closes input box and returns event and the values in the input fields
       eventHandler.switch(oldHandlers,true)
@@ -1252,6 +1254,7 @@ window = {
           return window.text(reText,tButtonFields,tInputFields,customEvent,true)
         end
       end
+      screen:setCursorBlink(prevBlink)
       screen:delLayer(screenLayer)
       inputOpen = (screenLayer ~= screen.layers.dialogue)
       activeInputs = activeInputs-1
@@ -1334,15 +1337,19 @@ window = {
      --updates input fields
       screen:setLayer(screenLayer)
       field = tInputs[field]
-      if field.cX > #field.value then
-        field.scroll = math.max(0,#field.value-field.lX+1)
-        field.cX = #field.value
-      end
-      field.scroll = field.cX >= field.lX and field.cX-field.lX or field.scroll
-      local fieldString = field.value:sub(field.scroll,field.lX+field.scroll)
+      field.scroll = (
+        field.cX > field.lX 
+        and math.min(field.scroll+(field.cX-field.lX),#field.value-field.lX)
+        or field.cX < 0
+        and math.max(field.scroll-math.abs(field.cX),0)
+        or field.scroll
+      )
+      field.cX = math.max(0,math.min(field.cX,field.lX))
+      local fieldString = field.value:sub(field.scroll+1,field.lX+field.scroll+1)
       screen:setCursorPos(field.sX,field.y)
+      screen:setBackgroundColor(field.backgroundColor)
       screen:write(fieldString..string.rep(" ",math.max(0,field.lX-#fieldString+1)))
-      screen:setCursorPos(field.sX+field.cX-field.scroll,field.y)
+      screen:setCursorPos(field.sX+field.cX,field.y)
     end
     local eventHandlers = {
       mouse_click = function(tEvent)
@@ -1360,7 +1367,8 @@ window = {
         if tInputs.enabled then
           local field = tInputs[tInputs.enabled]
           if tEvent[2]:match(field.accepted) and #field.value < field.charLimit then -- check for accepted character and character limit
-            field.value = field.value:sub(1,field.cX+field.scroll)..tEvent[2]..field.value:sub(field.cX+field.scroll+1)
+            local curs = field.cX+field.scroll
+            field.value = field.value:sub(1,curs)..tEvent[2]..field.value:sub(curs+1)
             field.cX = field.cX+1
             refreshField(tInputs.enabled)
           end
@@ -1374,10 +1382,7 @@ window = {
           if key == 14
           and field.cX > 0 then
             --backspace
-            local curs = field.cX
-            if field.cX >= field.lX then
-              curs = curs-1
-            end
+            local curs = field.cX+field.scroll
             field.value = field.value:sub(1,curs-1)..field.value:sub(curs+1)
             if field.scroll > 0 then
               field.scroll = field.scroll-1
@@ -1393,13 +1398,15 @@ window = {
           elseif key == 208 then --down arrow
             tInputs.enabled = math.min(#tInputs,tInputs.enabled+1)
           elseif key == 211 then --delete
-            if #field.value <= 1 and field.cX == 0 then
+            local curs = field.cX+field.scroll
+            if #field.value <= 1 and curs == 0 then
               field.value = ""
             else
-              field.value = field.value:sub(1,field.cX)..field.value:sub(field.cX+2)
+              field.value = field.value:sub(1,curs)..field.value:sub(curs+2)
             end
           elseif key == 207 then --end
-            field.cX = #field.value+1
+            field.cX = field.lX
+            field.scroll = #field.value-field.lX
           elseif key == 199 then --home
             field.cX = 1
             field.scroll = 0
@@ -1475,6 +1482,7 @@ window = {
     else
       eventHandler.timer = function(tEvent)
         eventQueue[#eventQueue+1] = tEvent
+        return true
       end
     end
     if customEvent then
