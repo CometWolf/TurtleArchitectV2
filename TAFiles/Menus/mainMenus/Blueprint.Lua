@@ -252,48 +252,82 @@ menu = {
       window.text"Transfer the currently loaded blueprint via rednet. This is only enabled if a modem is connected"
     end,
     func = function()
-      local button, tRes, reInput = window.text(
-      "Transfer current blueprint via rednet",
-        {
-          "Cancel",
-          "Ok",
-          "All"
-        },
+      local inRange = {}
+      rednet.send("All","Ping")
+      tTimers.scan.start()
+      local scanRes = window.text(
         {
           {
-            name = "Computer ID",
-            value = os.getComputerID(),
-            accepted = "%d",
-            charLimit = 5
+            text = "Scanning",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning.",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning..",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning...",
+            renderTime = 0.2
           },
         },
-        false,
-        true
-      )
-      while button ~= "Cancel" do
-        local id = button ~= "All" and tRes["Computer ID"] or "All"
-        if not id then
-          button,tRes,reInput = reInput"Missing receiver ID!"
-        elseif button == "Ok"
-        or button == "All" then
-          rednet.send(id,"Init connection",
-            {},
-            function()
-              rednet.send(id,"Blueprint transmission",
-                {
-                  blueprint = tBlueprint,
-                  blueprintName = tFile.blueprint or "Untitled"
-                }
-              )
-              window.text("Successfully sent the current blueprint to computer ID "..id)
-            end,
-            function()
-              window.text("Failed to connect to computer ID "..id)
+        {
+          "Cancel"
+        },
+        nil,
+        {
+          timer = function(tEvent)
+            if tTimers.scan.ids[tEvent[2]] then
+              return "Done"
             end
-          )
-          return
-        end
+          end,
+          modem_message = function(tEvent)
+            if tEvent[3] == modemChannel
+            and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
+            and tEvent[5].rID[os.id] then
+              local data = tEvent[5]
+              if data.event == "Success"
+              and data.type == "Ping" then
+                inRange[#inRange+1] = {
+                  text = data.turtle and data.sID.." - Turtle" or data.sID.." - Computer"
+                }
+              end
+            end
+          end
+        }
+      )
+      if scanRes == "Cancel" then
+        return
       end
+      if #inRange == 0 then
+        window.text"No Turtle Architect computers in range!"
+        return
+      end
+      local button,ids = window.scroll("Select IDs to transfer to:",inRange,true)
+      if button == "Cancel" then
+        return
+      end
+      local transferIds = {}
+      for i,id in ipairs(ids) do
+        transferIds[tonumber(id:match"%d+")] = true
+      end
+      rednet.send(transferIds,"Ping",
+        {},
+        function(id)
+          rednet.send(id,"Blueprint transmission",
+            {
+              blueprint = tBlueprint,
+              blueprintName = tFile.blueprint or "Untitled"
+            }
+          )
+        end,
+        function(id)
+          window.text("Failed to connect to computer ID "..id)
+        end
+      )
     end
   },
   [6] = {

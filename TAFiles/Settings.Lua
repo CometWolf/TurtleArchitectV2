@@ -122,8 +122,11 @@ tTimers = setmetatable( -- timer settings
     ctrl = { --ctrl key press timer, for ctrl shortcuts
       time = 1
     },
-    display = { --time a openP glasses message remains on screen
+    display = { --time a openP glasses message remains in the log
       time = 20
+    },
+    scan = { --time to wait for responses when scanning for other computers running TA
+      time = 1
     }
   },
   {

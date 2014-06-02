@@ -6,25 +6,18 @@ menu = {
   [1] = {
     name = "Move to...",
     enabled = function()
-      return tMode.sync.turtles > 0 and true
+      return tMode.sync.turtles > 0
     end,
     help = function()
       window.text"Move a synced turtle to the given coordinates"
     end,
     func = function()
-      local turtles = ""
-      local id
-      for k,v in pairs(tMode.sync.ids) do
-        if v == "turtle" then
-          turtles = turtles..k..","
-          if tMode.sync.turtles == 1 then
-            id = k
-            break
-          end
-        end
+      local id,nID = dialogue.selectTurtle("Select turtle ID to move")
+      if not id then
+        return
       end
-      local button, tRes, reInput = window.text(
-        "Move to coordinates...".."/nTurtle IDs: "..(turtles or ""),
+      local button,tRes,reInput = window.text(
+        "Move turtle "..nID.." to coordinates...",
         {
           "Cancel",
           "Ok"
@@ -44,15 +37,7 @@ menu = {
             name = "Z",
             value = "",
             accepted = "[-+%d]"
-          },
-          (
-            not id and {
-              name = "ID",
-              value = os.id,
-              accepted = "%d"
-            } 
-            or nil
-          )
+          }
         },
         false,
         true
@@ -65,12 +50,6 @@ menu = {
           button,tRes,reInput = reInput"Missing Y Coordinate!"
         elseif not tRes.Z then
           button,tRes,reInput = reInput"Missing Z Coordinate!"
-        elseif not id then
-          button,tRes,reInput = reInput"Missing Turtle ID!"
-        elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reinput("The ID "..id.." is not connected!")
-        elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reinput("The ID "..id.." is not a turtle!")
         else
           rednet.send(
             id,
@@ -96,19 +75,12 @@ menu = {
       window.text"Turn a synced turtle in the given direction. Most forms of directions are supported, like x+,north or right"
     end,
     func = function()
-      local turtles = ""
-      local id
-      for k,v in pairs(tMode.sync.ids) do
-        if v == "turtle" then
-          turtles = turtles..k..","
-          if tMode.sync.turtles == 1 then
-            id = k
-            break
-          end
-        end
+      local id,nID = dialogue.selectTurtle("Select turtle ID to turn")
+      if not id then
+        return
       end
       local button, tRes, reInput = window.text(
-        "Turn to.../nTurtle IDs: "..(turtles or ""),
+        "Turn turtle "..nID.."...",
         {
           "Cancel",
           "Ok"
@@ -118,34 +90,17 @@ menu = {
             name = "Direction",
             value = "",
             accepted = "."
-          },
-          (
-            not id and {
-              name = "ID",
-              value = turtles,
-              accepted = "."
-            }
-            or nil
-          )
+          }
         },
         false,
         true
       )
       while button ~= "Cancel" do
-        local id = tRes.ID or id
         if not tRes.Direction then
           button,tRes,reInput = reInput"Missing turn direction!"
-        elseif not cTurtle.dirStandardize(tRes.Direction) then
-          button,tRes,reInput = reInput"Invalid turn direction!"
-        elseif not id then
-          button,tRes,reInput = reInput"Missing turtle ID!"
-        elseif not tMode.sync.ids[id] then
-          button,tRes,reInput = reinput("The ID "..id.." is not connected!")
-        elseif tMode.sync.ids[id] ~= "turtle" then
-          button,tRes,reInput = reinput("The ID "..id.." is not a turtle!")
         else
           rednet.send(
-            tRes.ID,
+            id,
             "Turtle command",
             {
               type = "Turn",
@@ -170,73 +125,16 @@ menu = {
         window.text"Construction cancelled"
         return
       end
-      local turtles = ""
-      local turtleIds = {}
-      local turtleAmount = 0
-      for id,v in pairs(tMode.sync.ids) do
-        if v == "turtle" then
-          turtles = turtles..id..","
-          if tMode.sync.turtles == 1 then
-            turtleIds[id] = true
-            turtleAmount = 1
-            break
-          end
-        end
-      end
-      if turtleAmount < 1 then
-        local button, tRes, reInput = window.text(
-          "Input turtle IDs to use for building\nTurtle IDs: "..turtles,
-          {
-            "Cancel",
-            "Ok"
-          },
-          {
-            {
-              name = "IDs",
-              value = turtles,
-              accepted = "[%d,]"
-            }
-          },
-          false,
-          true
-        )
-        while button ~= "Cancel" do
-          local ids = {}
-          local faultyId = false
-          local faultyIds = true
-          turtleAmount = 0
-          for id in string.gmatch(string.format(tRes["IDs"]),"%d+") do
-            id = tonumber(id)
-            if not tMode.sync.ids[id] then
-              button,tRes,reInput = reinput("The ID("..id..") is not connected")
-              faultyId = true
-              break
-            elseif tMode.sync.ids[id] ~= "turtle" then
-              button,tRes,reInput = reinput("The ID("..id..") is not a turtle")
-              faultyId = true
-              break
-            else
-              ids[id] = true
-              turtleAmount = turtleAmount+1
-            end
-          end
-          if turtleAmount < 1 and not faultyId then
-            button,tRes,reInput = reinput'Faulty ID input! Separate IDs with ","'
-          elseif not faultyId then
-            turtleIds = ids
-            break
-          end
-        end
-        if button == "Cancel" then
-          return
-        end
+      local ids = dialogue.selectTurtle("Select turtle IDs to use for building",true)
+      if not ids then
+        return
       end
       local tProgress = checkProgress(tFile.blueprint,false,tBlueprint)
       if not tProgress then
         return
       end
       rednet.send(
-        turtleIds,
+        ids,
         "Turtle command",
         {
           type = "Save blueprint progress",
@@ -245,7 +143,7 @@ menu = {
         }
       )
       rednet.send(
-        turtleIds,
+        ids,
         "Sync edit",
         {
           type = "Colorslots load",
@@ -255,7 +153,7 @@ menu = {
       local layers,x,z = tBlueprint:size()
       local xChunks = math.ceil(x/turtleAmount)
       local xNext = 0
-      for id in pairs(turtleIds) do
+      for id in pairs(ids) do
         rednet.send(
           id,
           "Sync edit",
@@ -269,7 +167,7 @@ menu = {
         )
         xNext = xNext+xChunks
       end
-      rednet.send(turtleIds,"Turtle command",{type = "Build"}
+      rednet.send(ids,"Turtle command",{type = "Build"}
       )
     end
   }

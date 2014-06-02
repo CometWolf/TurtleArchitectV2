@@ -209,7 +209,7 @@ common = { --common event handlers, these are always active
   modem_message = function(tEvent)
     if tEvent[3] == modemChannel
     and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
-    and tEvent[5].rID[os.id] then
+    and (tEvent[5].rID[os.id] or tEvent[5].rID.All) then
       local data = tEvent[5]
       local event = data.event
       local senderId = data.sID
@@ -218,18 +218,20 @@ common = { --common event handlers, these are always active
         local func = tTransmissions.success[type][senderId]
         if func then
           func(data)
+          return true
         end
       elseif event == "Failure" then
         local func = tTransmissions.failure[type][senderId]
         if func then
           func(data)
+          return true
         end
       elseif event == "Ping" then
-        rednet.send(senderId,"Success",{type="Ping"})
+        rednet.send(senderId,"Success",{type="Ping",turtle = turtle and true or nil})
       elseif event == "Init connection" then
         if type == "Sync" then
-          local timeoutId = tTimers.inputTimeout.start()
-          local button, tRes = window.text(
+          --[[local timeoutId = tTimers.inputTimeout.start()
+          local button = window.text(
             "Computer ID "..senderId.." wants to initiate sync mode.",
             {
               "Deny",
@@ -244,7 +246,7 @@ common = { --common event handlers, these are always active
               end
             }
           )
-          if button == "Accept" or "Ok" then
+          if button == "Accept" or "Ok" then]]--
             local reRenderSideBar = tMode.sync.turtles > 0
             if tMode.sync.amount > 0 then
               rednet.disconnect(tMode.sync.ids)
@@ -266,9 +268,10 @@ common = { --common event handlers, these are always active
               end
             end
             rednet.send(senderId,"Success",{type = event,turtle = turtle and true})
-          else
-            rednet.send(senderId,"Failure",{type = event})
-          end
+          --else
+          --  rednet.send(senderId,"Failure",{type = event})
+          --end
+          return true
         end
       elseif event == "Sync edit"
       and tMode.sync.ids[senderId] then
@@ -367,6 +370,7 @@ common = { --common event handlers, these are always active
           tBlueprint.colorsSlots = class.matrix.new(2,data.colorSlots)
           tBlueprint:save(tFile.blueprint,true)
         end
+        return true
       elseif event == "Sync OFF"
       and tMode.sync.ids[senderId] then
         if tMode.sync.ids[senderId] then
@@ -381,6 +385,7 @@ common = { --common event handlers, these are always active
           end
           window.text((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
         end
+        return true
       elseif event == "Turtle command" then
         local response = {
           type = event
@@ -407,13 +412,17 @@ common = { --common event handlers, these are always active
           build(tBlueprint,true)
           tMode.sync = oldSync
         end
+        return true
       elseif event == "Turtle status" and not tIgnore[senderId] then
         if type == "Build complete" then
 				  window.text("Turtle "..senderId.." has completed construction of "..data.blueprintName)
+          return true
 				elseif type == "Layer complete" then
 					glasses.log.write("Turtle "..senderId.." completed layer "..data.layer.." of "..data.blueprintName)
+          return true
         elseif type == "Blocked" then
           glasses.log.write("Turtle "..senderId.." is being blocked, please remove the obstruction at\nX: "..data.x.."\nY: "..data.y.."n\Z: "..data.z)
+          return true
 				elseif type == "Blocks required" then
           local timeOut = tTimers.restockRetry.start()
           local button = window.text(
@@ -452,6 +461,7 @@ common = { --common event handlers, these are always active
           elseif button == "Ignore" then
             tIgnore[senderId] = true
           end
+          return true
 				elseif type == "Fuel required" then
           local timeOut = tTimers.restockRetry.start()
           local button = window.text(
@@ -491,6 +501,7 @@ common = { --common event handlers, these are always active
             tIgnore[senderId] = true
           end
         end
+        return true
       elseif event == "Blueprint transmission" then
         local timeoutId = tTimers.inputTimeout.start()
         local button, tRes, reInput = window.text(
@@ -534,8 +545,8 @@ common = { --common event handlers, these are always active
             return
           end
         end
+        return true
       end
-      return true
     end
   end,
 }

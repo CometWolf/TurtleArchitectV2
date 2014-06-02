@@ -242,13 +242,128 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
       window.text"Sync mode syncs the blueprint in real-time across multiple computers. If you sync with turtles, they can be ordered to build the blueprint together"
     end,
     func = function()
-      local synced = ""
+      local synced = {}
       for id in pairs(tMode.sync.ids) do
-        synced = synced..id..","
+        synced[id] = true
       end
-      local button, tRes, reInput= window.text(
-        [[Sync mode syncs the blueprint in real-time across multiple computers.
-Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
+      local inRange = {}
+      rednet.send("All","Ping")
+      tTimers.scan.start()
+      local scanRes = window.text(
+        {
+          {
+            text = "Scanning",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning.",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning..",
+            renderTime = 0.2
+          },
+          {
+            text = "Scanning...",
+            renderTime = 0.2
+          },
+        },
+        {
+          "Cancel"
+        },
+        nil,
+        {
+          timer = function(tEvent)
+            if tTimers.scan.ids[tEvent[2]] then
+              return "Done"
+            end
+          end,
+          modem_message = function(tEvent)
+            if tEvent[3] == modemChannel
+            and type(tEvent[5]) == "table" --All Turtle Architect messages are sent as tables
+            and tEvent[5].rID[os.id] then
+              local data = tEvent[5]
+              if data.event == "Success"
+              and data.type == "Ping" then
+                inRange[#inRange+1] = {
+                  text = data.turtle and data.sID.." - Turtle" or data.sID.." - Computer",
+                  selected = tMode.sync.ids[data.sID]
+                }
+              end
+            end
+          end
+        }
+      )
+      if scanRes == "Cancel" then
+        return
+      end
+      if #inRange == 0 then
+        window.text"No syncable computers in range!"
+        return
+      end
+      local button,connectIds = window.scroll("Select sync IDs:",inRange,true)
+      if button == "Cancel" then
+        return
+      end
+      local syncIds = {}
+      for i,id in ipairs(connectIds) do
+        syncIds[tonumber(id:match"%d+")] = true
+      end
+      connectIds = nil
+      local deSyncIds = {}
+      local deSync
+      for id in pairs(tMode.sync.ids) do
+        if not syncIds[id] then
+          deSyncIds[id] = true
+          deSync = true
+        else
+          syncIds[id] = nil
+        end
+      end
+      if deSync then
+        rednet.disconnect(deSyncIds)
+      end
+      deSyncIds = nil
+      rednet.connect(
+        syncIds,
+        "Sync",
+        100,
+        function(id,data)
+          tMode.sync.ids[id] = data.turtle and "turtle" or "computer"
+          tMode.sync.amount = tMode.sync.amount+1
+          tMode.sync.turtles = tMode.sync.turtles+(data.turtle and 1 or 0)
+          rednet.send(
+            id,
+            "Sync edit",
+            {
+              type = "Blueprint load",
+              blueprint = tBlueprint,
+              blueprintName = tFile.blueprint
+            }
+          )
+          sync({sync = tMode.sync},"Ids")
+          local timerId = os.startTimer(10)
+          if data.turtle and tMode.sync.turtles == 1 then
+            renderSideBar()
+          end
+          window.text(
+            "Successfully synced with "..(data.turtle and "Turtle" or "Computer").." ID "..id,
+            false,
+            false,
+            {
+              timer = function(tEvent)
+                if tEvent[2] == timerId then
+                  return "Ok"
+                end
+              end
+            }
+          )
+        end
+      )
+    end
+      --[[local button, tRes, reInput= window.text(
+        [=[Sync mode syncs the blueprint in real-time across multiple computers.
+Synced: ]=]..(tMode.sync.amount > 0 and synced or "None"),
         {
           "Cancel",
           (tMode.sync.amount > 0 and "Resync" or "Sync"),
@@ -285,47 +400,6 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
             if faultyIds then
               button,tRes,reInput = reInput"Faulty IDs!"
             else
-              tMode.sync.amount = 0
-              tMode.sync.ids = {}
-              rednet.connect(
-                syncIds,
-                "Sync",
-                100,
-                function(id,data)
-                  tMode.sync.ids[id] = data.turtle and "turtle" or "computer"
-                  tMode.sync.amount = tMode.sync.amount+1
-                  tMode.sync.turtles = tMode.sync.turtles+(data.turtle and 1 or 0)
-                  rednet.send(
-                    id,
-                    "Sync edit",
-                    {
-                      type = "Blueprint load",
-                      blueprint = tBlueprint,
-                      blueprintName = tFile.blueprint
-                    }
-                  )
-                  sync({sync = tMode.sync},"Ids")
-                  local timerId = os.startTimer(10)
-                   if data.turtle then
-                     renderSideBar()
-                   end
-                  window.text(
-                    "Successfully synced with "..(data.turtle and "Turtle" or "Computer").." ID "..id,
-                    false,
-                    false,
-                    {
-                      timer = function(tEvent)
-                        if tEvent[2] == timerId then
-                          return true
-                        end
-                      end
-                    }
-                  )
-                end
-              )
-              return
-            end
-          end
         elseif button == "Desync" then
           rednet.send(tMode.sync.ids,"Sync OFF")
           tMode.sync.turtles = 0
@@ -334,8 +408,7 @@ Synced: ]]..(tMode.sync.amount > 0 and synced or "None"),
           renderSideBar()
           return
         end
-      end
-    end
+      end]]--
   },
   [8] = {
     name = "About",

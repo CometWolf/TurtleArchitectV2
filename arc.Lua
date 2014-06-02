@@ -303,7 +303,7 @@ rednet = {
       rednet.connected.ids[id] = nil
       rednet.connected.amount = rednet.connected.amount-1
       if tMode.sync.ids[id] then
-        tMode.sync.turtles = tMode.sync.ids == "turtle" and tMode.sync.turtles-1 or tMode.sync.turtles
+        tMode.sync.turtles = tMode.sync.ids[id] == "turtle" and tMode.sync.turtles-1 or tMode.sync.turtles
         tMode.sync.ids[id] = nil
         tMode.sync.amount = tMode.sync.amount-1
       end
@@ -1508,15 +1508,27 @@ window = {
       end
     end
   end,
-  scroll = function(text,tItems)
+  scroll = function(text,tItems,multiSelection,customEvent)
     local screenLayer = screen.layers.dialogue+activeInputs
     inputOpen = true
     screen:setLayer(screenLayer)
     activeInputs = activeInputs+1
     local scroll = 0
-    local selected = 1
+    local selected
+    if multiSelection then
+      selected = {}
+      for i,v in ipairs(tItems) do
+        if type(v) == "table" then
+          if v.selected == true then
+            selected[i] = true
+          end
+        end
+      end
+    else
+      selected = 1
+    end
     local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
-    local function endExecution(event,selection,customEvent)
+    local function endExecution(event,selection)
       --closes input box and returns event and the values in the input fields
       eventHandler.switch(oldHandlers,true)
       screen:delLayer(screenLayer)
@@ -1564,32 +1576,55 @@ window = {
       screen:write(line)
     end
     local visibleSelections = tTerm.screen.y-6-#tLine
-    local selFunc = function(clickX,clickY)
-      local newSelection = clickY-box.top-#tLine+scroll
-      if newSelection == selected then
-        return
+    local selFunc = (
+      multiSelection
+      and function(clickX,clickY)
+        local newSelection = clickY-box.top-#tLine+scroll
+        screen:setLayer(screenLayer)
+        if selected[newSelection] then --de selection
+          selected[newSelection] = nil
+          local selection = tItems[newSelection]
+          screen:setTextColor(selection.uText)
+          screen:setBackgroundColor(selection.uBackground)
+          screen:setCursorPos(4,clickY)
+          screen:write(selection.string)
+        else --new selection
+          selected[newSelection] = true
+          local selection = tItems[newSelection]
+          screen:setTextColor(selection.sText)
+          screen:setBackgroundColor(selection.sBackground)
+          screen:setCursorPos(4,clickY)
+          screen:write(selection.string)
+        end
       end
-      screen:setLayer(screenLayer)
-      if visibleSelections+scroll >= selected
-      and scroll < selected then
-        local selection = tItems[selected]
-        screen:setTextColor(selection.uText)
-        screen:setBackgroundColor(selection.uBackground)
-        screen:setCursorPos(4,box.top+#tLine+selected-scroll)
+      or function(clickX,clickY)
+        local newSelection = clickY-box.top-#tLine+scroll
+        if newSelection == selected then
+          return
+        end
+        screen:setLayer(screenLayer)
+        if visibleSelections+scroll >= selected
+        and scroll < selected then
+          local selection = tItems[selected]
+          screen:setTextColor(selection.uText)
+          screen:setBackgroundColor(selection.uBackground)
+          screen:setCursorPos(4,selected+box.top+#tLine-scroll)
+          screen:write(selection.string)
+        end
+        local selection = tItems[newSelection]
+        screen:setTextColor(selection.sText)
+        screen:setBackgroundColor(selection.sBackground)
+        screen:setCursorPos(4,clickY)
         screen:write(selection.string)
+        selected = newSelection
       end
-      local selection = tItems[newSelection]
-      screen:setTextColor(selection.sText)
-      screen:setBackgroundColor(selection.sBackground)
-      screen:setCursorPos(4,box.top+#tLine+newSelection-scroll)
-      screen:write(selection.string)
-      selected = newSelection
-    end
-    for iY = box.top+#tLine+1,box.top+#tLine+visibleSelections do
-      if not tItems[iY] then
-        return
+    )
+    for i = 1,visibleSelections do
+      if not tItems[i] then
+        break
       end
-      for iX = 4,#tItems[iY].string+4 do
+      local iY = i+box.top+#tLine
+      for iX = 4,#tItems[i].string+4 do
         touchMap[iX][iY] = selFunc
       end
     end
@@ -1601,8 +1636,13 @@ window = {
         end
         local y = box.top+#tLine+iY-scroll
         screen:setCursorPos(4,y)
-        screen:setBackgroundColor(selected == iY and tItems[iY].sBackground or tItems[iY].uBackground)
-        screen:setTextColor(selected == iY and tItems[iY].sText or tItems[iY].uText)
+        if multiSelection then
+          screen:setBackgroundColor(selected[iY] and tItems[iY].sBackground or tItems[iY].uBackground)
+          screen:setTextColor(selected[iY] and tItems[iY].sText or tItems[iY].uText)
+        else
+          screen:setBackgroundColor(selected == iY and tItems[iY].sBackground or tItems[iY].uBackground)
+          screen:setTextColor(selected == iY and tItems[iY].sText or tItems[iY].uText)
+        end
         screen:write(tItems[iY].string)
       end
     end
@@ -1614,15 +1654,27 @@ window = {
     screen:setBackgroundColor(tColors.inputButton)
     screen:setTextColor(tColors.inputButtonText)
     screen:write(buttonString)
-    for i = x,x+#" Cancel " do
-      touchMap[i][y] = function()
-        return endExecution("Cancel")
-      end
+    local cancelFunc = function()
+      return endExecution("Cancel")
     end
-    for i = x+#" Cancel ",x+#buttonString do
-      touchMap[i][y] = function()
+    local okFunc = (
+      multiSelection
+      and function()
+        local tSelected = {}
+        for k in pairs(selected) do
+          tSelected[#tSelected+1] = tItems[k].text
+        end
+        return endExecution("Ok",tSelected)
+      end
+      or function()
         return endExecution("Ok",tItems[selected].text)
       end
+    )
+    for i = x,x+#" Cancel " do
+      touchMap[i][y] = cancelFunc
+    end
+    for i = x+#" Cancel ",x+#buttonString do
+      touchMap[i][y] = okFunc
     end
     local eventHandlers = {
       mouse_click = function(tEvent)
@@ -1642,7 +1694,7 @@ window = {
       key = function(tEvent)
         local key = tEvent[2]
         if key == 28 then
-          return endExecution("Ok",tItems[selected])
+          return endExecution("Ok",selected)
         end
       end
     }
@@ -1650,12 +1702,12 @@ window = {
       for k,v in pairs(customEvent) do
         local mainFunc = eventHandlers[k]
         eventHandlers[k] = function(tEvent)
-          local button = v(tEvent)
+          local customEvent = v(tEvent)
           if button then
-            return endExecution(button)
+            return endExecution(customEvent,selected)
           end
           if mainFunc then
-            return mainFunc(tEvent)
+            return mainFunc(tEvent,selected)
           end
         end
       end
@@ -1664,7 +1716,7 @@ window = {
     while true do
     --user interaction begins
       local event,selection = eventHandler.pull()
-      if type(event) == "String" then
+      if type(event) == "string" then
         return event,selection
       end
     end
@@ -1686,6 +1738,30 @@ for k,v in pairs(colors) do
   end
 end
 dialogue = {
+  selectTurtle = function(text,multi)
+    local connected = {}
+    for k,v in pairs(tMode.sync.ids) do
+      if v == "turtle" then
+        connected[#connected+1] = k.." - Turtle"
+      end
+    end
+    local ids,button
+    if #connected > 1 then
+      button,ids = window.scroll(text,connected,multi)
+      if button == "Cancel" then
+        return false
+      end
+    else
+      ids = connected
+    end
+    local retIDs = {}
+    local nID
+    for i,id in ipairs(ids) do
+      nID = tonumber(id:match"%d+")
+      retIDs[nID] = true
+    end
+    return retIDs, not multi and nID
+  end,
   selectColor = function(text)
     local event,selected = window.scroll(text,colorSelect)
     return event ~= "Cancel" and selected or event
