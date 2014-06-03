@@ -1127,7 +1127,8 @@ local scrollDefaults = { --default values for scroll selections
   sText = tColors.scrollBoxSelectText, --selected text color
   sBackground = tColors.scrollBoxSelected, --selected text background color
   uText = tColors.scrollBoxSelectText, --unselected text color
-  uBackground = tColors.scrollBoxUnselected --unselected text background color
+  uBackground = tColors.scrollBoxUnselected, --unselected text background color
+  selected = false --selected by default
 }
 window = {
   text = function(text,tButtonFields,tInputFields,customEvent,reInput)
@@ -1518,11 +1519,7 @@ window = {
     if multiSelection then
       selected = {}
       for i,v in ipairs(tItems) do
-        if type(v) == "table" then
-          if v.selected == true then
-            selected[i] = true
-          end
-        end
+        selected[i] = type(v) == "table" and v.selected and true or nil
       end
     else
       selected = 1

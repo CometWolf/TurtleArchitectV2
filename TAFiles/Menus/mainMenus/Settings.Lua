@@ -287,7 +287,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
               and data.type == "Ping" then
                 inRange[#inRange+1] = {
                   text = data.turtle and data.sID.." - Turtle" or data.sID.." - Computer",
-                  selected = tMode.sync.ids[data.sID]
+                  selected = tMode.sync.ids[data.sID] and true
                 }
               end
             end

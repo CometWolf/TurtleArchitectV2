@@ -247,24 +247,26 @@ common = { --common event handlers, these are always active
             }
           )
           if button == "Accept" or "Ok" then]]--
-            local reRenderSideBar = tMode.sync.turtles > 0
-            if tMode.sync.amount > 0 then
-              rednet.disconnect(tMode.sync.ids)
-            end
-            rednet.connected.amount = rednet.connected.amount+1
-            rednet.connected.ids[senderId] = true
-            tMode.sync.amount = 1
-            if data.turtle then
-              tMode.sync.turtles = 1
-              tMode.sync.ids = {[senderId] = "turtle"}
-              if not reRenderSideBar then
-                renderSideBar()
+            if not tMode.sync.ids[senderId] then 
+              local reRenderSideBar = tMode.sync.turtles > 0
+              if tMode.sync.amount > 0 then
+                rednet.disconnect(tMode.sync.ids)
               end
-            else
-              tMode.sync.turtles = 0
-              tMode.sync.ids = {[senderId] = "computer"}
-              if reRenderSideBar then
-                renderSideBar()
+              rednet.connected.amount = rednet.connected.amount+1
+              rednet.connected.ids[senderId] = true
+              tMode.sync.amount = 1
+              if data.turtle then
+                tMode.sync.turtles = 1
+                tMode.sync.ids = {[senderId] = "turtle"}
+                if not reRenderSideBar then
+                  renderSideBar()
+                end
+              else
+                tMode.sync.turtles = 0
+                tMode.sync.ids = {[senderId] = "computer"}
+                if reRenderSideBar then
+                  renderSideBar()
+                end
               end
             end
             rednet.send(senderId,"Success",{type = event,turtle = turtle and true})
@@ -372,18 +374,20 @@ common = { --common event handlers, these are always active
         end
         return true
       elseif event == "Sync OFF"
-      and tMode.sync.ids[senderId] then
+      or "Close connection" then
         if tMode.sync.ids[senderId] then
           local turtle = tMode.sync.ids[senderId] == "turtle"
           tMode.sync.turtles = tMode.sync.turtles-(turtle and 1 or 0)
           tMode.sync.amount = tMode.sync.amount-1
           tMode.sync.ids[senderId] = nil
-          rednet.connected.ids[senderId] = nil
-          rednet.connected.amount = rednet.connected.amount-1
           if turtle and tMode.sync.turtles == 0 then
             renderSideBar()
           end
           window.text((turtle and "Turtle" or "Computer").." ID "..senderId.." has de-synced")
+        end
+        if rednet.connected.ids[senderId] then
+          rednet.connected.ids[senderId] = nil
+          rednet.connected.amount = rednet.connected.amount-1
         end
         return true
       elseif event == "Turtle command" then
