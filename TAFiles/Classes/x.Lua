@@ -12,7 +12,8 @@ x = { --x-axis class
             return " "
           end
           return x[k]
-        end
+        end,
+        __metatable = false
       }
     )
   end,

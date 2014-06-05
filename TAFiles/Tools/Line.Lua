@@ -1,35 +1,57 @@
 local calcFunc = function(x1,z1,x2,z2,color)
-  local x = {
-    max = math.max(x1,x2),
-    min = math.min(x1,x2)
-  }
-  x.max = x.max-x.min+1
-  x.min = 1
-  local z = {
-    max = math.max(z1,z2),
-    min = math.min(z1,z2)
-  }
-  z.max = z.max-z.min+1
-  z.min = 1
   local points = class.layer.new()
-  for iX = x.min,x.max do
-    points[iX][z.min] = color
-    points[iX][z.max] = color
+  local xS,zS,xD,zD,xR,zR
+  if x1 > x2 then
+    xD = x1-x2
+    x1 = x1-x2+1
+    x2 = 1
+    xS = -1
+    xR = true
+  else
+    xD = x2-x1
+    x2 = x2-x1+1
+    x1 = 1
+    xS = 1
   end
-  for iZ = z.min,z.max do
-    points[x.min][iZ] = color
-    points[x.max][iZ] = color
+  if z1 > z2 then
+    zD = z1-z2
+    z1 = z1-z2+1
+    z2 = 1
+    zS = -1
+    zR = true
+  else
+    zD = z2-z1
+    z2 = z2-z1+1
+    z1 = 1
+    zS = 1
   end
-  return points
+  if xD >= zD then
+    zS = zD/xD
+    zS = zR and -zS or zS
+    local iZ = z1
+    for iX = x1,x2,xS do
+      points[iX][math.round(iZ)] = color
+      iZ = iZ+zS
+    end
+  else
+    xS = xD/zD
+    xS = xR and -xS or xS
+    local iX = x1
+    for iZ = z1,z2,zS do
+      points[math.round(iX)][iZ] = color
+      iX = iX+xS
+    end
+  end
+  return  points
 end
 
 local tool 
 tool = {
-  menuOrder = 4, --menu order, 1 being top
+  menuOrder = 3, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
     local button = window.text(
-      "The hollow square tool lets you draw a hollow square by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
+      "The line tool lets you draw a simple line by left clicking a point and dragging to the opposite point. When you are satisfied, simply right click to draw it on the blueprint",
       {
         "Ok",
         "Equip"
@@ -40,7 +62,7 @@ tool = {
     end
   end,
   selectFunc = function(button)
-    tTool.change("hSquare",1,2)
+    tTool.change("Line",1,2)
   end,
   renderFunc = function(event,button,x,z,color,layer)
     local s = tTool.shape
@@ -75,9 +97,7 @@ tool = {
     or not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
       error("Expected number,number,number,number",2)
     end
-    if type(layer) == "table" and layer.paste then
-      layer:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
-    elseif codeEnv.settings.direct then
+    if codeEnv.settings.direct then
       local s = {
         sX = sX,
         sZ = sZ,
@@ -86,13 +106,11 @@ tool = {
         layer = layer,
         l = calcFunc(sX,sZ,eX,eZ,color)
       }
-      tBlueprint[layer]:paste(s.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+      tBlueprint[layer]:paste(s.l,1,1,not tMode.overwrite)
       sync(s,"Paste")
       renderArea(sX,sZ,eX,eZ,true)
-    elseif type(layer) == "number" then
-      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
     else
-      error("Expected layer, got "..type(layer),2)
+      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),1,1,not tMode.overwrite)
     end
   end
 }

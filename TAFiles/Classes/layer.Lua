@@ -11,6 +11,7 @@ layer = { --layer class
           end
           return layer[k]
         end,
+        __metatable = false
       }
     )
   end,

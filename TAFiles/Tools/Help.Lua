@@ -1,6 +1,6 @@
 local tool
 tool = {
-  menuOrder = 11, --menu order, 1 being top
+  menuOrder = 12, --menu order, 1 being top
   enabled = true,
   help = function()
     window.text"The tool you are currently using, displays help windows describing what things do when you click on any element of TA's UI"

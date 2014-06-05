@@ -63,7 +63,7 @@ os = setmetatable(
 math = setmetatable(
   {
     round = function(num)
-      return num+0.5 > math.ceil(num) and math.ceil(num) or math.floor(num)
+      return math.floor(num+0.5)
     end
   },
   {
@@ -2330,12 +2330,54 @@ function build(blueprint,auto)
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
+          elseif block == "S" then --scan block
+            cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode)
+            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode)
+            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode)
+            if cTurtle.detect("-Y"..tOngoing.dir.y) then
+              local identified
+              for i,slot in ipairs(blueprint.colorSlots.S[1]) do
+                if cTurtle.compare("-Y"..tOngoing.dir.y,slot) then
+                  identified = i
+                  break
+                end
+              end
+              identified = identified and blueprint.colorSlots.S.color[identified] or blueprint.colorsSlots.S.color.unidentified
+              blueprint[nL][nX][nZ] = identified
+              blueprint:save(tFile.blueprint,true)
+              sync(
+                {
+                  layer = nL,
+                  x = nX,
+                  z = nZ,
+                  color = identified,
+                  isBuilding = true
+                },
+                "Point"
+              )
+              scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+              screen:refresh()
+            else
+              blueprint[nL][nX][nZ] = nil
+              blueprint:save(tFile.blueprint,true)
+              sync(
+                {
+                  layer = nL,
+                  x = nX,
+                  z = nZ,
+                  isBuilding = true
+                },
+                "Point"
+              )
+              scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+              screen:refresh()
+            end
           end
           block = nil
           local nextBlock = {}
           for i=-1,1 do --scan for blocks in vicinity
             for j=-1,1 do
-              if blueprint[nL][nX+i][nZ+j]:match"[X%l]" then
+              if blueprint[nL][nX+i][nZ+j]:match"[XS%l]" then
                 nextBlock = {
                   b = blueprint[nL][nX+i][nZ+j],
                   nX = nX+i,
@@ -2402,6 +2444,9 @@ local function Quit()
   end
   if glasses.bridge then
     glasses.bridge.clear()
+  end
+  if modem then
+    modem.close(modemChannel)
   end
   term.setTextColor(colors.white)
   term.setBackgroundColor(colors.black)

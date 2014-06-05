@@ -28,12 +28,17 @@ local menu = {
 codeEnv = { --Environment for the code tool
   tool = {}, --holds tool codefuncs
   class = { --class table for creating layers and blueprints
-    layer = class.layer,
-    blueprint = class.blueprint
+    layer = class.layer.new,
+    blueprint = class.blueprint.new
   },
   settings = {
     direct = false --whether to affect the blueprint directly, or through a pasted blueprint. this should only be enabled if your code is very light drawing wise.
-  }
+  },
+  window = setmetatable(
+    {},
+    window
+  ),
+  debug = debug --direct inheritance
 }
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do
@@ -58,7 +63,7 @@ tTool["Code"] = function(...) --since it changes, it has to be looked up on each
 end
 menu[tool.menuOrder] = {
   name = "Code",
-  enabled = true,
+  enabled = tool.enabled,
   help = tool.help,
   func = tool.selectFunc
 }

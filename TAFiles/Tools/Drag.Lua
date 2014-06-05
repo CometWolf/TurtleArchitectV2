@@ -1,6 +1,6 @@
 local tool
 tool = {
-  menuOrder = 10, --menu order, 1 being top
+  menuOrder = 11, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
     local button = window.text(

@@ -17,14 +17,16 @@ blueprint = { --blueprint class
             else
               return blueprint[k]
             end
-          end
+          end,
+          __metatable = false
         }
       )
     else
       return setmetatable(
         data,
         {
-          __index = blueprint
+          __index = blueprint,
+          __metatable = false
         }
       )
     end

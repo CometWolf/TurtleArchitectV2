@@ -1,5 +1,11 @@
+codeEnv.tool.select = tTool.change
+
 codeEnv.getCanvas = function()
   return tBlueprint
+end
+
+codeEnv.getLayer = function(num)
+  return tBlueprint[num or codeEnv.click.layer]
 end
 
 codeEnv.overlay = function(overlay,x,z)
@@ -12,14 +18,20 @@ codeEnv.overlay = function(overlay,x,z)
   end
   tTool.shape.sX = x
   tTool.shape.sZ = z
-  tTool.shape.eX,tTool.shape.eZ = overlay:size()
-  tTool.shape.eX = tTool.shape.eX+x
-  tTool.shape.eZ = tTool.shape.eZ+z
+  local eX,eZ = overlay:size()
+  tTool.shape.eX = eX+x
+  tTool.shape.eZ = eZ+z
   tTool.shape.l = overlay
+end
+
+codeEnv.getOverlay = function()
+  return tTool.shape.l
 end
 
 codeEnv.tool.brush = codeEnv.tool.Brush
 codeEnv.tool.Brush = nil
+codeEnv.tool.line = codeEnv.tool.Line
+codeEnv.tool.Line = nil
 for k,v in pairs(codeEnv.tool) do --setup proper environment access for the tool functions
   if type(v) == "function" then
     setfenv(v,progEnv)
@@ -30,8 +42,9 @@ local tDisabled = { --disabled APIs and functions, edit them if you wish...
   fs = true,
   term = true,
   turtle = true,
+  loadfile = true,
+  dofile = true,
   io = true,
-  http = true,
   paintutils = true,
   window = true,
   shell = true,
@@ -40,7 +53,6 @@ local tDisabled = { --disabled APIs and functions, edit them if you wish...
   write = true
 }
 
-setmetatable(codeEnv,{__index = _G})
 for k,v in pairs(_G) do
   if tDisabled[k] then
     codeEnv[k] = (
@@ -58,14 +70,21 @@ codeEnv._G = codeEnv
 for k,v in pairs(_G.colors) do
   if type(v) == "number" then
     codeEnv.colors[k] = colorKey[v]
+    codeEnv.colours[k] = colorKey[v]
   end
 end
 
-codeEnv.debug = debug
+setmetatable(
+  codeEnv,
+  {
+    __index = _G,
+    __metatable = false
+  }
+)
 
 local tool  
 tool = {
-  menuOrder = 9, --menu order, 1 being top
+  menuOrder = 10, --menu order, 1 being top
   enabled = true,
   help = function(clickButton)
     local button = window.text(
@@ -103,7 +122,7 @@ tool = {
   end,
   selectFunc = function(clickButton)
     local button,tRes,reInput = window.text(
-      "Input path to code tool file",
+      "Input path to code tool file\nor input code directly.",
       {
         "Cancel",
         "Load",
