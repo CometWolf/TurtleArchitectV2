@@ -97,7 +97,9 @@ tool = {
     or not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
       error("Expected number,number,number,number",2)
     end
-    if codeEnv.settings.direct then
+    if type(layer) == "table" and layer.paste then
+      layer:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
+    elseif codeEnv.settings.direct then
       local s = {
         sX = sX,
         sZ = sZ,
@@ -106,11 +108,13 @@ tool = {
         layer = layer,
         l = calcFunc(sX,sZ,eX,eZ,color)
       }
-      tBlueprint[layer]:paste(s.l,1,1,not tMode.overwrite)
+      tBlueprint[layer]:paste(s.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
       sync(s,"Paste")
       renderArea(sX,sZ,eX,eZ,true)
+    elseif type(layer) == "number" then
+      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
     else
-      codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),1,1,not tMode.overwrite)
+      error("Expected layer, got "..type(layer),2)
     end
   end
 }

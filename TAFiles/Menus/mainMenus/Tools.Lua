@@ -31,14 +31,11 @@ codeEnv = { --Environment for the code tool
     layer = class.layer.new,
     blueprint = class.blueprint.new
   },
-  settings = {
-    direct = false --whether to affect the blueprint directly, or through a pasted blueprint. this should only be enabled if your code is very light drawing wise.
-  },
   window = setmetatable(
     {},
-    window
+    {__index = window}
   ),
-  debug = debug --direct inheritance
+  debug = debug --direct inheritance,cause idgaf
 }
 --load tools
 for _k,file in pairs(fs.list(tFile.toolFolder)) do

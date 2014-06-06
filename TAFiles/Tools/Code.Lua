@@ -8,6 +8,11 @@ codeEnv.getLayer = function(num)
   return tBlueprint[num or codeEnv.click.layer]
 end
 
+codeEnv.settings = { --changing these here has no effect, they're simply used to illustrate their function.
+  direct = false, --whether to affect the blueprint directly, or through a pasted blueprint. this should only be enabled if your code is very light drawing wise.
+  overwrite = true --overwrite settings
+}
+
 codeEnv.overlay = function(overlay,x,z)
   if not (overlay and x and z)
   or type(x) ~= "number"
@@ -52,19 +57,52 @@ local tDisabled = { --disabled APIs and functions, edit them if you wish...
   print = true,
   write = true
 }
+local disabled_G = {}
 
 for k,v in pairs(_G) do
   if tDisabled[k] then
-    codeEnv[k] = (
-      type(codeEnv[k]) == "table"
-      and setmetatable({},{__index = function() error(k.." functions are disabled within the code tool!",2) end})
+    disabled_G[k] = (
+      type(v) == "table"
+      and setmetatable(
+        {},
+        {
+          __index = function()
+            error(k.." functions are disabled within the code tool!",2)
+          end
+        }
+      )
     ) or (
-      function() error(k.." is disabled within the code tool!",2) end
+      function() 
+        error(k.." is disabled within the code tool!",2)
+      end
     )
   elseif type(v) == "table" then
-    codeEnv[k] = setmetatable({},{__index = v})
+    disabled_G[k] = setmetatable({},{__index = v})
   end
 end
+disabled_G.getfenv = function(level)
+  local env = getfenv(level)
+  if env == progEnv
+  or env == disabled_G
+  or env == _G then
+    return codeEnv
+  end
+  return env
+end
+
+setmetatable(
+  codeEnv,
+  {
+    __index = setmetatable(
+      disabled_G,
+      {
+        __index = _G,
+        __metatable = {}
+      }
+    ),
+    __metatable = codeEnv
+  }
+)
 codeEnv._G = codeEnv
 
 for k,v in pairs(_G.colors) do
@@ -73,14 +111,6 @@ for k,v in pairs(_G.colors) do
     codeEnv.colours[k] = colorKey[v]
   end
 end
-
-setmetatable(
-  codeEnv,
-  {
-    __index = _G,
-    __metatable = false
-  }
-)
 
 local tool  
 tool = {
@@ -148,8 +178,9 @@ tool = {
         else
           setfenv(loadRes[1],codeEnv)
           codeEnv.code = path
+          codeEnv.settings.direct = false
+          codeEnv.settings.overwrite = tMode.overwrite
           tool.renderFunc = function(event,button,x,z,color,layer)
-            codeEnv.settings.direct = false
             codeEnv.click = {
               event = event,
               button = button,
@@ -172,7 +203,7 @@ tool = {
                 tool.selectFunc()
               end
             elseif not codeEnv.settings.direct then
-              tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
+              tBlueprint:paste(codeEnv.blueprint,nil,nil,not codeEnv.overwrite)
               local syncObj = {
                 sX = 0,
                 sZ = 0,
@@ -213,6 +244,8 @@ tool = {
           if not loadRes[1] then
             button,tRes,reInput = reInput("Error: "..loadRes[2])
           else
+            codeEnv.settings.direct = false
+            codeEnv.settings.overwrite = tMode.overwrite
             setfenv(loadRes[1],codeEnv)
             codeEnv.code = path
             tool.renderFunc = function(event,button,x,z,color,layer)
@@ -239,7 +272,7 @@ tool = {
                   tool.selectFunc()
                 end
               elseif not codeEnv.settings.direct then
-                tBlueprint:paste(codeEnv.blueprint,nil,nil,not tMode.overwrite)
+                tBlueprint:paste(codeEnv.blueprint,nil,nil,not codeEnv.overwrite)
                 local syncObj = {
                   sX = 0,
                   sZ = 0,

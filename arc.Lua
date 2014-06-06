@@ -338,9 +338,6 @@ debug = {
         if tEvent[2] == 14 then
           error("Quit",0)
         else
-          for i=1,#tEventQueue do
-            os.queueEvent(unpack(tEventQueue[i]))
-          end
           return
         end
       elseif tEvent[1] == "mouse_click"
@@ -381,6 +378,13 @@ debug = {
       end
       debug.pause()
     end
+    if screen then
+      screen:redraw()
+    end
+    for i=1,#tEventQueue do
+      os.queueEvent(unpack(tEventQueue[i]))
+    end
+    return
   end,
   timedStart = function(key)
     debug.tExecutionTime[k] = os.clock()
