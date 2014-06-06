@@ -15,7 +15,7 @@ layer = { --layer class
       }
     )
   end,
-  size = function(layer)
+  size = function(layer,dir)
     local x,z = 0,0
     for nX,vX in pairs(layer) do
       x = math.max(nX,x)
@@ -23,14 +23,14 @@ layer = { --layer class
         z = math.max(nZ,z)
       end
     end
-    return x,z
+    return dir == "x" and x or dir == "z" and z or x,z
   end,
   copy = function(layer,x1,z1,x2,z2,clipboard)
   --returns a layer copy, optional coordinates
     local copy = layer.new()
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
+      x.min,x.max = 1,layer:size("x")
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -86,7 +86,7 @@ layer = { --layer class
     --marks the layer as built, optionally just one area
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
+      x.min,x.max = 1,layer:size("x")
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -110,7 +110,7 @@ layer = { --layer class
     --marks the layer as unbuilt, optionally just one area
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
+      x.min,x.max = 1,layer:size("x")
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -134,8 +134,8 @@ layer = { --layer class
   --flips layer on the x-axis, optionally just one area
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
-      x.size = #layer+1
+      x.min,x.max = 1,layer:size("x")
+      x.size = x.max+1
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -164,7 +164,7 @@ layer = { --layer class
   --flips layer on the Z-axis, optionally just one area
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
+      x.min,x.max = 1,layer:size("x")
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -197,7 +197,7 @@ layer = { --layer class
   --changes all colored blocks to the specified color, optionally within an area
     local x,z = {},{}
     if not (x1 and x2) then
-      x.min,x.max = 1,#layer
+      x.min,x.max = 1,layer:size("x")
     else
       x.max = math.max(x1,x2)
       x.min = math.min(x1,x2)
@@ -228,7 +228,7 @@ layer = { --layer class
   render = function(layer)
   --renders the layer on the canvas
     local view = tTerm.viewable
-	local mX = view.mX
+  	local mX = view.mX
     local mZ = view.mZ
     screen:setLayer(screen.layers.canvas)
     local scrX = tTerm.scroll.x

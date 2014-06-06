@@ -729,6 +729,22 @@ menu = {
     end
   },
   [12] = {
+    name = "Recolor",
+    enabled = true,
+    help = function()
+      window.text"Changes the color of the entire selected layer"
+    end,
+    func = function()
+      local curLayer = tTerm.scroll.layer
+      local color = dialogue.selectColor("Recolor the current layer("..curLayer..") to")
+      if color ~= "Cancel" then
+        tBlueprint[curLayer]:recolor(colorKey[color])
+        scroll()
+        sync({layer = curLayer},"Mark built")
+      end
+    end
+  },
+  [13] = {
     name = "Mark built",
     enabled = true,
     help = function()
@@ -745,14 +761,14 @@ menu = {
       )
       if button == "Ok" then
         tBlueprint[curLayer]:markBuilt()
+        if tMode.builtRender then
+          scroll()
+        end
+        sync({layer = curLayer},"Mark built")
       end
-      if tMode.builtRender then
-        scroll()
-      end
-      sync({layer = curLayer},"Mark built")
     end
   },
-  [13] = {
+  [14] = {
     name = "Mark unbuilt",
     enabled = true,
     help = function()
@@ -769,14 +785,14 @@ menu = {
       )
       if button == "Ok" then
         tBlueprint[curLayer]:markUnbuilt()
+        if tMode.builtRender then
+          scroll()
+        end
+        sync({layer = curLayer},"Mark unbuilt")
       end
-      if tMode.builtRender then
-        scroll()
-      end
-      sync({layer = curLayer},"Mark unbuilt")
     end
   },
-  [14] = {
+  [15] = {
     name = "Goto...",
     enabled = true,
     help = function()

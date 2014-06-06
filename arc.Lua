@@ -324,6 +324,7 @@ debug = {
   tExecutionTime = {
     program = os.clock()
   },
+  tEventQueue = {},
   prep = function()
     term.setBackgroundColor(colors.black)
     term.clear()
@@ -345,7 +346,7 @@ debug = {
       or tEvent[1] == "mouse_scroll" then
         --ignore user input
       else
-        tEventQueue[#tEventQueue+1] = tEvent
+        debug.tEventQueue[#debug.tEventQueue+1] = tEvent
       end
     end
   end,
@@ -381,9 +382,10 @@ debug = {
     if screen then
       screen:redraw()
     end
-    for i=1,#tEventQueue do
-      os.queueEvent(unpack(tEventQueue[i]))
+    for _i,event in ipairs(debug.tEventQueue) do
+      os.queueEvent(unpack(event))
     end
+    debug.tEventQueue = {}
     return
   end,
   timedStart = function(key)
@@ -1041,7 +1043,7 @@ function writePoint(x,z) --renders the specified blueprint point at wherever the
   local color = tBlueprint[tTerm.scroll.layer][x][z]
   if color == "X" then
     marker = "X"
-    tColor = color
+    tColor = colorKey.X
     bColor = colors.white
   elseif tMode.backgroundLayer and color == " " and (tMode.backgroundLayer[x][z] ~= " " and tMode.backgroundLayer[x][z] ~= "X") then
     marker = tMode.grid and "+" or " "
@@ -1765,7 +1767,7 @@ dialogue = {
   end,
   selectColor = function(text)
     local event,selected = window.scroll(text,colorSelect)
-    return event ~= "Cancel" and selected or event
+    return event ~= "Cancel" and selected:lower() or event
   end,
   save = function(text)
     local fileName = tFile.blueprint

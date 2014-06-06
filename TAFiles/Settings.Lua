@@ -164,8 +164,7 @@ colorKey = setmetatable(
     l = 2 ^ 12, --brown
     m = 2 ^ 13, --green
     n = 2 ^ 14, --red
-    o = 2 ^ 15,  --black
-    X = colors.red --break block marker
+    o = 2 ^ 15  --black
   },
   {
     __index = function(t,k)
@@ -190,12 +189,12 @@ for kK,vK in pairs(colorKey) do -- add color names to colorKey table
     end
   end
 end
-keyColor.X = "Break"
-
 for k,v in pairs(colorLoop) do
   colorKey[k] = v
 end
 colorLoop = nil
+keyColor.X = "Break"
+colorKey.X = colors.red --break block marker
 
 tTool = { --Default equipped tools and colors
   [1] = { --left mouse button

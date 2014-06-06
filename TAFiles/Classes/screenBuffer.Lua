@@ -33,15 +33,15 @@ screenBuffer = {
   setBackgroundColor = function(buffer,color)
     buffer.bColor = (
       type(color) == "number" and color 
-      or colors[color] and colors[color]
-      or colorKey[color] and colorKey[color]
+      or colorKey[color]
+      or colors[color]
     )
   end,
   setTextColor = function(buffer,color)
     buffer.tColor = (
       type(color) == "number" and color 
-      or colors[color] and colors[color]
-      or colorKey[color] and colorKey[color]
+      or colorKey[color]
+      or colors[color]
     )
   end,
   setMarker = function(buffer,marker)
@@ -119,6 +119,10 @@ screenBuffer = {
     x = x or buffer.x
     y = y or buffer.y
     mColor = mColor or color
+    if type(mColor) ~= "number" then
+      debug(mColor)
+      error("lol",2)
+    end
     local p = buffer[buffer.layer][x][y]
     if not p
     or p.bColor ~= color
