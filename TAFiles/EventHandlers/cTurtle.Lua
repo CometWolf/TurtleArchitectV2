@@ -1,20 +1,18 @@
 local handler
+local tSlots = {}
+for i=1,16 do
+  tSlots[i] = "Slot "..i
+end
 handler = { --cTurtle only events
   refuel = function()
     if tMode.sync.amount > 0 then
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Fuel required",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})
     end
     tTimers.restockRetry.start()
-    local button,tRes,reInput = window.text(
-      "Fuel required, please input slot to refuel from and press Ok",
-      nil,
-      {
-        {
-          name = "Slot",
-          value = 1,
-          accepted = "%d"
-        }
-      },
+    local button,slot = window.scroll(
+      "Fuel required, please select slot to refuel from and press Ok",
+      tSlots,
+      false,
       {
         timer = function(tEvent)
           if tTimers.restockRetry.ids[tEvent[2]] then
@@ -36,25 +34,15 @@ handler = { --cTurtle only events
       true
     )
     while button ~= "timeout" do
-      local slot = tRes.Slot
-      if not slot then
-        tTimers.restockRetry.start()
-        button,tRes,reInput = reInput("Missing refuel slot number!")
-      elseif slot > 16
-      or slot < 1 then
-        tTimers.restockRetry.start()
-        button,tRes,reInput = reInput("Invalid slot number "..slot.."!")
-      else
-        turtle.select(slot)
-        turtle.refuel(64)
-        return
-      end
+      turtle.select(tonumber(slot:match"%d+"))
+      turtle.refuel(64)
+      return true
     end
   end,
   blocked = 0, --amount of times the turtle has been blocked
   moveFail = function() --movement blocked
     handler.blocked = handler.blocked+1
-    if handler.blocked > 20
+    if handler.blocked > 10
     and tMode.sync.amount > 0 then
       handler.blocked = 0
       rednet.send(tMode.sync.ids,"Turtle status",{type = "Blocked",x = cTurtle.tPos.x,y = cTurtle.tPos.y,z = cTurtle.tPos.z})

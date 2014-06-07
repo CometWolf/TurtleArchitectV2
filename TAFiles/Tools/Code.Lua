@@ -14,7 +14,9 @@ codeEnv.settings = { --changing these here has no effect, they're simply used to
 }
 
 codeEnv.overlay = function(overlay,x,z)
-  if not (overlay and x and z)
+  x = x or 1
+  z = z or 1
+  if not overlay
   or type(x) ~= "number"
   or type(z) ~= "number" 
   or type(overlay) ~= "table" 
