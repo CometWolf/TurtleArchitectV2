@@ -1,5 +1,5 @@
 local minification = true
-local folder = tFile.folder:match"(.+)/?/.+$"
+local folder = tFile.folder:match"(.)/TAFiles" or ""
 local tGitSha
 local file = fs.open(tFile.folder.."/".."gitSha","r")
 if file then

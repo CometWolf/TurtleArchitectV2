@@ -726,7 +726,7 @@ function renderBottomBar() --renders bottom bar and updates info
   screen:setBackgroundColor(bgColor)
   local cursX,cursY = screen:getCursorPos()
   local coordString = "X:"..tTerm.scroll.x.." Y:"..tTerm.scroll.layer.." Z:"..tTerm.scroll.z
-  local screenX = tTerm.screen.y > 8+#tMenu.main.enabled() and tTerm.screen.x-2 or tTerm.screen.x-3
+  local screenX = tTerm.screen.y > 8+tMenu.main.enabled() and tTerm.screen.x-2 or tTerm.screen.x-3
   screen:write(string.rep(" ",math.max(screenX-#coordString-cursX+1,0))..coordString)
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function(button)

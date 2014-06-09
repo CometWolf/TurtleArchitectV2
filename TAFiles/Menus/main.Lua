@@ -35,7 +35,7 @@ end
 main.enabled = function()
   local enabled = 0
   for i,menu in ipairs(main) do
-    if type(menu.enabled) = function and menu.enabled() or menu.enabled == true then
+    if type(menu.enabled) == "function" and menu.enabled() or menu.enabled == true then
       enabled = enabled+1
     end
   end
