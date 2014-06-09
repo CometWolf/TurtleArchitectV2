@@ -151,7 +151,7 @@ if button == "Done" then
             local saveFile = fs.open(fileName,"w")
             local webFile = tEvent[3]
             if fileName:match"TAFiles/Settings.Lua" then --settings file can't be minified
-              saveFile.write(webFile.readAll()
+              saveFile.write(webFile.readAll())
             else
               local line = webFile.readLine()
               while line do
