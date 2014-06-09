@@ -32,4 +32,14 @@ for iMain = 1,#main do
   main[iMain].string = string.rep(" ",math.floor(longest+1-(#name/2)))..name..string.rep(" ",math.ceil(longest+1-(#name/2)))
 end
 
+main.enabled = function()
+  local enabled = 0
+  for i,menu in ipairs(main) do
+    if type(menu.enabled) = function and menu.enabled() or menu.enabled == true then
+      enabled = enabled+1
+    end
+  end
+  return enabled
+end
+
 return main

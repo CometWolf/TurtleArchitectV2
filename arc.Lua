@@ -726,7 +726,7 @@ function renderBottomBar() --renders bottom bar and updates info
   screen:setBackgroundColor(bgColor)
   local cursX,cursY = screen:getCursorPos()
   local coordString = "X:"..tTerm.scroll.x.." Y:"..tTerm.scroll.layer.." Z:"..tTerm.scroll.z
-  local screenX = tTerm.screen.y > 8+#tMenu.main and tTerm.screen.x-2 or tTerm.screen.x-3
+  local screenX = tTerm.screen.y > 8+#tMenu.main.enabled() and tTerm.screen.x-2 or tTerm.screen.x-3
   screen:write(string.rep(" ",math.max(screenX-#coordString-cursX+1,0))..coordString)
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function(button)
@@ -1047,7 +1047,7 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
   if posY > 0 then
     screen:drawLine(tTerm.screen.x,1,tTerm.screen.x,posY,tColors.sideBar)
     screen:drawLine(tTerm.screen.x-1,1,tTerm.screen.x-1,posY,tColors.sideBar)
-    if posY > 2 then
+    if posY >= 2 then
       screen:setCursorPos(tTerm.screen.x-1,1)
       screen:write"/\\"
       tBar.touchMap[tTerm.screen.x][1] = function(button)
