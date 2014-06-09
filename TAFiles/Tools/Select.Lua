@@ -40,7 +40,7 @@ tool = {
       renderToolOverlay()
       tTimers.blink.id = os.startTimer(tTimers.blink.time)
     else --right click
-      tMenu.rightClick.render(x,z)
+      tMenu.rightClick.render("select",x,z)
     end
   end
 }

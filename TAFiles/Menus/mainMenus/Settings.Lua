@@ -361,54 +361,6 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
         end
       )
     end
-      --[[local button, tRes, reInput= window.text(
-        [=[Sync mode syncs the blueprint in real-time across multiple computers.
-Synced: ]=]..(tMode.sync.amount > 0 and synced or "None"),
-        {
-          "Cancel",
-          (tMode.sync.amount > 0 and "Resync" or "Sync"),
-          (tMode.sync.amount > 0 and "Desync" or nil)
-        },
-        {
-          {
-            name = "Sync IDs",
-            value = os.id,
-            accepted = "[%d,]",
-          },
-        },
-        false,
-        true
-      )
-      while button ~= "Cancel" do
-        if button == "Sync"
-        or button == "Resync"
-        or button == "Ok" then
-          tMode.sync = {
-            ids = {},
-            amount = 0,
-            turtles = 0
-          }
-          if not tRes["Sync IDs"] then
-            button,tRes,reInput = reInput"Missing sync partner ID"
-          else
-            local syncIds = {}
-            local faultyIds = true
-            for id in string.gmatch(string.format(tRes["Sync IDs"]),"%d+") do
-              syncIds[tonumber(id)] = true
-              faultyIds = false
-            end
-            if faultyIds then
-              button,tRes,reInput = reInput"Faulty IDs!"
-            else
-        elseif button == "Desync" then
-          rednet.send(tMode.sync.ids,"Sync OFF")
-          tMode.sync.turtles = 0
-          tMode.sync.amount = 0
-          tMode.sync.ids = {}
-          renderSideBar()
-          return
-        end
-      end]]--
   },
   [8] = {
     name = "About",

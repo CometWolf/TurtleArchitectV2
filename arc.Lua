@@ -451,23 +451,23 @@ tTerm = { --screen size and canvas area
   viewable = {} --currently visible canvas area
 }
 tTerm.screen.x,tTerm.screen.y = term.getSize()
-tTerm.screen.xMid = math.floor(tTerm.screen.x/2)
-tTerm.screen.yMid = math.floor(tTerm.screen.y/2)
-tTerm.canvas.sX = 1
-tTerm.canvas.eX = tTerm.screen.x-2
-tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
-tTerm.canvas.sZ = 1
-tTerm.canvas.eZ = tTerm.screen.y-1
-tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
-tTerm.viewable.sX = 1
-tTerm.viewable.eX = tTerm.canvas.eX
-tTerm.viewable.sZ = 1
-tTerm.viewable.eZ = tTerm.canvas.eZ
-tTerm.viewable.mX = 0
-tTerm.viewable.mZ = 0
-tTerm.scroll.x = 0
-tTerm.scroll.z = 0
-tTerm.scroll.layer = 1
+tTerm.screen.xMid = math.floor(tTerm.screen.x/2) --middle of the screen sideways
+tTerm.screen.yMid = math.floor(tTerm.screen.y/2) --middle of the screen up and down
+tTerm.canvas.sX = 1 --canvas left side
+tTerm.canvas.eX = tTerm.screen.x-2 --canvas edge
+tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1 --canvas total length
+tTerm.canvas.sZ = 1 --canvas top side
+tTerm.canvas.eZ = tTerm.screen.y-1 --canvas bottom
+tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1 --canvas total height
+tTerm.viewable.sX = 1 --left side of the blueprint in view
+tTerm.viewable.eX = tTerm.canvas.eX --edge of the blueprint in view
+tTerm.viewable.sZ = 1 --top side of the blueprint in view
+tTerm.viewable.eZ = tTerm.canvas.eZ --bottom of the blueprint in view
+tTerm.viewable.mX = 0 --view modifier sideways
+tTerm.viewable.mZ = 0 --view modifier up or down
+tTerm.scroll.x = 0 --canvas scroll sideways
+tTerm.scroll.z = 0 --canvas scroll up or down
+tTerm.scroll.layer = 1 --currently in view layer
 tTerm.color = term.isColor()
 
 tOngoing = { --stores ongoing build info
@@ -476,20 +476,35 @@ tOngoing = { --stores ongoing build info
 }
 
 screen = class.screenBuffer.new() --screen buffer, supports layers and uses custom methods, no silly redirect here.
-screen.layers = {
+screen.layers = { --screen layers
   canvas = 1,
   toolsOverlay = 2,
   bottomBar = 3,
   sideBar = 3,
   gridBorder = 3,
+  layerBar = 3,
   menus = 4,
   dialogue = 5
 }
 
 tBar = { --menu bar variables
   menu = {
-    open = false,
     touchMap = class.matrix.new(2) --used for open menus
+  },
+  layerBar = {
+    --open = tMode.layerBar, change this in the settings menu. false by default
+    sX = tTerm.canvas.eX,
+    eX = tTerm.canvas.eX,
+    sZ = 1,
+    eZ = tTerm.canvas.eZ,
+    sL = 1,
+    eL = tTerm.canvas.eZ,
+    tSelected = {
+      [1] = true
+    },
+    selectedAmt = 1,
+    prevSelected = 1,
+    clipboard = false,
   },
   touchMap = class.matrix.new(2) --used for clicks on the side and bottom bar
 }
@@ -757,22 +772,20 @@ function renderBottomBar() --renders bottom bar and updates info
   end
 end
 
-function renderMenu(menu) --renders the given menu and creates touchmap for said menu
+function renderMenu(menu) --renders the given menu and activates the touch map for said menu
   tMenu.touchMap = class.matrix.new(2)
   screen:clearLayer(screen.layers.menus)
   if not menu 
-  or not tMenu.main[menu] and menu ~= "rightClick" 
-  or (not tMenu.main[menu].enabled or type(tMenu.main[menu].enabled) == "function" and not tMenu.main[menu].enabled()) then
+  or not tMenu.main[menu] and not tMenu.rightClick[menu]
+  or tMenu.main[menu] and (not tMenu.main[menu].enabled or type(tMenu.main[menu].enabled) == "function" and not tMenu.main[menu].enabled()) then
     tMenu.open = false
     return
-  elseif tMenu.open then
-    tMenu.open = false
+  elseif tMenu.rightClick[menu] then
+    tMenu.open = menu
+    tMenu.rightClick.render(menu)
+    return
   end
   tMenu.open = menu
-  if menu == "rightClick" then
-    tMenu.rightClick.render()
-    return
-  end
   menu = tMenu.main[menu]
   screen:setLayer(screen.layers.menus)
   screen:setBackgroundColor(tColors.menuTop)
@@ -821,14 +834,157 @@ function renderMenu(menu) --renders the given menu and creates touchmap for said
           menu.items[iMenu].func(button)
         end
       end
-      for iX = sX,sX+menu.lX do
+      for iX = sX,sX+menu.lX-1 do
         tMenu.touchMap[iX][sY] = enabled and menuFunc or helpFunc --true prevents the touchmap func from closing the menu
       end
     end
   end
 end
 
-function renderSideBar() --renders sidebar and creates touchmap for sidebar buttons
+local layerBarClick = function(button,x,z) --touch map layer bar function
+  local layerBar = tBar.layerBar
+  if tTool[button].tool == "Help" then
+    window.text"This is the layer bar.\nLeft click any layer here to instantly scroll to it.\nOr use the ctrl and shift keys to select multiple layers, which may then be manipulated by right clickling.\nYou can also scroll the menu up and down using a mouse wheel."
+    return
+  elseif tMenu.open then
+    renderMenu()
+    return
+  end
+  local layer = layerBar.eZ-z+layerBar.sL
+  if button == 1 and tBlueprint[layer] then
+    if tTimers.shift.pressed then
+      if layerBar.prevSelected > 0 then
+        layerBar.tSelected = {}
+        local bottomSel = math.min(layerBar.prevSelected,layer)
+        local topSel = math.max(layerBar.prevSelected,layer)
+        for i = bottomSel,topSel do
+          layerBar.tSelected[i] = true
+        end
+        layerBar.selectedAmt = topSel-bottomSel+1
+        renderLayerBar()
+      end
+    elseif tTimers.ctrl.pressed then
+      if layerBar.tSelected[layer] then
+        layerBar.tSelected[layer] = nil
+        layerBar.selectedAmt = layerBar.selectedAmt-1
+        layerBar.prevSelected = layerBar.selectedAmt == 0 and 0 or layer
+      else
+        layerBar.tSelected[layer] = true
+        layerBar.selectedAmt = layerBar.selectedAmt+1
+        layerBar.prevSelected = layer
+      end
+      renderLayerBar()
+    else
+      layerBar.tSelected = {
+        [layer] = true
+      }
+      scroll(layer,nil,nil,nil,true)
+      layerBar.selectedAmt = 1
+      layerBar.prevSelected = layer
+      renderLayerBar()
+    end
+  elseif button == 2 then --right click
+    if tMenu.open then
+      renderMenu()
+    else
+      tMenu.rightClick.render("layerBar",x,z)
+    end
+  end
+end
+
+function renderLayerBar(fullRefresh) --updates the layer sidebar, optionally redrawing it entirely
+  if not tMode.layerBar then
+    return
+  end
+  local layerBar = tBar.layerBar
+  screen:setTextColor(tColors.layerBarText)
+  local tSelected = layerBar.tSelected
+  screen:setLayer(screen.layers.layerBar)
+  tBar.touchMap[layerBar.eX-1][layerBar.eZ] = nil
+  tBar.touchMap[layerBar.eX-2][layerBar.eZ] = nil
+  screen:delPoint(layerBar.eX-1,layerBar.eZ)
+  screen:delPoint(layerBar.eX-2,layerBar.eZ)
+  local indicatorLength = #string.format(layerBar.sL)
+  for iX = 2,indicatorLength do
+    tBar.touchMap[layerBar.eX-iX+1][layerBar.eZ] = layerBarClick
+  end
+  if fullRefresh then
+    screen:drawLine(layerBar.sX,layerBar.sZ,layerBar.eX,layerBar.eZ,tColors.layerBar)
+  end
+  screen:setCursorPos(layerBar.eX-indicatorLength+1,layerBar.eZ)
+  screen:setBackgroundColor(
+    layerBar.sL == tTerm.scroll.layer and (tSelected[layerBar.sL] and tColors.layerBarViewSelected or tColors.layerBarViewUnselected) 
+    or tSelected[layerBar.sL] and tColors.layerBarSelected 
+    or tColors.layerBarUnselected
+  )
+  screen:write(layerBar.sL)
+  local curs = 1
+  for layer = layerBar.sL+1,layerBar.eL do
+    if tBlueprint[layer] then
+      screen:setBackgroundColor(
+        layer == tTerm.scroll.layer and (tSelected[layer] and tColors.layerBarViewSelected or tColors.layerBarViewUnselected) 
+        or tSelected[layer] and tColors.layerBarSelected 
+        or tColors.layerBarUnselected
+      )
+      screen:setCursorPos(layerBar.sX,layerBar.eZ-curs)
+      screen:write(string.match(layer,".$"))
+      curs = curs+1
+    else
+      break
+    end
+  end
+end
+
+function openLayerBar() --renders the layer sidebar and adds it to the touch map
+  tMode.layerBar = true
+  local layerBar = tBar.layerBar
+  local x = tBar.layerBar.eX
+  for y = tBar.layerBar.sL,tBar.layerBar.eL do
+    tBar.touchMap[x][y] = layerBarClick
+  end
+  renderLayerBar(true)
+  local canvas = tTerm.canvas
+  canvas.eX = canvas.eX-1
+  canvas.tX = canvas.eX-canvas.sX
+  local view = tTerm.viewable
+  view.eX = view.sX+canvas.tX
+  renderSideBar()
+  scroll()
+end
+
+function closeLayerBar() --closes the layer sidebar and removes it from the touch map
+  tMode.layerBar = false
+  local canvas = tTerm.canvas
+  canvas.eX = canvas.eX+1
+  canvas.tX = canvas.eX-canvas.sX
+  local view = tTerm.viewable
+  view.eX = view.sX+canvas.tX
+  local iX = tBar.layerBar.eX
+  screen:delPoint(iX-1,tBar.layerBar.eZ,screen.layers.layerBar)
+  screen:delPoint(iX-2,tBar.layerBar.eZ,screen.layers.layerBar)
+  tBar.touchMap[iX-1][tBar.layerBar.eZ] = nil
+  tBar.touchMap[iX-2][tBar.layerBar.eZ] = nil
+  for iZ=tBar.layerBar.sZ,tBar.layerBar.eZ do
+    tBar.touchMap[iX][iZ] = nil
+    screen:delPoint(iX,iZ,screen.layers.layerBar)
+  end
+  if tMode.grid then
+    screen:setLayer(screen.layers.gridBorder)
+    screen:setCursorPos(tBar.layerBar.sX,tBar.layerBar.sZ)
+    screen:setBackgroundColor(tColors.gridBorder)
+    screen:setTextColor(tColors.gridBorderText)
+    local gridChar = string.format(tBar.layerBar.sZ-1)
+    screen:write(gridChar:sub(#gridChar-1))
+  end
+  renderSideBar()
+  scroll()
+end
+
+function renderSideBar() --renders sidebar and fills the touch map with sidebar buttons
+  for iY=1,tTerm.screen.y do
+    tBar.touchMap[tTerm.screen.x][iY] = nil
+    tBar.touchMap[tTerm.screen.x-1][iY] = nil
+  end
   screen:setLayer(screen.layers.sideBar)
   local posX,posY = tTerm.screen.x,(tTerm.screen.y > 8+#tMenu.main and tTerm.screen.y-1) or tTerm.screen.y
   for k,v in pairs(colorKey) do
@@ -949,7 +1105,6 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
     --re-renders current view if no args are given
     tTerm.scroll.layer = math.min(#tBlueprint,math.max(tTerm.scroll.layer,1))
     tBlueprint[tTerm.scroll.layer]:render()
-    renderToolOverlay()
     return
   end
   local oldX,oldZ = tTerm.scroll.x,tTerm.scroll.z
@@ -964,14 +1119,21 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
     tTerm.scroll.z = math.max(tTerm.scroll.z+z,0)
   end
   if oldX ~= tTerm.scroll.x or oldZ ~= tTerm.scroll.z or layer ~= tTerm.scroll.layer or forceRefresh then
+    if layer ~= tTerm.scroll.layer then
+      tTerm.scroll.layer = math.max(layer,1)
+      tBar.layerBar.tSelected = {
+        [tTerm.scroll.layer] = true
+      }
+      tBar.layerBar.prevSelected = tTerm.scroll.layer
+      tBar.layerBar.selectedAmt = 1
+      renderLayerBar()
+    end
     local view = tTerm.viewable
-    tTerm.scroll.layer = math.max(layer,1)
     view.sX = tTerm.scroll.x+1
     view.eX = view.sX+tTerm.canvas.tX
     view.sZ = tTerm.scroll.z+1
     view.eZ = tTerm.viewable.sZ+tTerm.canvas.tZ
     tBlueprint[tTerm.scroll.layer]:render()
-    renderToolOverlay()
     renderBottomBar()
   end
 end
@@ -2432,7 +2594,8 @@ local execution = function()
   tTimers.blink.toggle = true
   renderBottomBar()
   renderSideBar()
-  tBlueprint[1]:render()
+  renderLayerBar(true)
+  tBlueprint[tTerm.scroll.layer]:render()
   if turtle and tArg[2] == "-r" then
     build(tBlueprint,true)
     tArg[2] = nil
@@ -2459,6 +2622,9 @@ local function Quit()
   term.clear()
   term.setCursorPos(1,1)
   print"Thank you for using Turtle Architect, by CometWolf."
+end
+if tMode.layerBar then
+  openLayerBar()
 end
 while true do
   local tRes = {pcall(execution)}

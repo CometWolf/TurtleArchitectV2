@@ -19,6 +19,9 @@ common = { --common event handlers, these are always active
     elseif timerID == tTimers.ctrl.id then
       tTimers.ctrl.pressed = false
       return true
+    elseif timerID == tTimers.shift.id then
+      tTimers.shift.pressed = false
+      return true
     elseif tTimers.display.ids[timerID] then
       local func = glasses.log.timers[timerID]
       if func then
@@ -91,6 +94,32 @@ common = { --common event handlers, these are always active
       glasses.bridge = nil
       return true
     end
+  end,
+  term_resize = function()
+    tTerm.screen.x,tTerm.screen.y = term.getSize()
+    tTerm.screen.xMid = math.floor(tTerm.screen.x/2) --middle of the screen sideways
+    tTerm.screen.yMid = math.floor(tTerm.screen.y/2) --middle of the screen up and down
+    tTerm.canvas.sX = 1 --canvas left side
+    tTerm.canvas.eX = tTerm.screen.x-2 --canvas edge
+    tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1 --canvas total length
+    tTerm.canvas.sZ = 1 --canvas top side
+    tTerm.canvas.eZ = tTerm.screen.y-1 --canvas bottom
+    tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1 --canvas total height
+    tTerm.viewable.sX = 1 --left side of the blueprint in view
+    tTerm.viewable.eX = tTerm.canvas.eX --edge of the blueprint in view
+    tTerm.viewable.sZ = 1 --top side of the blueprint in view
+    tTerm.viewable.eZ = tTerm.canvas.eZ --bottom of the blueprint in view
+    tTerm.viewable.mX = 0 --view modifier sideways
+    tTerm.viewable.mZ = 0 --view modifier up or down
+    tTerm.scroll.x = 0 --canvas scroll sideways
+    tTerm.scroll.z = 0 --canvas scroll up or down
+    tTerm.scroll.layer = 1 --currently in view layer
+    while rawget(screen,1) do
+      screen:delLayer(1)
+    end
+    eventHandler.switch(eventHandler.main)
+    renderBottomBar()
+    renderSideBar()
   end,
   chat_command = function(tEvent)
     local command = tEvent[2]:lower()
@@ -320,33 +349,109 @@ common = { --common event handlers, these are always active
           end
           renderArea(data.sX,data.sZ,data.eX,data.eZ,true)
         elseif type == "Recolor" then
-          tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
+          if data.layers then
+            for layer in pairs(data.layers) do
+              tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
+            end
+            if data.layers[tTerm.scroll.layer] then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          else
+            tBlueprint[data.layer]:recolor(data.color,data.sX,data.sZ,data.eX,data.eZ)
+            if tTerm.scroll.layer == data.layer then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          end
         elseif type == "Mark built" then
           if data.blueprint then
             tBlueprint:markBuilt()
-          else
+            if tMode.renderBuilt then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          elseif data.layer then
             tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+            if tMode.renderBuilt and data.layer == tTerm.scroll.layer then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          elseif data.layers then
+            for layer in pairs(data.layers) do
+              tBlueprint[layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+            end
+            if tMode.renderBuilt and data.layers[tTerm.scroll.layer] then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
           end
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Mark unbuilt" then
-          tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
-          renderArea(data.sX,data.sZ,data.eX,data.eZ)
+          if data.blueprint then
+            tBlueprint:markUnbuilt()
+            if tMode.renderBuilt then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          elseif data.layer then
+            tBlueprint[data.layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
+            if tMode.renderBuilt and data.layer == tTerm.scroll.layer then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          elseif data.layers then
+            for layer in pairs(data.layers) do
+              tBlueprint[layer]:markUnbuilt(data.sX,data.sZ,data.eX,data.eZ)
+            end
+            if tMode.renderBuilt and data.layers[tTerm.scroll.layer] then
+              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+            end
+          end
         elseif type == "Layer add" then
           while #tBlueprint < data.layer do
             tBlueprint[#tBlueprint+1] = class.layer.new()
           end
         elseif type == "Layer delete" then
-          if data.layer then
+          if data.layers then
+            local delLayers = {}
+            for layer in pairs(data.layers) do
+              delLayers[#delLayers+1] = layer
+            end
+            table.sort(
+              delLayers,
+              function(k1,k2)
+                return k1 < k2
+              end
+            )
+            for i,layer in ipairs(delLayers) do
+              if layer == 1 and #tBlueprint == 1 then
+                tBlueprint[1] = tBlueprint[1].new()
+              else
+                table.remove(tBlueprint,i)
+              end
+            end
+            scroll()
+            return
+          elseif data.layer then
             data.from = data.layer
             data.to = data.layer
           end
-          for i=data.from,data.to do
-            if i == 1 and #tBlueprint == 1 then
+          for layer=data.to,data.from,-1 do
+            if layer == 1 and #tBlueprint == 1 then
               tBlueprint[1] = tBlueprint[1].new()
             else
-              table.remove(tBlueprint,i)
+              table.remove(tBlueprint,layer)
             end
+          end
+          scroll()
+        elseif type == "Layer clear" then
+          if data.layers then
+            for layer in pairs(data.layers) do
+              tBlueprint[layer] = class.layer.new()
+            end
+            if data.layers[tTerm.scroll.layer] then
+              scroll()
+            end
+            return
+          elseif data.layer then
+            data.from = data.layer
+            data.to = data.layer
+          end
+          for layer=data.from,data.to do
+            tBlueprint[layer] = class.layer.new()
           end
           scroll()
         elseif type == "Flip" then

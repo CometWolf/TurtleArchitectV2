@@ -1,6 +1,8 @@
 local menu
 menu = {
-  enabled = true,
+  enabled = function()
+    return not tMode.layerBar
+  end,
   [1] = {
     name = "Create new...",
     enabled = true,
@@ -278,6 +280,7 @@ menu = {
           end
           tTerm.scroll.layer = math.min(tTerm.scroll.layer,#tBlueprint)
           scroll()
+          sync({from = tRes.From,to = tRes.To},"Layer delete")
           return
         end
       end
@@ -720,11 +723,11 @@ menu = {
       if button == "Horizontal" then
         tBlueprint[curLayer] = tBlueprint[curLayer]:flipX()
         scroll()
-        sync({dir = "X"},"Flip")
+        sync({layer = curLayer,dir = "X"},"Flip")
       elseif button == "Vertical" then
         tBlueprint[curLayer] = tBlueprint[curLayer]:flipZ()
         scroll()
-        sync({dir = "Z"},"Flip")
+        sync({layer = curLayer,dir = "Z"},"Flip")
       end
     end
   },
@@ -839,5 +842,20 @@ menu = {
       end
     end
   },
+  [16] = {
+    name = "Open layerbar",
+    enabled = true,
+    help = function()
+      window.text"Opens the layer bar and disables the layer menu"
+    end,
+    func = function()
+      openLayerBar()
+      closeLayerBar()
+      local file = class.fileTable.new(tFile.settings)
+      local line = file:find("  layerBar = false,")
+      file:write("  layerBar = true,",line)
+      file:save()
+    end
+  }
 }
 return menu

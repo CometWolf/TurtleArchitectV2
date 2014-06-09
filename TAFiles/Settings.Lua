@@ -34,10 +34,16 @@ tColors = setmetatable(
     rightClickUseable = colors.white, --Useable right click selection menu options
     rightClickUnuseable = colors.lightGray, --Not useable right click selection menu options
     selection = colors.gray, --Color of the selection marker
+    layerBar = colors.black, --Background color of the layer bar
+    layerBarViewSelected = colors.lightBlue, --in view and selected layer item on the layer bar
+    layerBarViewUnselected = colors.lightGray, --in view layer item on layer bar    
+    layerBarSelected = colors.blue, --Selected layer item on the layer bar
+    layerBarUnselected = colors.black, --Unselected layer item on the layer bar
+    layerBarText = colors.white, --layer numbers color on the layer bar
   },
   {
     __index = function(t,k)
-      error("The color "..k.." is not defined!")
+      error("The color "..k.." is not defined!",2)
     end
   }
 )
@@ -119,6 +125,9 @@ tTimers = setmetatable( -- timer settings
     inputTimeout = { --Time to wait for time sensitive dialogue boxes, eg accept blueprint transmission or sync mode
       time = 100
     },
+    shift = { --shift key press timer, for shift shortcuts
+      time = 1
+    },
     ctrl = { --ctrl key press timer, for ctrl shortcuts
       time = 1
     },
@@ -168,8 +177,7 @@ colorKey = setmetatable(
   },
   {
     __index = function(t,k)
-      debug(k)
-      error("Attempt to access non-existant color "..tostring(k),2)
+      error("Attempt to access non-existant color "..(tostring(k) or "nil"),2)
     end
   }
 )
@@ -219,6 +227,7 @@ tMode = { -- default modes
   builtRender = true,
   overwrite = true,
   grid = false,
+  layerBar = true,
   backgroundLayer = false,
   sync = {
     amount = 0,

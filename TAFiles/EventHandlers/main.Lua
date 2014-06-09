@@ -2,13 +2,13 @@ local main
 main = { 
   mouse_click = function(tEvent)
     local button,x,y = tEvent[2],tEvent[3],tEvent[4]
-    if tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
-      tBar.touchMap[x][y](button)
-      return true
-    elseif tMenu.open and tMenu.touchMap[x][y] then
+    if tMenu.open and tMenu.touchMap[x][y] then
       if tMenu.touchMap[x][y] ~= true then --true signifies a disabled menu
-        tMenu.touchMap[x][y](button)
+        tMenu.touchMap[x][y](button,x,y)
       end
+      return true
+    elseif tBar.touchMap[x][y] and tEvent[1] == "mouse_click" then --right menu bar click
+      tBar.touchMap[x][y](button,x,y)
       return true
     elseif y <= tTerm.canvas.eZ
     and y >= tTerm.canvas.sZ 
@@ -49,6 +49,13 @@ main = {
     elseif key == 201 then --page up
       scroll(tTerm.scroll.layer+1)
       return true
+    elseif key == 42
+    or key == 54 then --shift
+      if not tTimers.shift.pressed then
+        tTimers.shift.pressed = true
+        tTimers.shift.start()
+        return true
+      end
     elseif key == 29 then --ctrl
       if not tTimers.ctrl.pressed then
         tTimers.ctrl.pressed = true
@@ -70,7 +77,20 @@ main = {
     end
   end,
   mouse_scroll = function(tEvent)
-    scroll(false,0,tEvent[2])
+    local x,y = tEvent[3],tEvent[4]
+    local layerBar = tBar.layerBar
+    if x == layerBar.sX and tMode.layerBar and  y >= layerBar.sZ and y <= layerBar.eZ then
+      local eLNew = layerBar.eL-tEvent[2]
+      local sLNew = layerBar.sL-tEvent[2]
+      if tBlueprint[eLNew]
+      and tBlueprint[sLNew] then
+        layerBar.eL = eLNew
+        layerBar.sL = sLNew
+        renderLayerBar()
+      end
+    else
+      scroll(false,0,tEvent[2])
+    end
     return true
   end
 }
