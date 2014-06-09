@@ -1,3 +1,4 @@
+local minification = true
 local folder = tFile.folder:match"(.+)/?/.+$"
 local tGitSha
 local file = fs.open(tFile.folder.."/".."gitSha","r")
@@ -148,7 +149,11 @@ if button == "Done" then
           http_success = function(tEvent)
             local saveFile = fs.open(updateFiles[updatingFile].file,"w")
             local webFile = tEvent[3]
-            saveFile.write(webFile.readAll())
+            local line = webFile.readLine()
+            while line do
+              saveFile.write((minification and (line:match"(%S.*)$" or "") or line).."\n")
+              line = webFile.readLine()
+            end
             saveFile.close()
             webFile.close()
             tUpdated[#tUpdated+1] = updateFiles[updatingFile].file
