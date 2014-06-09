@@ -147,12 +147,17 @@ if button == "Done" then
         false,
         {
           http_success = function(tEvent)
-            local saveFile = fs.open(updateFiles[updatingFile].file,"w")
+            local fileName = updateFiles[updatingFile].file
+            local saveFile = fs.open(fileName,"w")
             local webFile = tEvent[3]
-            local line = webFile.readLine()
-            while line do
-              saveFile.write((minification and (line:match"(%S.*)$" or "") or line).."\n")
-              line = webFile.readLine()
+            if fileName:match"TAFiles/Settings.Lua" then --settings file can't be minified
+              saveFile.write(webFile.readAll()
+            else
+              local line = webFile.readLine()
+              while line do
+                saveFile.write((minification and (line:match"(%S.*)$" or "") or line).."\n")
+                line = webFile.readLine()
+              end
             end
             saveFile.close()
             webFile.close()
