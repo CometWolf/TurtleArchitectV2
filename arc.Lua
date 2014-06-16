@@ -994,7 +994,8 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
     tBar.touchMap[tTerm.screen.x-1][iY] = nil
   end
   screen:setLayer(screen.layers.sideBar)
-  local posX,posY = tTerm.screen.x,(tTerm.screen.y > 8+tMenu.main.enabled() and tTerm.screen.y-1) or tTerm.screen.y
+  local sizeReduction = tTerm.screen.y < 9+tMenu.main.enabled()
+  local posX,posY = tTerm.screen.x,sizeReduction and tTerm.screen.y or tTerm.screen.y 
   for k,v in pairs(colorKey) do
     if string.match(k,"^[%l%s]$") then
       screen:setBackgroundColor(v)
@@ -1078,6 +1079,8 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
       end
       tBar.touchMap[tTerm.screen.x-1][2] = tBar.touchMap[tTerm.screen.x][2]
     end
+  end
+  if not sizeReduction then 
     screen:setCursorPos(tTerm.screen.x-1,tTerm.screen.y)
     screen:setBackgroundColor(colors.black)
     screen:setTextColor(colorKey.X)
