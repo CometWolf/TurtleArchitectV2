@@ -1052,10 +1052,10 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
       posY = posY-1
     end
   end
-  if posY > 0 then
+  if posY >= 0 then
     screen:drawLine(tTerm.screen.x,1,tTerm.screen.x,posY,tColors.sideBar)
     screen:drawLine(tTerm.screen.x-1,1,tTerm.screen.x-1,posY,tColors.sideBar)
-    if posY >= 2 then
+    if posY > 2 then
       screen:setCursorPos(tTerm.screen.x-1,1)
       screen:write"/\\"
       tBar.touchMap[tTerm.screen.x][1] = function(button)
