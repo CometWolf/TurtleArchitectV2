@@ -887,6 +887,14 @@ local layerBarClick = function(button,x,z) --touch map layer bar function
     if tMenu.open then
       renderMenu()
     else
+      if tBlueprint[layer] and not layerBar.tSelected[layer] then
+        layerBar.tSelected = {
+          [layer] = true
+        }
+        layerBar.prevSelected = layer
+        layerBar.selectedAmt = layer
+        scroll(layer)
+      end
       tMenu.rightClick.render("layerBar",x,z)
     end
   end

@@ -1,9 +1,10 @@
 local fileTable
 fileTable = { --file table class, this is used to simplify file handling
   new = function(path)
-    local file = {}
-    setmetatable(
-      file,
+    local file = setmetatable(
+      {
+      
+      },
       {
         __index = fileTable
       }
@@ -16,11 +17,13 @@ fileTable = { --file table class, this is used to simplify file handling
   load = function(tTable,filePath)
     --loads the specified file into the table
     local file = fs.open(filePath,"r")
-    for line in file.readLine do
-      tTable[#tTable+1] = line
+    if file then
+      for line in file.readLine do
+        tTable[#tTable+1] = line
+      end
+      file.close()
     end
     tTable.path = filePath
-    file.close()
   end,
   save = function(tTable,filePath)
     --saves the current table to the specified filePath

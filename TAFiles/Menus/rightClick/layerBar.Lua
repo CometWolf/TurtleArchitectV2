@@ -12,7 +12,7 @@ menu = {
     func = function()
       local layer = layerBar.prevSelected+1
       table.insert(tBlueprint,layer,class.layer.new())
-      scroll(layer,nil,nil,nil,true)
+      renderLayerBar()
       sync({layer = layer},"Layer add")
     end
   },
@@ -27,7 +27,8 @@ menu = {
     func = function()
       local layer = layerBar.prevSelected
       table.insert(tBlueprint,layer,class.layer.new())
-      scroll(layer,nil,nil,nil,true)
+      renderLayerBar()
+      scroll(layer+1)
       sync({layer = layer},"Layer add")
     end
   },
@@ -37,7 +38,7 @@ menu = {
       return layerBar.selectedAmt == 1
     end,
     help = function()
-      window.text"Import layers from another blueprint into the layers above this one"
+      window.text"Import layers from another blueprint into the layers above the one currently selected"
     end,
     func = function()
       local button, tRes, reInput = window.text(
@@ -441,6 +442,67 @@ menu = {
     end
   },
   [16] = {
+    name = "Save as paint",
+    enabled = function()
+      return layerBar.selectedAmt == 1
+    end,
+    help = function()
+      window.text"Saves the layer as a paint file"
+    end,
+    func = function()
+      local button,tRes,reInput = window.text(
+        "Input save path",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "Path",
+            value = "/"
+          }
+        },
+        nil,
+        true
+      )
+      while button ~= "Cancel" do
+        if not tRes.Path or not tRes.Path:match"/[^/]+$" then
+          button,tRes,reInput = reInput"Invalid path!"
+        elseif fs.exists(tRes.Path) and button ~= "Overwrite" then
+          local button2 = window.text(
+            tRes.Path.." already exists!\nOverwrite?",
+            {
+              "Cancel",
+              "Overwrite"
+            }
+          )
+          if button2 == "Cancel" then
+            button,tRes,reInput = reInput"Input save path"
+          else 
+            button = button2
+          end
+        else
+          local file = class.fileTable.new(tRes.Path)
+          local layer = tBlueprint[layerBar.prevSelected]
+          for nX = 1,layer:size("x") do
+            local sX = ""
+            for nZ,vZ in pairs(layer[nX]) do
+              vZ = paintColors[vZ:lower()]
+              if #sX < nZ then
+                sX = sX..string.rep(" ",nZ-#sX-1)..vZ
+              else
+                sX = sX:sub(1,nZ-1)..vZ..sX:sub(nZ+1)
+              end
+            end
+            file:write(sX,nX)
+          end
+          file:save()
+          return
+        end
+      end
+    end
+  },
+  [17] = {
     name = "Close layer bar",
     enabled = true,
     help = function()

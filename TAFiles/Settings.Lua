@@ -201,6 +201,28 @@ for k,v in pairs(colorLoop) do
   colorKey[k] = v
 end
 colorLoop = nil
+
+paintColors = { --paint colors,used for conversion
+  j = "a",
+  k = "b",
+  l = "c",
+  m = "d",
+  n = "e",
+  o = "f",
+  X = "e"
+}
+for i=1,9 do
+  paintColors[colorKey[2^i]] = i
+end
+local paintUpper = {}
+for k,v in pairs(paintColors) do
+  paintUpper[k:upper()] = v
+end
+for k,v in pairs(paintUpper) do
+  paintColors[k] = v
+end
+paintUpper = nil
+
 keyColor.X = "Break"
 colorKey.X = colors.red --break block marker
 

@@ -40,7 +40,7 @@ blueprint = { --blueprint class
       local blankX = true
       file:write("L"..nL)
       local fX = class.fileTable.new()
-      for nX=#blueprint[nL],1,-1 do
+      for nX=#blueprint[nL]:size("x"),1,-1 do
         local sX = ""
         for nZ,vZ in pairs(blueprint[nL][nX]) do
           if #sX < nZ then
