@@ -995,7 +995,7 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
   end
   screen:setLayer(screen.layers.sideBar)
   local sizeReduction = tTerm.screen.y < 9+tMenu.main.enabled()
-  local posX,posY = tTerm.screen.x,sizeReduction and tTerm.screen.y or tTerm.screen.y 
+  local posX,posY = tTerm.screen.x,sizeReduction and tTerm.screen.y or tTerm.screen.y-1
   for k,v in pairs(colorKey) do
     if string.match(k,"^[%l%s]$") then
       screen:setBackgroundColor(v)
