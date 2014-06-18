@@ -17,7 +17,8 @@ common = { --common event handlers, these are always active
       tTimers.blink.start()
       return true
     elseif timerID == tTimers.ctrl.id then
-      tTimers.ctrl.pressed = false
+      tTimers.ctrl.lPressed = false
+      tTimers.ctrl.rPressed = false
       return true
     elseif timerID == tTimers.shift.id then
       tTimers.shift.pressed = false

@@ -30,6 +30,8 @@ rightClick.render = function(menu,x,z)
   screen:setLayer(screen.layers.menus)
   x = x or menu.sX
   z = z or menu.sZ
+  menu.eZ = z+menu.lZ
+  menu.eX = x+menu.lX
   tMenu.touchMap = class.matrix.new(2)
   tMenu.open = menu.name
   local eX = x+menu.lX
@@ -44,6 +46,22 @@ rightClick.render = function(menu,x,z)
   end
   menu.sX = x
   menu.sZ = z
+  menu.splits = math.ceil(menu.lX/tTerm.screen.y-1)
+  if menu.splits <= 1 then
+    while menu.sZ < 1 do
+      menu.sZ = menu.sY+1
+      menu.eZ = menu.eY+1
+    end
+    while menu.eZ > tTerm.screen.y do
+      menu.sZ = menu.sY-1
+      menu.eZ = menu.eY-1
+    end
+  else
+    menu.sZ = 1
+    menu.eZ = math.ceil(menu.lY/menu.splits)
+    menu.lZ = menu.lZ
+    menu.sX = menu.sX-(menu.lX*(menu.splits-1))
+  end
   for i,item in ipairs(menu) do
     local z = z+i-1
     screen:setCursorPos(x,z)

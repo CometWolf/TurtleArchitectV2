@@ -1,3 +1,28 @@
+local toolChange = function(t1,t2,primary)
+  local secondary = primary == 1 and 2 or 1
+  if t1 == tTool[primary].tool then
+    if tTool[primary].prevDouble then
+      tTool.change(tTool[primary].prevTool,primary,secondary)
+    elseif tTool[primary].double and tTool[secondary].double then
+      tTool.change(tTool[primary].prevTool,primary)
+      tTool.change(tTool[secondary].prevTool,secondary)
+      tTool[primary].prevDouble = true
+      tTool[secondary].prevDouble = true
+    else
+      tTool.change(tTool[primary].prevTool or tTool[primary].tool,primary,t2 and secondary or nil)
+    end
+  elseif tTool[primary].double then
+    if t2 or tTool[secondary].prevDouble then
+      tTool.change(t1,primary,secondary)
+    else
+      tTool.change(t1,primary)
+      tTool.change(tTool[secondary].prevTool,secondary)
+    end
+  else
+    tTool.change(t1,primary,t2 and secondary or nil)
+  end
+end
+
 local main
 main = { 
   mouse_click = function(tEvent)
@@ -56,22 +81,28 @@ main = {
         tTimers.shift.start()
         return true
       end
-    elseif key == 29 then --ctrl
-      if not tTimers.ctrl.pressed then
-        tTimers.ctrl.pressed = true
+    elseif key == 29 then --left ctrl
+      if not tTimers.ctrl.lPressed then
+        tTimers.ctrl.lPressed = true
         tTimers.ctrl.start()
         return true
       end
-    elseif tTimers.ctrl.pressed then
-      if key == 48 then --B
-        local tool = tTool[1]
-        if tool.tool == "Brush" then
-          tool.tool = tool.prevTool or tool.tool
-        else
-          tool.prevTool = tool.tool
-          tool.tool = "Brush"
-        end
-        renderBottomBar()
+    elseif tTimers.ctrl.lPressed then
+      local tool = tTool.shortcuts[key]
+      if tool then
+        toolChange(tool[1],tool[2],1)
+        return true
+      end
+    elseif key == 157 then --right ctrl
+      if not tTimers.ctrl.rPressed then
+        tTimers.ctrl.rPressed = true
+        tTimers.ctrl.start()
+        return true
+      end
+    elseif tTimers.ctrl.rPressed then
+      local tool = tTool.shortcuts[key]
+      if tool then
+        toolChange(tool[1],tool[2],2)
         return true
       end
     end

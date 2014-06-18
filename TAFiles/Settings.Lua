@@ -239,9 +239,34 @@ tTool = { --Default equipped tools and colors
     tool = "Help",
     color = colorKey.white
   },
+  shortcuts = { --ctrl+key shortcuts, [1] is the tool and [2] is wether it's double handed or not. Use left ctrl for button 1, and right ctrl for button 2.
+    [48] = { --B
+      "Brush"
+    },
+    [33] = { --F
+      "Fill"
+    },
+    [25] = { --P
+      "Pipette"
+    },
+    [31] = { --S
+      "Select",
+      true
+    },
+    [46] = { --C
+      "Code"
+    },
+    [38] = { --L
+      "Line",
+      true
+    },
+    [32] = { --D
+      "Drag"
+    }
+  },
   select = {}, --contains selection tool info
   clipboard = false, --tool clipboard
-  shape = {} --contains circle and square tool info
+  shape = {}, --contains circle and square tool info
 }
 
 tMode = { -- default modes

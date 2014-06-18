@@ -2,15 +2,20 @@ tTool.change = function(tool,b1,b2) --tool change function
   if b1 then
     tTool[b1].prevTool = tTool[b1].tool
     tTool[b1].tool = tool
+    tTool[b1].prevDouble = tTool[b1].double
     if b2 then
       tTool[b2].prevTool = tTool[b2].tool
       tTool[b2].tool = tool
-      tTool.double = true
-    elseif tTool.double then
-      tTool.double = false
+      tTool[b2].prevDouble = tTool[b2].double
+      tTool[b2].double = true
+      tTool[b1].double = true
+    elseif tTool[b1].double then
+      tTool[b1].double = false
       b2 = b1 == 1 and 2 or 1
       tTool[b2].tool = tTool[b2].prevTool
       tTool[b2].prevTool = tTool[b2].tool
+      tTool[b2].double = tTool[b2].prevDouble
+      tTool[b2].prevDouble = true
     end
   end
   if tTool.shape.eX or tTool.clipboard or tTool.select.sX then
