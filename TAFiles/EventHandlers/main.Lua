@@ -74,6 +74,8 @@ main = {
     elseif key == 201 then --page up
       scroll(tTerm.scroll.layer+1)
       return true
+    elseif key == 87 -- F11
+      toggleMenus()
     elseif key == 42
     or key == 54 then --shift
       if not tTimers.shift.pressed then

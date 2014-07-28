@@ -118,56 +118,11 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
         }
       )
       if button == "Grid ON" then
+        renderGrid()
         tMode.grid = true
-        local canvas = tTerm.canvas
-        screen:setLayer(screen.layers.gridBorder)
-        screen:setCursorPos(1,1)
-        screen:setBackgroundColor(tColors.gridBorder)
-        screen:setTextColor(tColors.gridBorderText)
-        screen:write" "
-        local nextChar = 1
-        for i=2,canvas.eX do
-          screen:write(string.format(nextChar))
-          nextChar = nextChar+1
-          nextChar = (nextChar < 10 and nextChar or 0)
-        end
-        screen:setCursorPos(1,2)
-        nextChar = 1
-        for i=2,canvas.eZ do
-          screen:setCursorPos(1,i)
-          screen:write(string.format(nextChar))
-          nextChar = nextChar+1
-          nextChar = (nextChar < 10 and nextChar or 0)
-        end
-        canvas.sX = canvas.sX+1
-        canvas.tX = canvas.eX-canvas.sX
-        canvas.sZ = canvas.sZ+1
-        canvas.tZ = canvas.eZ-canvas.sZ
-        local view = tTerm.viewable
-        view.mX = view.mX+1
-        view.mZ = view.mZ+1
-        view.eX = view.sX+tTerm.canvas.tX
-        view.eZ = view.sZ+tTerm.canvas.tZ
-        scroll()
       elseif button == "Grid OFF" then
+        removeGrid()
         tMode.grid = false
-        local canvas = tTerm.canvas
-        canvas.sX = canvas.sX-1
-        canvas.tX = canvas.eX-canvas.sX
-        canvas.sZ = canvas.sZ-1
-        canvas.tZ = canvas.eZ-canvas.sZ
-        local view = tTerm.viewable
-        view.mX = view.mX-1
-        view.mZ = view.mZ-1
-        view.eX = view.sX+tTerm.canvas.tX
-        view.eZ = view.sZ+tTerm.canvas.tZ
-        for i=1,canvas.eX do
-          screen:delPoint(i,1,screen.layers.gridBorder)
-        end
-        for i=1,canvas.eZ do
-          screen:delPoint(1,i,screen.layers.gridBorder)
-        end
-        scroll()
       end
     end
   },
@@ -234,6 +189,16 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
     end
   },
   [7] = {
+    name = "Hide menus",
+    enabled = true,
+    help = function()
+      window.text"Hides all menus, leaving only the canvas. Press F11 to re-enable menus."
+    end,
+    func = function()
+      toggleMenus()
+    end
+  },
+  [8] = {
     name = "Sync mode",
     enabled = function()
       return modem and true or false
@@ -362,7 +327,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
       )
     end
   },
-  [8] = {
+  [9] = {
     name = "About",
     enabled = true,
     help = function()
@@ -376,7 +341,7 @@ Developed by CometWolf.
       )
     end
   },
-  [9] = {
+  [10] = {
     name = "Quit",
     enabled = true,
     func = function()

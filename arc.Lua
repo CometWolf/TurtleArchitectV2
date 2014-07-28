@@ -700,6 +700,100 @@ end
 --[[----------------------------------------------------------------------------------------------------------
 Rendering functions
 ----------------------------------------------------------------------------------------------------------]]--
+function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
+  local cX,cZ = 1,1 --cavnas size change
+  if tMode.hideMenus or FORCE then --reveal
+    renderSideBar()
+    renderBottomBar()
+    if tMode.layerBar then
+      openLayerBar()
+      cX = 2
+    end
+    if tMode.grid then
+      renderGrid()
+    end
+    screen:clearLayer(screen.layers.bottomBar or screen.layers.sideBar or screen.layers.layerBar) --they all use the same layer
+    local change = tMode.layer
+    tTerm.canvas.eX = tTerm.canvas.eX-cX
+    tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
+    tTerm.canvas.eZ = tTerm.canvas.eZ-cZ
+    tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
+    tTerm.viewable.eX = tTerm.viewable.eX-cX
+    tTerm.viewable.eZ = tTerm.viewable.eZ-cZ
+    tMode.hideMenus = false
+  else --hide
+    if tMode.layerBar then
+      closeLayerBar()
+      cX = 2
+    end
+    screen:clearLayer(screen.layers.bottomBar or screen.layers.sideBar or screen.layers.layerBar) --they all use the same layer
+    if tMode.grid then --the grid border is on the same layer as the menus, and must be re-rendered
+      removeGrid()
+    end
+    tBar.touchMap = class.matrix.new(2)
+    tTerm.canvas.eX = tTerm.canvas.eX+cX
+    tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
+    tTerm.canvas.eZ = tTerm.canvas.eZ+cZ
+    tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
+    tTerm.viewable.eX = tTerm.viewable.eX+cX
+    tTerm.viewable.eZ = tTerm.viewable.eZ+cZ
+    tMode.hideMenus = true
+  end
+end
+
+function renderGrid() --renders grid overlay and borders
+  local canvas = tTerm.canvas
+  screen:setLayer(screen.layers.gridBorder)
+  screen:setCursorPos(1,1)
+  screen:setBackgroundColor(tColors.gridBorder)
+  screen:setTextColor(tColors.gridBorderText)
+  screen:write" "
+  local nextChar = 1
+  for i=2,canvas.eX do
+    screen:write(string.format(nextChar))
+    nextChar = nextChar+1
+    nextChar = (nextChar < 10 and nextChar or 0)
+  end
+  screen:setCursorPos(1,2)
+  nextChar = 1
+  for i=2,canvas.eZ do
+    screen:setCursorPos(1,i)
+    screen:write(string.format(nextChar))
+    nextChar = nextChar+1
+    nextChar = (nextChar < 10 and nextChar or 0)
+  end
+  canvas.sX = canvas.sX+1
+  canvas.tX = canvas.eX-canvas.sX
+  canvas.sZ = canvas.sZ+1
+  canvas.tZ = canvas.eZ-canvas.sZ
+  local view = tTerm.viewable
+  view.mX = view.mX+1
+  view.mZ = view.mZ+1
+  view.eX = view.sX+tTerm.canvas.tX
+  view.eZ = view.sZ+tTerm.canvas.tZ
+  scroll()
+end
+
+function removeGrid() --removes the grid border and overlay
+  local canvas = tTerm.canvas
+  canvas.sX = canvas.sX-1
+  canvas.tX = canvas.eX-canvas.sX
+  canvas.sZ = canvas.sZ-1
+  canvas.tZ = canvas.eZ-canvas.sZ
+  local view = tTerm.viewable
+  view.mX = view.mX-1
+  view.mZ = view.mZ-1
+  view.eX = view.sX+tTerm.canvas.tX
+  view.eZ = view.sZ+tTerm.canvas.tZ
+  for i=1,canvas.eX do
+    screen:delPoint(i,1,screen.layers.gridBorder)
+  end
+  for i=1,canvas.eZ do
+    screen:delPoint(1,i,screen.layers.gridBorder)
+  end
+  scroll()
+end
+
 function renderBottomBar() --renders bottom bar and updates info
   screen:setLayer(screen.layers.bottomBar)
   screen:setCursorPos(1,tTerm.screen.y)
