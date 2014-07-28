@@ -2697,9 +2697,13 @@ local execution = function()
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
   tTimers.blink.start()
   tTimers.blink.toggle = true
-  renderBottomBar()
-  renderSideBar()
-  renderLayerBar(true)
+  if not tMode.hideMenus then
+    renderBottomBar()
+    renderSideBar()
+    if tMode.layerBar then
+      openLayerBar()
+    end
+  end
   tBlueprint[tTerm.scroll.layer]:render()
   if turtle and tArg[2] == "-r" then
     build(tBlueprint,true)
@@ -2727,9 +2731,6 @@ local function Quit()
   term.clear()
   term.setCursorPos(1,1)
   print"Thank you for using Turtle Architect, by CometWolf."
-end
-if tMode.layerBar then
-  openLayerBar()
 end
 while true do
   local tRes = {pcall(execution)}
