@@ -318,6 +318,7 @@ tMode = { -- default modes
   grid = false,
   layerBar = true,
   backgroundLayer = false,
+  hideMenus = true,
   sync = {
     amount = 0,
     turtles = 0,

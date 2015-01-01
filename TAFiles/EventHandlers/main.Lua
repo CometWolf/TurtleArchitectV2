@@ -55,6 +55,8 @@ main = {
     elseif key == 199 then --home
       scroll(1)
       return true
+    elseif key == 87 then -- F11
+      toggleMenus()
     elseif key == 42
     or key == 54 then --shift
       if not tTimers.shift.pressed then
