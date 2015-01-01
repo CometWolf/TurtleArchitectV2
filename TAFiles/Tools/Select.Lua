@@ -1,4 +1,33 @@
-local tool 
+local rightClickFunc = function(name,button) --used for modularity's sake
+  for _i,v in ipairs(tMenu.rightClick.select) do
+    if v.name == name then
+      return v.enabled() and v.func(button)
+    end
+  end
+  return false
+end
+
+local shortcuts = {
+  [46] = function(button) --C
+    rightClickFunc"Copy"
+  end,
+  [45] = function(button) --X
+    rightClickFunc"Cut"
+  end,
+  [47] = function(button) --V
+    rightClickFunc"Paste"
+  end,
+  [19] = function(button) --R
+    rightClickFunc("Recolor",button)
+  end,
+  [48] = function(button) --B
+    rightClickFunc"Mark built"
+  end,
+  [22] = function(button) --U
+    rightClickFunc"Mark unbuilt"
+  end,
+}
+local tool
 tool = {
   menuOrder = 9, --menu order, 1 being top
   enabled = true,
@@ -16,6 +45,15 @@ tool = {
   end,
   selectFunc = function(button)
     tTool.change("Select",1,2)
+    for k,v in pairs(shortcuts) do
+      ctrlShortcuts.active[k] = v
+    end
+  end,
+  deselectFunc = function()
+    ctrlShortcuts.active = {}
+    for k,v in pairs(ctrlShortcuts.default) do
+      ctrlShortcuts.active[k] = v
+    end
   end,
   renderFunc = function(event,button,x,z,color)
     if button == 1 then

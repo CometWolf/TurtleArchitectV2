@@ -863,7 +863,7 @@ local layerBarClick = function(button,x,z) --touch map layer bar function
         layerBar.selectedAmt = topSel-bottomSel+1
         renderLayerBar()
       end
-    elseif tTimers.ctrl.pressed then
+    elseif tTimers.ctrl.lPressed or tTimers.ctrl.rPressed then
       if layerBar.tSelected[layer] then
         layerBar.tSelected[layer] = nil
         layerBar.selectedAmt = layerBar.selectedAmt-1
@@ -1146,6 +1146,7 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
     view.eZ = tTerm.viewable.sZ+tTerm.canvas.tZ
     tBlueprint[tTerm.scroll.layer]:render()
     renderBottomBar()
+    renderToolOverlay()
   end
 end
 

@@ -1,28 +1,3 @@
-local toolChange = function(t1,t2,primary)
-  local secondary = primary == 1 and 2 or 1
-  if t1 == tTool[primary].tool then
-    if tTool[primary].prevDouble then
-      tTool.change(tTool[primary].prevTool,primary,secondary)
-    elseif tTool[primary].double and tTool[secondary].double then
-      tTool.change(tTool[primary].prevTool,primary)
-      tTool.change(tTool[secondary].prevTool,secondary)
-      tTool[primary].prevDouble = true
-      tTool[secondary].prevDouble = true
-    else
-      tTool.change(tTool[primary].prevTool or tTool[primary].tool,primary,t2 and secondary or nil)
-    end
-  elseif tTool[primary].double then
-    if t2 or tTool[secondary].prevDouble then
-      tTool.change(t1,primary,secondary)
-    else
-      tTool.change(t1,primary)
-      tTool.change(tTool[secondary].prevTool,secondary)
-    end
-  else
-    tTool.change(t1,primary,t2 and secondary or nil)
-  end
-end
-
 local main
 main = { 
   mouse_click = function(tEvent)
@@ -74,6 +49,12 @@ main = {
     elseif key == 201 then --page up
       scroll(tTerm.scroll.layer+1)
       return true
+    elseif key == 207 then --end
+      scroll(#tBlueprint)
+      return true
+    elseif key == 199 then --home
+      scroll(1)
+      return true
     elseif key == 42
     or key == 54 then --shift
       if not tTimers.shift.pressed then
@@ -87,24 +68,18 @@ main = {
         tTimers.ctrl.start()
         return true
       end
-    elseif tTimers.ctrl.lPressed then
-      local tool = tTool.shortcuts[key]
-      if tool then
-        toolChange(tool[1],tool[2],1)
-        return true
-      end
+    elseif tTimers.ctrl.lPressed and ctrlShortcuts.active[key] then
+      ctrlShortcuts.active[key](1)
+      return true
     elseif key == 157 then --right ctrl
       if not tTimers.ctrl.rPressed then
         tTimers.ctrl.rPressed = true
         tTimers.ctrl.start()
         return true
       end
-    elseif tTimers.ctrl.rPressed then
-      local tool = tTool.shortcuts[key]
-      if tool then
-        toolChange(tool[1],tool[2],2)
-        return true
-      end
+    elseif tTimers.ctrl.rPressed and ctrlShortcuts.active[key] then
+      ctrlShortcuts.active[key](2)
+      return true
     end
   end,
   mouse_scroll = function(tEvent)

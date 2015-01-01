@@ -1,9 +1,17 @@
 tTool.change = function(tool,b1,b2) --tool change function
   if b1 then
+    local deselected = tTool.deselected[tTool[b1].tool]
+    if deselected then
+      deselected()
+    end
     tTool[b1].prevTool = tTool[b1].tool
     tTool[b1].tool = tool
     tTool[b1].prevDouble = tTool[b1].double
     if b2 then
+      local deselected = tTool[b1].tool ~= tTool[b2].tool and tTool.deselected[tTool[b2].tool]
+      if deselected then
+        deselected()
+      end
       tTool[b2].prevTool = tTool[b2].tool
       tTool[b2].tool = tool
       tTool[b2].prevDouble = tTool[b2].double
@@ -48,6 +56,8 @@ for _k,file in pairs(fs.list(tFile.toolFolder)) do
     local tool = loadFile(tFile.toolFolder.."/"..file,progEnv)
     local toolName = file:match"(.+)%.Lua"
     tTool[toolName] = tool.renderFunc
+    tTool.selected[toolName] = tool.selectFunc
+    tTool.deselected[toolName] = tool.deselectFunc
     codeEnv.tool[toolName] = tool.codeFunc
     menu[tool.menuOrder] = {
       name = toolName,

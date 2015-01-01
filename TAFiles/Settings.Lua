@@ -226,6 +226,71 @@ paintUpper = nil
 keyColor.X = "Break"
 colorKey.X = colors.red --break block marker
 
+local shortcutChange = function(t1,t2,primary) --ctrl shortcut tool change function
+  local secondary = primary == 1 and 2 or 1
+  if t1 == tTool[primary].tool then
+    if tTool[primary].prevDouble then
+      tTool.change(tTool[primary].prevTool,primary,secondary)
+    elseif tTool[primary].double and tTool[secondary].double then
+      tTool.change(tTool[primary].prevTool,primary)
+      tTool.change(tTool[secondary].prevTool,secondary)
+      tTool[primary].prevDouble = true
+      tTool[secondary].prevDouble = true
+    else
+      tTool.change(tTool[primary].prevTool or tTool[primary].tool,primary,t2 and secondary or nil)
+    end
+  elseif tTool[primary].double then
+    if t2 or tTool[secondary].prevDouble then
+      tTool.change(t1,primary,secondary)
+    else
+      tTool.change(t1,primary)
+      tTool.change(tTool[secondary].prevTool,secondary)
+    end
+  else
+    tTool.change(t1,primary,t2 and secondary or nil)
+  end
+end
+
+ctrlShortcuts = { --ctrl+key shortcuts, left ctrl button = 1, right ctrl button = 2
+  default = { --these are active by default
+    [48] = function(button) --B
+      shortcutChange("Brush",nil,button)
+    end,
+    [33] = function(button) --F
+      shortcutChange("Fill",nil,button)
+    end,
+    [25] = function(button) --P
+      shortcutChange("Pipette",nil,button)
+    end,
+    [31] = function(button) --S
+      if tTool[1].tool == "Select" then
+        shortcutChange("Select",true,button)
+      else
+        tTool.selected.Select()
+      end
+    end,
+    [46] = function(button) --C
+      shortcutChange("Code",nil,button)
+    end,
+    [38] = function(button) --L
+      shortcutChange("Line",true,button)
+    end,
+    [32] = function(button) --D
+      shortcutChange("Drag",nil,button)
+    end,
+    [49] = function() --N
+      table.insert(tBlueprint,tTerm.scroll.layer+1,class.layer.new())
+      scroll(tTerm.scroll.layer+1)
+    end,
+  },
+  active = { --holds the currently active shortcuts, don't add anything here
+    
+  }
+}
+for k,v in pairs(ctrlShortcuts.default) do --activate default shortcuts
+  ctrlShortcuts.active[k] = v
+end
+
 tTool = { --Default equipped tools and colors
   [1] = { --left mouse button
     tool = "Brush",
@@ -239,34 +304,11 @@ tTool = { --Default equipped tools and colors
     tool = "Help",
     color = colorKey.white
   },
-  shortcuts = { --ctrl+key shortcuts, [1] is the tool and [2] is wether it's double handed or not. Use left ctrl for button 1, and right ctrl for button 2.
-    [48] = { --B
-      "Brush"
-    },
-    [33] = { --F
-      "Fill"
-    },
-    [25] = { --P
-      "Pipette"
-    },
-    [31] = { --S
-      "Select",
-      true
-    },
-    [46] = { --C
-      "Code"
-    },
-    [38] = { --L
-      "Line",
-      true
-    },
-    [32] = { --D
-      "Drag"
-    }
-  },
   select = {}, --contains selection tool info
   clipboard = false, --tool clipboard
   shape = {}, --contains circle and square tool info
+  selected = {}, --contains select functions, indexed by tool name
+  deselected = {}, --contains deselect functions, indexed by tool name
 }
 
 tMode = { -- default modes
