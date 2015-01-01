@@ -701,18 +701,17 @@ end
 Rendering functions
 ----------------------------------------------------------------------------------------------------------]]--
 function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
-  local cX,cZ = 1,1 --cavnas size change
+  local cX,cZ = 2,1 --cavnas size change
   if tMode.hideMenus or FORCE then --reveal
+    tMode.hideMenus = false
     renderSideBar()
     renderBottomBar()
     if tMode.layerBar then
       openLayerBar()
-      cX = 2
     end
     if tMode.grid then
       renderGrid()
     end
-    screen:clearLayer(screen.layers.bottomBar or screen.layers.sideBar or screen.layers.layerBar) --they all use the same layer
     local change = tMode.layer
     tTerm.canvas.eX = tTerm.canvas.eX-cX
     tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
@@ -720,11 +719,9 @@ function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
     tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
     tTerm.viewable.eX = tTerm.viewable.eX-cX
     tTerm.viewable.eZ = tTerm.viewable.eZ-cZ
-    tMode.hideMenus = false
   else --hide
     if tMode.layerBar then
-      closeLayerBar()
-      cX = 2
+      cX = cX+1
     end
     screen:clearLayer(screen.layers.bottomBar or screen.layers.sideBar or screen.layers.layerBar) --they all use the same layer
     if tMode.grid then --the grid border is on the same layer as the menus, and must be re-rendered
@@ -739,6 +736,7 @@ function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
     tTerm.viewable.eZ = tTerm.viewable.eZ+cZ
     tMode.hideMenus = true
   end
+  scroll()
 end
 
 function renderGrid() --renders grid overlay and borders
@@ -795,6 +793,9 @@ function removeGrid() --removes the grid border and overlay
 end
 
 function renderBottomBar() --renders bottom bar and updates info
+  if tMode.hideMenus then
+    return
+  end
   screen:setLayer(screen.layers.bottomBar)
   screen:setCursorPos(1,tTerm.screen.y)
   local bgColor = tColors.bottomBar
@@ -867,6 +868,9 @@ function renderBottomBar() --renders bottom bar and updates info
 end
 
 function renderMenu(menu) --renders the given menu and activates the touch map for said menu
+  if tMode.hideMenus then
+    return
+  end
   tMenu.touchMap = class.matrix.new(2)
   screen:clearLayer(screen.layers.menus)
   if not menu 
@@ -995,6 +999,9 @@ local layerBarClick = function(button,x,z) --touch map layer bar function
 end
 
 function renderLayerBar(fullRefresh) --updates the layer sidebar, optionally redrawing it entirely
+  if tMode.hideMenus then
+    return
+  end
   if not tMode.layerBar then
     return
   end
@@ -1039,6 +1046,9 @@ end
 
 function openLayerBar() --renders the layer sidebar and adds it to the touch map
   tMode.layerBar = true
+  if tMode.hideMenus then
+    return
+  end
   local layerBar = tBar.layerBar
   local x = tBar.layerBar.eX
   for y = tBar.layerBar.sL,tBar.layerBar.eL do
@@ -1056,6 +1066,9 @@ end
 
 function closeLayerBar() --closes the layer sidebar and removes it from the touch map
   tMode.layerBar = false
+  if tMode.hideMenus then
+    return
+  end
   local canvas = tTerm.canvas
   canvas.eX = canvas.eX+1
   canvas.tX = canvas.eX-canvas.sX
@@ -1083,6 +1096,9 @@ function closeLayerBar() --closes the layer sidebar and removes it from the touc
 end
 
 function renderSideBar() --renders sidebar and fills the touch map with sidebar buttons
+  if tMode.hideMenus then
+    return
+  end
   for iY=1,tTerm.screen.y do
     tBar.touchMap[tTerm.screen.x][iY] = nil
     tBar.touchMap[tTerm.screen.x-1][iY] = nil
@@ -2035,7 +2051,15 @@ dialogue = {
   end,
   selectColor = function(text)
     local event,selected = window.scroll(text,colorSelect)
-    return event ~= "Cancel" and selected:lower() or event
+    if event ~= "Cancel" then
+      selected = selected:lower()
+      local space = selected:find" "
+      if space then
+        selected = selected:sub(1,space-1)..string.upper(selected:sub(space+1,space+1))..selected:sub(space+2)
+      end
+      return selected
+    end
+    return event
   end,
   save = function(text)
     local fileName = tFile.blueprint
@@ -2698,12 +2722,10 @@ local execution = function()
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
   tTimers.blink.start()
   tTimers.blink.toggle = true
-  if not tMode.hideMenus then
-    renderBottomBar()
-    renderSideBar()
-    if tMode.layerBar then
-      openLayerBar()
-    end
+  renderBottomBar()
+  renderSideBar()
+  if tMode.layerBar then
+    openLayerBar()
   end
   tBlueprint[tTerm.scroll.layer]:render()
   if turtle and tArg[2] == "-r" then

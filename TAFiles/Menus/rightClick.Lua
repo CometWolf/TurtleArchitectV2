@@ -49,12 +49,12 @@ rightClick.render = function(menu,x,z)
   menu.splits = math.ceil(menu.lX/tTerm.screen.y-1)
   if menu.splits <= 1 then
     while menu.sZ < 1 do
-      menu.sZ = menu.sY+1
-      menu.eZ = menu.eY+1
+      menu.sZ = menu.sZ+1
+      menu.eZ = menu.eZ+1
     end
     while menu.eZ > tTerm.screen.y do
-      menu.sZ = menu.sY-1
-      menu.eZ = menu.eY-1
+      menu.sZ = menu.sZ-1
+      menu.eZ = menu.eZ-1
     end
   else
     menu.sZ = 1

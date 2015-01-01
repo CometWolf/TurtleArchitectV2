@@ -69,9 +69,9 @@ glasses = { --openP glass settings
   screen = {
     size = { --the size of each screen pixel
       x = 3,
-      y = 5
+      y = 5 
     },
-    pos = { --where to render the screen
+    pos = { --where to render the glasses screen
       x = 0,
       y = 0
     },
@@ -282,6 +282,9 @@ ctrlShortcuts = { --ctrl+key shortcuts, left ctrl button = 1, right ctrl button 
       table.insert(tBlueprint,tTerm.scroll.layer+1,class.layer.new())
       scroll(tTerm.scroll.layer+1)
     end,
+    [35] = function() --H
+      toggleMenus()
+    end,
   },
   active = { --holds the currently active shortcuts, don't add anything here
     
@@ -318,7 +321,7 @@ tMode = { -- default modes
   grid = false,
   layerBar = true,
   backgroundLayer = false,
-  hideMenus = true,
+  hideMenus = false,
   sync = {
     amount = 0,
     turtles = 0,
