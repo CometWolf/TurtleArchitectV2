@@ -709,9 +709,6 @@ function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
     if tMode.layerBar then
       openLayerBar()
     end
-    if tMode.grid then
-      renderGrid()
-    end
     local change = tMode.layer
     tTerm.canvas.eX = tTerm.canvas.eX-cX
     tTerm.canvas.tX = tTerm.canvas.eX-tTerm.canvas.sX+1
@@ -719,6 +716,9 @@ function toggleMenus(FORCE) --Hides/reveals menus, FORCE reveal.
     tTerm.canvas.tZ = tTerm.canvas.eZ-tTerm.canvas.sZ+1
     tTerm.viewable.eX = tTerm.viewable.eX-cX
     tTerm.viewable.eZ = tTerm.viewable.eZ-cZ
+    if tMode.grid then
+      renderGrid()
+    end
   else --hide
     if tMode.layerBar then
       cX = cX+1

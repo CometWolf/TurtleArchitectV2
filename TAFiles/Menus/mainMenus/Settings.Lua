@@ -118,8 +118,8 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
         }
       )
       if button == "Grid ON" then
-        renderGrid()
         tMode.grid = true
+        renderGrid()
       elseif button == "Grid OFF" then
         removeGrid()
         tMode.grid = false
