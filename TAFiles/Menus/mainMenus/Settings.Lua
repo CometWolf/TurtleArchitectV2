@@ -192,7 +192,7 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
     name = "Hide menus",
     enabled = true,
     help = function()
-      window.text"Hides all menus, leaving only the canvas. Press F11 to re-enable menus."
+      window.text"Hides all menus, leaving only the canvas. Press ctrl+H to re-enable menus."
     end,
     func = function()
       toggleMenus()
