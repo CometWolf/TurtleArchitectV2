@@ -1589,14 +1589,14 @@ window = {
     screen:setBackgroundColor(tColors.inputButton)
     for i=1,#tButtons do
       tButtons[i].sX = nextButton
-      tButtons[i].eX = nextButton+tButtons[i].size
+      tButtons[i].eX = nextButton+tButtons[i].size-1
       tButtons[i].y = box.bottom-1
       screen:setCursorPos(tButtons[i].sX,tButtons[i].y)
       screen:write(" "..tButtons[i].name.." ")  --add spaces for appearances
-      nextButton = nextButton+#tButtons[i].name+2
       for iX=tButtons[i].sX,tButtons[i].eX do
         buttonTouchMap[iX][tButtons[i].y] = tButtons[i].name
       end
+      nextButton = nextButton+#tButtons[i].name+3
     end
     --set up & render input boxes
     local inputTouchMap = class.matrix.new(2)
