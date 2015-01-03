@@ -1844,7 +1844,7 @@ window = {
       )
       selection = tItems[i]
       setmetatable(selection,{__index = scrollDefaults})
-      local text = string.rep(" ",math.floor((selectionLength-#selection.text)/2))..selection.text
+      local text = string.rep(" ",math.max(0,math.floor((selectionLength-#selection.text)/2)))..selection.text
       selection.string = text..string.rep(" ",math.max(selectionLength-#text,0))
     end
     local touchMap = class.matrix.new(2)
@@ -2230,6 +2230,7 @@ function checkUsage(blueprint,sLayer,eLayer)
     z = 0
   }
   local placed = class.matrix.new(3)
+  local loop = 0
   for nL = sLayer,eLayer do
     for nX,vX in pairs(blueprint[nL]) do
       for nZ,block in pairs(vX) do
@@ -2276,6 +2277,10 @@ function checkUsage(blueprint,sLayer,eLayer)
     end
     tUsage.fuel = math.abs(nL-tPos.y)+tUsage.fuel
     tPos.y = nL
+    loop = loop+1
+    if loop%10 == 0 then
+      sleep(0.05)
+    end
   end
   return tUsage
 end

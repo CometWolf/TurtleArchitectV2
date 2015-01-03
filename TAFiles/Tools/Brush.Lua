@@ -35,10 +35,17 @@ tool = {
     end
     color = color or codeEnv.click.color
     layer = layer or codeEnv.click.layer
-    if codeEnv.settings.direct then
-      drawPoint(x,z,color,layer,true)
+    local layerType = type(layer)
+    if layerType == "table" and layer.paste then
+      layer[x][z] = color
+    elseif layerType == "number" then
+      if codeEnv.settings.direct then
+        drawPoint(x,z,color,layer,true)
+      else
+        codeEnv.blueprint[layer][x][z] = color
+      end
     else
-      codeEnv.blueprint[layer][x][z] = color
+      error("Expected layer, got "..layerType,2)
     end
   end
 }

@@ -188,7 +188,7 @@ menu = {
       }
       layerBar.prevSelected = scrollLayer
       layerBar.selectedAmt = 1
-      renderLayerBar()
+      renderLayerBar(true)
       scroll(math.max(scrollLayer,1))
     end
   },

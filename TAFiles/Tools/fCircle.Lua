@@ -82,11 +82,12 @@ tool = {
   codeFunc = function(sX,sZ,eX,eZ,color,layer) --this is used by the code tool
     color = color or codeEnv.click.color
     layer = layer or codeEnv.click.layer
+    local layerType = type(layer)
     if not (sX and sZ and eX and eZ)
     or not (type(sX) == "number" and type(sZ) == "number" and type(eX) == "number" and type(eZ) == "number") then
       error("Expected number,number,number,number",2)
     end
-    if type(layer) == "table" and layer.paste then
+    if layerType == "table" and layer.paste then
       layer:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
     elseif codeEnv.settings.direct then
       local c = {
@@ -100,10 +101,10 @@ tool = {
       tBlueprint[layer]:paste(c.l,math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
       sync(c,"Paste")
       renderArea(sX,sZ,eX,eZ,true)
-    elseif type(layer) == "number" then
+    elseif layerType == "number" then
       codeEnv.blueprint[layer]:paste(calcFunc(sX,sZ,eX,eZ,color),math.min(sX,eX),math.min(sZ,eZ),not tMode.overwrite)
     else
-      error("Expected layer, got "..type(layer),2)
+      error("Expected layer, got "..layerType,2)
     end
   end
 }
