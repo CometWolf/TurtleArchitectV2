@@ -16,6 +16,9 @@ menu = {
   [2] = {
     name = "Color settings",
     enabled = true,
+    help = function()
+      window.text("Change the programs color settings. Every color of the GUI may be changed here, with the exception of the actual drawing colors. These settings are saved between sessions.")
+    end,
     func = function()
       local colorSelection = {}
       for k,v in pairs(tColors) do
@@ -64,7 +67,7 @@ menu = {
           tColors[selected] = colors[selectedColor]
           local file = class.fileTable.new(tFile.settings)
           local line = file:find("    "..selected.." = colors")
-          file:write("    "..selected.." = colors."..selectedColor..", --"..(file[line]:match"%-%-(.+)$" or ""),line)
+          file:write("    "..selected.." = colors."..selectedColor..", "..(file[line]:match"%-%-(.+)$" and "--"..file[line]:match"%-%-(.+)$" or ""),line)
           file:save()
           renderSideBar()
           renderBottomBar()
@@ -120,9 +123,17 @@ Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
       if button == "Grid ON" then
         tMode.grid = true
         renderGrid()
+        local file = class.fileTable.new(tFile.settings)
+        local line = file:find("  grid = false,",true)
+        file:write("  grid = true,",line)
+        file:save()
       elseif button == "Grid OFF" then
         tMode.grid = false
         removeGrid()
+        local file = class.fileTable.new(tFile.settings)
+        local line = file:find("  grid = true,",true)
+        file:write("  grid = false,",line)
+        file:save()
       end
     end
   },

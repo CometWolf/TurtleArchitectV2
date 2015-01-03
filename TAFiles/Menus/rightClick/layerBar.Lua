@@ -284,7 +284,7 @@ menu = {
     end
   },
   [9] = {
-    name = "Flatten",
+    name = "Merge",
     enabled = function()
       return layerBar.selectedAmt > 1
     end,
@@ -426,6 +426,7 @@ menu = {
   [15] = {
     name = "Mark unbuilt",
     enabled = function()
+      debug(layerBar)
       return layerBar.selectedAmt > 0
     end,
     help = function()
@@ -511,7 +512,7 @@ menu = {
     func = function()
       closeLayerBar()
       local file = class.fileTable.new(tFile.settings)
-      local line = file:find("  layerBar = true,")
+      local line = file:find("  layerBar = true,",true)
       file:write("  layerBar = false,",line)
       file:save()
     end

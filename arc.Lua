@@ -492,7 +492,7 @@ tBar = { --menu bar variables
     touchMap = class.matrix.new(2) --used for open menus
   },
   layerBar = {
-    --open = tMode.layerBar, change this in the settings menu. false by default
+    --open = tMode.layerBar, change this in the settings menu. true by default
     sX = tTerm.canvas.eX,
     eX = tTerm.canvas.eX,
     sZ = 1,
@@ -1934,13 +1934,14 @@ window = {
       end
     end
     refresh()
-    local buttonString = " Cancel  Ok "
     local y = box.bottom-1
-    local x = tTerm.screen.xMid-math.floor(#buttonString/2)
+    local x = tTerm.screen.xMid-6
     screen:setCursorPos(x,y)
     screen:setBackgroundColor(tColors.inputButton)
     screen:setTextColor(tColors.inputButtonText)
-    screen:write(buttonString)
+    screen:write(" Cancel ")
+    screen:setCursorPos(x+9)
+    screen:write(" Ok ")
     local cancelFunc = function()
       return endExecution("Cancel")
     end
@@ -1957,10 +1958,10 @@ window = {
         return endExecution("Ok",tItems[selected].text)
       end
     )
-    for i = x,x+#" Cancel " do
+    for i = x,x+7 do
       touchMap[i][y] = cancelFunc
     end
-    for i = x+#" Cancel ",x+#buttonString do
+    for i = x+9,x+12 do
       touchMap[i][y] = okFunc
     end
     local eventHandlers = {
@@ -2729,6 +2730,9 @@ local execution = function()
   tTimers.blink.toggle = true
   renderBottomBar()
   renderSideBar()
+  if tMode.grid then
+    renderGrid()
+  end
   if tMode.layerBar then
     openLayerBar()
   end

@@ -909,9 +909,8 @@ menu = {
     end,
     func = function()
       openLayerBar()
-      closeLayerBar()
       local file = class.fileTable.new(tFile.settings)
-      local line = file:find("  layerBar = false,")
+      local line = file:find("  layerBar = false,",true)
       file:write("  layerBar = true,",line)
       file:save()
     end

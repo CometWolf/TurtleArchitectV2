@@ -3,10 +3,10 @@ modemChannel = 62700 --Channel used to communicate with other computers/turtles 
 tColors = setmetatable(
   { -- color settings
     canvas = colors.white, --changing this can cause some derps
-    bottomBar = colors.gray,
-    coordsText = colors.white,
+    bottomBar = colors.gray, --Bottom bar color
+    coordsText = colors.white, --text color for the coordinates on the bottom right
     sideBarText = colors.white, --menu buttons text color
-    sideBar = colors.gray,
+    sideBar = colors.gray, --menu sidebar color
     menuTop = colors.blue, --menu header color
     menuPri = colors.black, --Menu color alteration primary 
     menuSec = colors.gray, --Menu color alteration secondary

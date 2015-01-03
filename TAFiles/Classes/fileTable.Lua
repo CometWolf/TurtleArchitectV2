@@ -61,8 +61,8 @@ fileTable = { --file table class, this is used to simplify file handling
   end,
   find = function(tTable,sString,plain)
     --finds the specified string in the file
-    for i=1,#tTable do
-      if tTable[i]:find(sString,nil,plain) then
+    for i,v in ipairs(tTable) do
+      if v:find(sString,1,plain) then
         return i
       end
     end
