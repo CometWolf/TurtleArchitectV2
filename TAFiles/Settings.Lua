@@ -223,6 +223,8 @@ for k,v in pairs(paintUpper) do
 end
 paintUpper = nil
 
+keyColor.S = "Scan"
+colorKey.S = colors.blue
 keyColor.X = "Break"
 colorKey.X = colors.red --break block marker
 

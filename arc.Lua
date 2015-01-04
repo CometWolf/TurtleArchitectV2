@@ -821,7 +821,7 @@ function renderBottomBar() --renders bottom bar and updates info
   screen:setBackgroundColor(bgColor)
   local cursX,cursY = screen:getCursorPos()
   local coordString = "X:"..tTerm.scroll.x.." Y:"..tTerm.scroll.layer.." Z:"..tTerm.scroll.z
-  local screenX = tTerm.screen.y > 8+tMenu.main.enabled() and tTerm.screen.x-2 or tTerm.screen.x-3
+  local screenX = tBar.menu.sizeReduction and tTerm.screen.x-4 or tTerm.screen.x-2
   screen:write(string.rep(" ",math.max(screenX-#coordString-cursX+1,0))..coordString)
   for iX = screenX-#coordString+1,screenX do
     tBar.touchMap[iX][cursY] = function(button)
@@ -1187,34 +1187,33 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
       tBar.touchMap[tTerm.screen.x-1][2] = tBar.touchMap[tTerm.screen.x][2]
     end
   end
-  if not sizeReduction then 
-    screen:setCursorPos(tTerm.screen.x-1,tTerm.screen.y)
-    screen:setBackgroundColor(colors.black)
-    screen:setTextColor(colorKey.X)
-    screen:write("XX")
-    for i=0,1 do
-      tBar.touchMap[tTerm.screen.x-i][tTerm.screen.y] = function(button)
-        if tTool[button].tool == "Help" then
-          window.text"This is the break marker, every block you draw with this will be broken by the turtle."
-        else
-          tTool[button].color = "X"
-          renderBottomBar()
-        end
-      end
+  local x = sizeReduction and tTerm.screen.x-3 or tTerm.screen.x-1
+  screen:setCursorPos(x,tTerm.screen.y)
+  screen:setBackgroundColor(colors.white)
+  screen:setTextColor(colorKey.S)
+  screen:write("S")
+  screen:setBackgroundColor(colors.black)
+  screen:setTextColor(colorKey.X)
+  screen:write("X")
+  tBar.touchMap[x][tTerm.screen.y] = function(button)
+    if tTool[button].tool == "Help" then
+      window.text"This is the scan marker, every block you draw with this will be scanned by the turtle, and saved to the blueprint."
+    else
+      tTool[button].color = "S"
+      renderBottomBar()
     end
-  else
-    screen:setCursorPos(tTerm.screen.x-2,tTerm.screen.y)
-    screen:setBackgroundColor(colors.black)
-    screen:setTextColor(colorKey.X)
-    screen:write("X")
-    tBar.touchMap[tTerm.screen.x-2][tTerm.screen.y] = function(button)
-      if tTool[button].tool == "Help" then
-        window.text"This is the break marker, every block you draw with this will be broken by the turtle."
-      else
-        tTool[button].color = "X"
-        renderBottomBar()
-      end
+  end
+  tBar.touchMap[x+1][tTerm.screen.y] = function(button)
+    if tTool[button].tool == "Help" then
+      window.text"This is the break marker, every block you draw with this will be broken by the turtle."
+    else
+      tTool[button].color = "X"
+      renderBottomBar()
     end
+  end
+  if tBar.menu.sizeReduction ~= sizeReduction then --if the reduction has changed state, the bottom bar must be re-rendered
+    tBar.menu.sizeReduction = sizeReduction
+    renderBottomBar()
   end
 end
 
@@ -1325,6 +1324,10 @@ function writePoint(x,z) --renders the specified blueprint point at wherever the
   if color == "X" then
     marker = "X"
     tColor = colorKey.X
+    bColor = colors.white
+  elseif color == "S" then
+    marker = "S"
+    tColor = colorKey.S
     bColor = colors.white
   elseif tMode.backgroundLayer and color == " " and (tMode.backgroundLayer[x][z] ~= " " and tMode.backgroundLayer[x][z] ~= "X") then
     marker = tMode.grid and "+" or " "
@@ -2696,8 +2699,8 @@ local execution = function()
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
   tTimers.blink.start()
   tTimers.blink.toggle = true
-  renderBottomBar()
   renderSideBar()
+  --renderBottomBar() --sidebar calls this on the first call anyways.
   if tMode.grid then
     renderGrid()
   end

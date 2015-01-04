@@ -405,6 +405,9 @@ common = { --common event handlers, these are always active
           while #tBlueprint < data.layer do
             tBlueprint[#tBlueprint+1] = class.layer.new()
           end
+          if tMode.layerBar then
+            renderLayerBar(true)
+          end
         elseif type == "Layer delete" then
           if data.layers then
             local delLayers = {}
@@ -425,6 +428,9 @@ common = { --common event handlers, these are always active
               end
             end
             scroll()
+            if tMode.layerBar then
+              renderLayerBar(true)
+            end
             return
           elseif data.layer then
             data.from = data.layer
@@ -438,6 +444,9 @@ common = { --common event handlers, these are always active
             end
           end
           scroll()
+          if tMode.layerBar then
+            renderLayerBar(true)
+          end
         elseif type == "Layer clear" then
           if data.layers then
             for layer in pairs(data.layers) do
@@ -467,6 +476,9 @@ common = { --common event handlers, these are always active
           tBlueprint = class.blueprint.copy(data.blueprint)
           tFile.blueprint = data.blueprintName or nil
           scroll(1,0,0,true,true)
+          if tMode.layerBar then
+            renderLayerBar(true)
+          end
         elseif type == "Blueprint sub" then
           tBlueprint = tBlueprint:copy(data.sX,data.sZ,data.eX,data.eZ)
           tBlueprint:save(tFile.blueprint,true)
