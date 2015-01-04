@@ -2284,44 +2284,29 @@ function checkUsage(blueprint,sLayer,eLayer)
 end
 
 function assignColorSlots(color)
-  local button, tRes, reInput = window.text(
-    "Input slot range for "..keyColor[color],
-    {
-      "Cancel",
-      "Ok",
-    },
-    {
-      {
-        name = "From",
-        value = tBlueprint.colorSlots[color][1] or 1,
-        accepted = "%d",
-        charLimit = 2
-      },
-      {
-        name = "To",
-        value = tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]] or 16,
-        accepted = "%d",
-        charLimit = 2
-      },
-    },
-    false,
+  local tSelection = {}
+  for iS = 1,16 do
+    tSelection[iS] = {}
+    local selection = tSelection[iS]
+    selection.text = tostring(iS)
+    for iC,v in ipairs(tBlueprint.colorSlots[color]) do
+      if v == iS then
+        selection.selected = true
+        break
+      end
+    end
+  end
+  local button, tRes = window.scroll(
+    "Select slots for "..keyColor[color],
+    tSelection,
     true
   )
-  while button ~= "Cancel" do
-    if not tRes.From then
-      button,tRes,reInput = reinput("Missing parameter From!")
-    elseif not tRes.To then
-      button,tRes,reInput = reinput("Missing parameter To!")
-    elseif tRes.From < 1 or tRes.From > tRes.To
-    or tRes.To > 16 then
-      button,tRes,reInput = reinput("Invalid slot range "..tRes.From.."-"..tRes.To.."!")
-    elseif button == "Ok" then
-      tBlueprint.colorSlots[color] = {}
-      for i=tRes.From,tRes.To do
-        tBlueprint.colorSlots[color][#tBlueprint.colorSlots[color]+1] = i
-      end
-      return true
+  if button ~= "Cancel" then
+    tBlueprint.colorSlots[color] = {}
+    for i,slot in ipairs(tRes) do
+      tBlueprint.colorSlots[color][i] = tonumber(slot)
     end
+    return true
   end
   return false
 end
@@ -2560,7 +2545,7 @@ end
 
 function build(blueprint,auto)
   --builds the given blueprint layers
-  if not (tFile.blueprint or blueprint) then
+  if not tFile.blueprint then
     if not dialogue.save"Blueprint must be saved locally prior to building" then
       window.text"Construction cancelled"
       return
