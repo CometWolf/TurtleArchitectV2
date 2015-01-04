@@ -426,7 +426,6 @@ menu = {
   [15] = {
     name = "Mark unbuilt",
     enabled = function()
-      debug(layerBar)
       return layerBar.selectedAmt > 0
     end,
     help = function()

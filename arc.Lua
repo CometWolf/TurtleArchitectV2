@@ -868,9 +868,6 @@ function renderBottomBar() --renders bottom bar and updates info
 end
 
 function renderMenu(menu) --renders the given menu and activates the touch map for said menu
-  if tMode.hideMenus then
-    return
-  end
   tMenu.touchMap = class.matrix.new(2)
   screen:clearLayer(screen.layers.menus)
   if not menu 
