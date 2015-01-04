@@ -431,43 +431,30 @@ menu = {
       window.text"Check the materials required to build a given layer range"
     end,
     func = function()
-      local button, tRes = window.text(
-        "Check material requirements for the layer range",
-        {
-          "Cancel",
-          "Ok"
-        },
-        {
-          {
-            name = "From",
-            value = 1,
-            accepted = "%d"
-          },
-          {
-            name = "To",
-            value = #tBlueprint,
-            accepted = "%d"
-          },
+      local tSelection = {}
+      for i=1,#tBlueprint do
+        tSelection[i] = {
+          text = tostring(i),
+          selected = true
         }
+      end
+      local button, tRes = window.scroll(
+        "Select layers to check usage for",
+        tSelection,
+        true
       )
-      while button ~= "Cancel" do
-        if not tRes.From then
-          button,tRes,reInput = reInput"Missing parameter From!"
-        elseif not tRes.To then
-          button,tRes,reInput = reInput"Missing parameter To!"
-        elseif not tBlueprint[tRes.From]
-        or not tBlueprint[tRes.To] then
-          button,tRes,reInput = reInput("Invalid slot range "..tRes.From.."-"..tRes.To)
-        else
-          local tLines = {
-            [1] = "Materials required to build current blueprint"
-          }
-          for k,v in pairs(checkUsage(tBlueprint,tRes.From,tRes.To)) do
-            tLines[#tLines+1] = (keyColor[k] or k)..": "..v
-          end
-          window.text(tLines)
-          return
+      if button ~= "Cancel" then
+        local tLayers = {}
+        for i,v in ipairs(tRes) do
+          tLayers[i] = tonumber(v)
         end
+        local tLines = {
+          [1] = "Materials required to build current blueprint"
+        }
+        for k,v in pairs(checkUsage(tBlueprint,tLayers)) do
+          tLines[#tLines+1] = (keyColor[k] or k)..": "..v
+        end
+        window.text(tLines)
       end
     end
   },
