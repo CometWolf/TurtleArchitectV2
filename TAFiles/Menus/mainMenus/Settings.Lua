@@ -112,27 +112,19 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
       window.text"Grid mode renders a grid line ontop of your blueprint, for ease of visualization."
     end,
     func = function()
-      local button = window.text(
-        [[Grid mode renders a grid line ontop of your blueprint, for ease of visualization
-Grid mode: ]]..(tMode.grid and "ON" or "OFF"),
-        {
-          "Cancel",
-          (tMode.grid and "Grid OFF" or "Grid ON"),
-        }
-      )
-      if button == "Grid ON" then
-        tMode.grid = true
-        renderGrid()
-        local file = class.fileTable.new(tFile.settings)
-        local line = file:find("  grid = false,",true)
-        file:write("  grid = true,",line)
-        file:save()
-      elseif button == "Grid OFF" then
+      if tMode.grid then
         tMode.grid = false
         removeGrid()
         local file = class.fileTable.new(tFile.settings)
         local line = file:find("  grid = true,",true)
         file:write("  grid = false,",line)
+        file:save()
+      else
+        tMode.grid = true
+        renderGrid()
+        local file = class.fileTable.new(tFile.settings)
+        local line = file:find("  grid = false,",true)
+        file:write("  grid = true,",line)
         file:save()
       end
     end
@@ -184,19 +176,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       window.text"Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white)."
     end,
     func = function()
-      local button = window.text(
-        [[Overwrite mode lets you draw over any color. If it's off, you may only draw on blank areas(white).
-Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
-        {
-          "Cancel",
-          (tMode.overwrite and "Overwrite OFF" or "Overwrite ON"),
-        }
-      )
-      if button == "Overwrite ON" then
-        tMode.overwrite = true
-      elseif button == "Overwrite OFF" then
-        tMode.overwrite = false
-      end
+      tMode.overwrite = not tMode.overwrite
     end
   },
   [7] = {
@@ -348,6 +328,8 @@ Overwrite mode: ]]..(tMode.overwrite and "ON" or "OFF"),
       window.text([[Turtle Architect 2.0.
 This software lets you draw your Minecraft constructions on your computer, and have your turtle build it wherever you desire. Files may easily be saved or even uploaded to Pastebin, for later use.
 Developed by CometWolf.
+
+Use the help tool, found under the To menu, if you desire more information.
 ]]
       )
     end
