@@ -33,7 +33,10 @@ menu = {
         else
           tBlueprint = class.blueprint.new()
           tFile.blueprint = fileName
-          scroll(1)
+          scroll()
+          if tMode.layerBar then
+            renderLayerBar(true)
+          end
           window.text("Successfully created "..fileName..".TAb.")
           return
         end
@@ -117,6 +120,9 @@ menu = {
               else
                 tBlueprint = blueprint
                 scroll()
+                if tMode.layerBar then
+                  renderLayerBar(true)
+                end
                 sync({blueprint = tBlueprint,blueprintName = false},"Blueprint load")
                 window.text("Successfully downloaded "..fileName.."!")
                 return
@@ -137,6 +143,9 @@ menu = {
             tFile.blueprint = fileName
             tBlueprint = blueprint
             scroll()
+            if tMode.layerBar then
+              renderLayerBar(true)
+            end
             sync({blueprint = tBlueprint,blueprintName = fileName},"Blueprint load")
             window.text("Successfully loaded "..fileName..".TAb.")
             return

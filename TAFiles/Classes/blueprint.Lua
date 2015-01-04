@@ -67,7 +67,7 @@ blueprint = { --blueprint class
       end
     end
     file:write"END"
-    file:write(textutils.serialize(blueprint.colorSlots))
+    file:write((textutils.serialize(blueprint.colorSlots):gsub("\n%s-","")))
     if path == true then
       return file:readAll()
     end
@@ -116,7 +116,7 @@ blueprint = { --blueprint class
         line = read()
       end
     end
-    blueprint.colorSlots = class.matrix.new(2,textutils.unserialize(read()))
+    blueprint.colorSlots = class.matrix.new(2,(textutils.unserialize(read() or "{}")))
     file.close()
     return blueprint
   end,

@@ -2092,10 +2092,10 @@ dialogue = {
             "Overwrite"
           }
         )
-        if button == "Overwrite" then
+        if button == "Overwrite" or button == "Ok" then
           break
         end
-        button,tRes,reInput = reinput("Overwrite of "..fileName.." cancelled. Input new file name.")
+        button,tRes,reInput = reInput("Overwrite of "..fileName.." cancelled. Input new file name.")
       else
         break
       end
@@ -2116,8 +2116,7 @@ Turtle functions
 ----------------------------------------------------------------------------------------------------------]]--
 function saveProgress(fileName,tProgress)
   local file = class.fileTable.new()
-  file:write("sLayer: "..tProgress.sLayer)
-  file:write("eLayer: "..tProgress.eLayer)
+  file:write("layers: "..textutils.serialize(tProgress.layers):gsub("\n%s-",""))
   file:write("X: "..tProgress.x)
   file:write("Y: "..tProgress.y)
   file:write("Z: "..tProgress.z)
@@ -2134,9 +2133,7 @@ function loadProgress(fileName)
   local file = fs.open(fileName..".TAo","r")
   local read = file.readLine
   local line = read()
-  tOngoing.sLayer = tonumber(line:match"sLayer: (%d+)" or 1)
-  line = read()
-  tOngoing.eLayer = tonumber(line:match"eLayer: (%d+)" or #tBlueprint)
+  tOngoing.layers = textutils.unserialize(line:match"layers: ({.+)" or 1)
   line = read()
   tOngoing.x = tonumber(line:match"X: ([%d-]+)" or 0)
   line = read()
@@ -2214,11 +2211,15 @@ function selectColor(color,threshold)
   end
 end
 
-function checkUsage(blueprint,sLayer,eLayer)
+function checkUsage(blueprint,tLayers)
   --checks amount of materials required to build the given blueprint
   blueprint = blueprint or tBlueprint
-  tOngoing.sLayer = sLayer or 1 --start layer
-  tOngoing.eLayer = eLayer or #blueprint --end layer
+  if not tOngoing.layers then
+    tOngoing.layers = {}
+    for i=1,#tBlueprint do
+      tOngoing.layers[i] = i
+    end
+  end
   local tUsage = {
     fuel = 0
   }
@@ -2229,7 +2230,7 @@ function checkUsage(blueprint,sLayer,eLayer)
   }
   local placed = class.matrix.new(3)
   local loop = 0
-  for nL = sLayer,eLayer do
+  for iL,nL in ipairs(tLayers) do
     for nX,vX in pairs(blueprint[nL]) do
       for nZ,block in pairs(vX) do
         local nX = nX
@@ -2322,7 +2323,7 @@ function checkProgress(fileName,tProgress,blueprint,auto)
     else
       local button = window.text(
         [[In-progress build of current blueprint found.
-layers ]]..tProgress.sLayer..[[-]]..tProgress.eLayer..[[ 
+layers ]]..tProgress.layers[1]..[[-]]..tProgress.layers[#tProgress.layers]..[[ 
 X: ]]..tProgress.x..[[ "]]..tProgress.dir.x..[["
 Y: ]]..tProgress.y..[[ "]]..tProgress.dir.y..[["
 Z: ]]..tProgress.z..[[ "]]..tProgress.dir.z..[["
@@ -2345,44 +2346,29 @@ Load?]],
       dir = {}
     }
   end
-  if not (tProgress.sLayer and tProgress.eLayer) then
-    local button, tRes, reInput = window.text(
-      "Input layer range to build",
-      {
-        "Cancel",
-        "Ok",
-      },
-      {
-        {
-          name = "Start",
-          value = 1,
-          accepted = "%d"
-        },
-        {
-          name = "End",
-          value = #blueprint,
-          accepted = "%d"
-        },
-      },
-      false,
+  if not (tProgress.layers) then
+    local tSelection = {}
+    for i=1,#tBlueprint do
+      tSelection[i] = {
+        text = tostring(i),
+        selected = true
+      }
+    end
+    local button, tRes = window.scroll(
+      "Select layers to build",
+      tSelection,
       true
     )
-    while true do
-      if button == "Cancel" then
-        window.text("Construction cancelled.")
-        return
-      elseif not tRes.Start then
-        button,tRes,reInput = reinput("Missing start layer!")
-      elseif not tRes.End then
-        button,tRes,reInput = reinput("Missing end layer!")
-      elseif button == "Ok" then
-        tProgress.sLayer = tRes.Start
-        tProgress.eLayer = tRes.End
-        break
+    if button ~= "Cancel" then
+      tProgress.layers = {}
+      for i,v in ipairs(tRes) do
+        tProgress.layers[i] = tonumber(v)
       end
+    else
+      return false
     end
   end
-  local tUsage = checkUsage(blueprint,tProgress.sLayer,tProgress.eLayer)
+  local tUsage = checkUsage(blueprint,tProgress.layers)
   local fuelUsage = tUsage.fuel
   tUsage.fuel = nil
   for k,v in pairs(tUsage) do
@@ -2560,7 +2546,7 @@ function build(blueprint,auto)
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1]
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
-  for nL = tOngoing.sLayer,math.min(tOngoing.eLayer,#blueprint) do
+  for iL,nL in ipairs(tOngoing.layers) do
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
       for nZ in pairs(vX) do
