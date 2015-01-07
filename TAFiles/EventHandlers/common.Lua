@@ -492,7 +492,7 @@ common = { --common event handlers, these are always active
         end
         return true
       elseif event == "Sync OFF"
-      or "Close connection" then
+      or event == "Close connection" then
         if tMode.sync.ids[senderId] then
           local turtle = tMode.sync.ids[senderId] == "turtle"
           tMode.sync.turtles = tMode.sync.turtles-(turtle and 1 or 0)

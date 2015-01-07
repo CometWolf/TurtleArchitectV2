@@ -2048,7 +2048,7 @@ dialogue = {
       nID = tonumber(id:match"%d+")
       retIDs[nID] = true
     end
-    return retIDs, not multi and nID
+    return retIDs, multi and #ids or nID
   end,
   selectColor = function(text)
     local event,selected = window.scroll(text,colorSelect)

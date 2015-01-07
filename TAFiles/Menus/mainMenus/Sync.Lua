@@ -125,7 +125,7 @@ menu = {
         window.text"Construction cancelled"
         return
       end
-      local ids = dialogue.selectTurtle("Select turtle IDs to use for building",true)
+      local ids, turtleAmount = dialogue.selectTurtle("Select turtle IDs to use for building",true)
       if not ids then
         return
       end
