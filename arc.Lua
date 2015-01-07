@@ -2547,7 +2547,7 @@ function build(blueprint,auto)
   end
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
-  local digSlot = blueprint.colorSlots.X[1]
+  local digSlot = blueprint.colorSlots.X[1] or 1
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
   for iL,nL in ipairs(tOngoing.layers) do
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
