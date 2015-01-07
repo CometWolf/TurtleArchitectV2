@@ -2508,7 +2508,9 @@ Load?]],
         button,tRes,reInput = reinput("Invalid slot "..tRes.Slot)
       elseif button == "Ok" then
         tProgress.enderChest = tRes.Slot
-        cTurtle.tSettings.enderFuel = tRes.Slot
+        if cTurtle then
+          cTurtle.tSettings.enderFuel = tRes.Slot
+        end
         break
       elseif button == "Permanent" then
         tProgress.enderChest = tRes.Slot
