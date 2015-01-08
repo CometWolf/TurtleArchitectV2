@@ -2581,6 +2581,29 @@ function build(blueprint,auto)
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
+            local blockAbove = blueprint[nL+1] and blueprint[nL+1][nX][nZ]
+            if blockAbove == "X" then
+              turtle.select(blueprint.colorSlots.X[1])
+              if tOngoing.dropoff then
+                if turtle.getItemCount(tOngoing.dropoff) > 0 then
+                  cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+                end
+              else
+                cTurtle.drop("Y-",false,64)
+              end
+              cTurtle.dig("Y"..tOngoing.dir.y)
+              blueprint[nL+1][nX][nZ] = nil
+              blueprint:save(tFile.blueprint,true)
+              sync(
+                {
+                  layer = nL+1,
+                  x = nX,
+                  z = nZ,
+                  isBuilding = true
+                },
+                "Point"
+              )
+            end
           elseif block == "X" then --break block
             cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode and digSlot)
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode and digSlot)
@@ -2607,6 +2630,29 @@ function build(blueprint,auto)
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
+            local blockAbove = blueprint[nL+1] and blueprint[nL+1][nX][nZ]
+            if blockAbove == "X" then
+              turtle.select(blueprint.colorSlots.X[1])
+              if tOngoing.dropoff then
+                if turtle.getItemCount(tOngoing.dropoff) > 0 then
+                  cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+                end
+              else
+                cTurtle.drop("Y-",false,64)
+              end
+              cTurtle.dig("Y"..tOngoing.dir.y)
+              blueprint[nL+1][nX][nZ] = nil
+              blueprint:save(tFile.blueprint,true)
+              sync(
+                {
+                  layer = nL+1,
+                  x = nX,
+                  z = nZ,
+                  isBuilding = true
+                },
+                "Point"
+              )
+            end
           elseif block == "S" then --scan block
             cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode and digSlot)
             cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode and digSlot)
