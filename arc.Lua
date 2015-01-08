@@ -2712,12 +2712,6 @@ function build(blueprint,auto)
                   break
                 end
               end
-              if block then
-                break
-              end
-            end
-            if block then
-              break
             end
           end
           block = block or nextBlock.b
