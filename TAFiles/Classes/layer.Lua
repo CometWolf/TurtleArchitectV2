@@ -102,7 +102,7 @@ layer = { --layer class
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
           if vZ == "X" then
-            vZ = nil
+            vX[nZ] = nil
           else
             vX[nZ] = vZ:upper()
           end
