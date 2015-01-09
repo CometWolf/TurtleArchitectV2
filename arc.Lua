@@ -2698,8 +2698,8 @@ function build(blueprint,auto)
           end
           block = nil
           local nextBlock = {}
-          for i=-1,1 do --scan for blocks in vicinity
-            for j=-1,1 do
+          for i=1,-1,-1 do --scan for blocks in vicinity
+            for j=1,-1,-1 do
               if blueprint[nL][nX+i][nZ+j]:match"[XS%l]" then
                 nextBlock = {
                   b = blueprint[nL][nX+i][nZ+j],

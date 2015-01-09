@@ -101,7 +101,11 @@ layer = { --layer class
       local vX = layer[nX]
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
-          vX[nZ] = vZ:upper()
+          if vZ == "X" then
+            vZ = nil
+          else
+            vX[nZ] = vZ:upper()
+          end
         end
       end
     end
