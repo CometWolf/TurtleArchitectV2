@@ -408,7 +408,7 @@ menu = {
       return layerBar.selectedAmt > 0
     end,
     help = function()
-      window.text"Mark the entire current layer as built, meaning the turtle will skip it"
+      window.text"Mark the selected layers as built, meaning the turtle will skip it during construction"
     end,
     func = function()
       for layer in pairs(layerBar.tSelected) do
@@ -429,7 +429,7 @@ menu = {
       return layerBar.selectedAmt > 0
     end,
     help = function()
-      window.text"Reset all build progress made on current layer"
+      window.text"Reset all build progress made on selected layers"
     end,
     func = function()
       for layer in pairs(layerBar.tSelected) do

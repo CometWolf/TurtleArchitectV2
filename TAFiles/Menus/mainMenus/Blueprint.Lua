@@ -380,7 +380,7 @@ menu = {
     name = "Mark built",
     enabled = true,
     help = function()
-      window.text"Marks the entire blueprint as built, meaning the turtle will not build any of the currently drawn blocks"
+      window.text"Marks the entire blueprint as built, meaning the turtle will not build any of the currently drawn blocks.\n\nClear break markers?"
     end,
     func = function()
       local curLayer = tTerm.scroll.layer
@@ -388,10 +388,15 @@ menu = {
         "Mark the entire blueprint as built. This means the turtle will not build it",
         {
           "Cancel",
-          "Ok"
+          "Yes",
+          "No"
         }
       )
-      if button == "Ok" then
+      if button == "Yes" or button == "Ok" then
+        tBlueprint:markBuilt(nil,nil,nil,nil,true)
+        scroll()
+        sync({blueprint = true,clearBreak = true},"Mark built")
+      elseif button == "No" then
         tBlueprint:markBuilt()
         if tMode.builtRender then
           scroll()

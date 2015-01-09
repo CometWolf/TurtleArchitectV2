@@ -756,13 +756,18 @@ menu = {
     func = function()
       local curLayer = tTerm.scroll.layer
       local button, tRes = window.text(
-        "Mark the current layer("..curLayer..") as built. This means the turtle will not build it",
+        "Mark the current layer("..curLayer..") as built. This means the turtle will not build it.\n\nClear break markers?",
         {
           "Cancel",
-          "Ok"
+          "Yes",
+          "No"
         }
       )
-      if button == "Ok" then
+      if button == "Yes" or button == "Ok" then
+        tBlueprint[curLayer]:markBuilt(nil,nil,nil,nil,true)
+        scroll()
+        sync({layer = curLayer,clearBreak = true},"Mark built")
+      elseif button == "No" then
         tBlueprint[curLayer]:markBuilt()
         if tMode.builtRender then
           scroll()

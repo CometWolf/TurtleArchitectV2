@@ -365,20 +365,20 @@ common = { --common event handlers, these are always active
           end
         elseif type == "Mark built" then
           if data.blueprint then
-            tBlueprint:markBuilt()
+            tBlueprint:markBuilt(nil,nil,nil,nil,data.clearBreak)
             if tMode.renderBuilt then
               renderArea(data.sX,data.sZ,data.eX,data.eZ)
             end
           elseif data.layer then
             tBlueprint[data.layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
             if tMode.renderBuilt and data.layer == tTerm.scroll.layer then
-              renderArea(data.sX,data.sZ,data.eX,data.eZ)
+              renderArea(data.sX,data.sZ,data.eX,data.eZ,data.clearBreak)
             end
           elseif data.layers then
             for layer in pairs(data.layers) do
-              tBlueprint[layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ)
+              tBlueprint[layer]:markBuilt(data.sX,data.sZ,data.eX,data.eZ,data.clearBreak)
             end
-            if tMode.renderBuilt and data.layers[tTerm.scroll.layer] then
+            if (tMode.renderBuilt or data.clearBreak) and data.layers[tTerm.scroll.layer] then
               renderArea(data.sX,data.sZ,data.eX,data.eZ)
             end
           end

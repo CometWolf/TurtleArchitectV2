@@ -181,10 +181,10 @@ blueprint = { --blueprint class
       blueprint[nL]:paste(clipboard[nL],pX,pZ,merge)
     end
   end,
-  markBuilt = function(blueprint,x1,z1,x2,z2)
+  markBuilt = function(blueprint,x1,z1,x2,z2,clearBreak)
     --marks the blueprint as built, optionally just one area
     for i=1,#blueprint do
-      blueprint[i]:markBuilt(x1,z1,x2,z2)
+      blueprint[i]:markBuilt(x1,z1,x2,z2,clearBreak)
     end
   end,
   markUnbuilt = function(blueprint,x1,z1,x2,z2)

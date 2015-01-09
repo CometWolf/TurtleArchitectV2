@@ -24,7 +24,7 @@ main = {
         --executes tool function
         local tool = tTool[button].tool
         local color = tTool[button].color
-        tTool[tool](tEvent[1],button,x,y,color,tTerm.scroll.layer)
+        tTool[tool](tEvent[1],button,x,y,tMode.builtDraw and color:upper() or color,tTerm.scroll.layer)
       end
       return true
     end

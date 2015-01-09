@@ -82,7 +82,7 @@ layer = { --layer class
       end
     end
   end,
-  markBuilt = function(layer,x1,z1,x2,z2)
+  markBuilt = function(layer,x1,z1,x2,z2,clearBreak)
     --marks the layer as built, optionally just one area
     local x,z = {},{}
     if not (x1 and x2) then
@@ -101,11 +101,7 @@ layer = { --layer class
       local vX = layer[nX]
       for nZ,vZ in pairs(vX) do
         if nZ >= z.min and nZ <= z.max then
-          if vZ == "X" then
-            vX[nZ] = nil
-          else
-            vX[nZ] = vZ:upper()
-          end
+          vX[nZ] = clearBreak and vZ == "X" and " " or vZ:upper()
         end
       end
     end
