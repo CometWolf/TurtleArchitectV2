@@ -2660,7 +2660,7 @@ function build(blueprint,auto)
             end
           end
           if blockAbove then
-            nL = tonumber(nL..dirY..(2))
+            nL = dirY == "+" and nL-2 or nL+2
             blockAbove = false
           else
             blockAbove = ( --check for block above/below turtle
@@ -2670,7 +2670,7 @@ function build(blueprint,auto)
           end
           if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             block = blockAbove
-            nL = tonumber(nL..dirY..(2))
+            nL = dirY == "+" and nL+2 or nL-2
           else
             block = nil
             local nextBlock
