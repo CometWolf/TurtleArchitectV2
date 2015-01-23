@@ -2660,7 +2660,7 @@ function build(blueprint,auto)
             end
           end
           if blockAbove then
-            nL = tonumber(nL..revBuildDir..(2))
+            nL = tonumber(nL..dirY..(2))
             blockAbove = false
           else
             blockAbove = ( --check for block above/below turtle
