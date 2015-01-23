@@ -2554,8 +2554,8 @@ function build(blueprint,auto)
   local dirX = tOngoing.dir.x
   local dirZ = tOngoing.dir.z
   local dirY = tOngoing.dir.y
-  local buildDir = "-Y"..dirY
-  local revBuildDir = dirY.."Y"
+  local buildDir = dirY == "+" and "Y-" or "Y+"
+  local revBuildDir = dirY == "+" and "Y+" or "Y-"
   local blockAbove
   local function moveTo(nL,nX,nZ)
     cTurtle.moveTo(tOngoing.y + tonumber(dirY..nL-1),"Y",tOngoing.breakMode and digSlot)
