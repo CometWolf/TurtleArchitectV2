@@ -2673,7 +2673,7 @@ function build(blueprint,auto)
             nL = dirY == "+" and nL+2 or nL-2
           else
             block = nil
-            local nextBlock
+            local nextBlock = {}
             local dir = cTurtle.tPos.dir
             local iX1 = 1
             local iX2 = -1
@@ -2701,12 +2701,16 @@ function build(blueprint,auto)
                   if iZ == 0
                   or iX == 0 then --1 block away, diagonal blocks are second priority
                     block = nextBlock.b
+                    nextBlock.break = true
                     break
                   end
                 end
               end
+              if  nextBlock.break then
+                break
+              end
             end
-            block = block or nextBlock and nextBlock.b
+            block = block or nextBlock.b
             nX = nextBlock.nX
             nZ = nextBlock.nZ
           end
