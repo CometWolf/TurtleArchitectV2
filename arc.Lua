@@ -2701,12 +2701,12 @@ function build(blueprint,auto)
                   if iZ == 0
                   or iX == 0 then --1 block away, diagonal blocks are second priority
                     block = nextBlock.b
-                    nextBlock.break = true
+                    nextBlock.nonDiagonal = true
                     break
                   end
                 end
               end
-              if  nextBlock.break then
+              if  nextBlock.nonDiagonal then
                 break
               end
             end
