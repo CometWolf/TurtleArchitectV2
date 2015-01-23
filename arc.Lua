@@ -2681,7 +2681,7 @@ function build(blueprint,auto)
             local iZ1 = 1
             local iZ2 = -1
             local iZ3 = -1
-            if dir == 2 then
+            if dir == 3 then
               iX1 = -1
               iX2 = 1
               iX3 = 1
@@ -2692,9 +2692,10 @@ function build(blueprint,auto)
             end
             for iX=iX1,iX2,iX3 do --scan for blocks in vicinity
               for iZ=iZ1,iZ2,iZ3 do
-                if blueprint[nL][nX+iX][nZ+iZ]:match"[XS%l]" then
+                local newBlock = blueprint[nL][nX+iX][nZ+iZ]
+                if newBlock and newBlock:match"[XS%l]" then
                   nextBlock = {
-                    b = blueprint[nL][nX+iX][nZ+iZ],
+                    b = newBlock,
                     nX = nX+iX,
                     nZ = nZ+iZ
                   }
