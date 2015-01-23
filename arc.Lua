@@ -2556,6 +2556,7 @@ function build(blueprint,auto)
   local dirY = tOngoing.dir.y
   local buildDir = "-Y"..dirY
   local revBuildDir = dirY.."Y"
+  local blockAbove
   local function moveTo(nL,nX,nZ)
     cTurtle.moveTo(tOngoing.y + tonumber(dirY..nL-1),"Y",tOngoing.breakMode and digSlot)
     cTurtle.moveTo(tOngoing.x + tonumber(dirX..nX-1),"X",tOngoing.breakMode and digSlot)
@@ -2590,7 +2591,7 @@ function build(blueprint,auto)
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "X" then --break block
-            if not block.above then
+            if not blockAbove then
               moveTo(nL,nX,nZ)
             end
             turtle.select(blueprint.colorSlots.X[1])
@@ -2601,7 +2602,7 @@ function build(blueprint,auto)
             else
               cTurtle.drop("Y-",false,64)
             end
-            cTurtle.dig(block.above and revBuildDir or buildDir)
+            cTurtle.dig(blockAbove and revBuildDir or buildDir)
             blueprint[nL][nX][nZ] = nil
             blueprint:save(tFile.blueprint,true)
             sync(
@@ -2616,10 +2617,10 @@ function build(blueprint,auto)
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "S" then --scan block
-            if not block.above then
+            if not blockAbove then
               moveTo(nL,nX,nZ)
             end
-            if cTurtle.detect(block.above and revBuildDir or buildDir) then
+            if cTurtle.detect(blockAbove and revBuildDir or buildDir) then
               local identified
               for i,slot in ipairs(blueprint.colorSlots.S[1]) do
                 if cTurtle.compare(buildDir,slot) then
@@ -2658,17 +2659,17 @@ function build(blueprint,auto)
               screen:refresh()
             end
           end
-          if block.above then
+          if blockAbove then
             nL = tonumber(nL..revBuildDir..(2))
+            blockAbove = false
           else
-            blockAbove = not block.above and ( --check for block above/below turtle
+            blockAbove = ( --check for block above/below turtle
               dirY == "+" and (rawget(blueprint,nL+2) and blueprint[nL+2][nX][nZ]) 
               or (rawget(blueprint,nL-2) and blueprint[nL-2][nX][nZ])
             )
           end
           if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             block = blockAbove
-            block.above = true
             nL = tonumber(nL..buildDir..(2))
           else
             block = nil
