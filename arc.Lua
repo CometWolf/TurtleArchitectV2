@@ -2659,7 +2659,7 @@ function build(blueprint,auto)
               screen:refresh()
             end
           end
-          if blockAbove then
+          if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             nL = dirY == "+" and nL-2 or nL+2
             blockAbove = false
           else
