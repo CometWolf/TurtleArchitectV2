@@ -2551,6 +2551,9 @@ function build(blueprint,auto)
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1] or 1
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
+  local dirX = tOngoing.dir.x
+  local dirZ = tOngoing.dir.z
+  local dirY = tOngoing.dir.y
   for iL,nL in ipairs(tOngoing.layers) do
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
     for nX,vX in pairs(layerCopy) do
@@ -2559,14 +2562,14 @@ function build(blueprint,auto)
         local nX = nX
         while block do
           if block:match"%l" then --unbuilt block
-            cTurtle.moveTo(tOngoing.y + tonumber(tOngoing.dir.y..nL-1),"Y",tOngoing.breakMode and digSlot)
-            cTurtle.moveTo(tOngoing.x + tonumber(tOngoing.dir.x..nX-1),"X",tOngoing.breakMode and digSlot)
-            cTurtle.moveTo(tOngoing.z + tonumber(tOngoing.dir.z..nZ-1),"Z",tOngoing.breakMode and digSlot)
+            cTurtle.moveTo(tOngoing.y + tonumber(dirY..nL-1),"Y",tOngoing.breakMode and digSlot)
+            cTurtle.moveTo(tOngoing.x + tonumber(dirX..nX-1),"X",tOngoing.breakMode and digSlot)
+            cTurtle.moveTo(tOngoing.z + tonumber(dirZ..nZ-1),"Z",tOngoing.breakMode and digSlot)
             if not selectColor(block,2) then
               window.text("Construction cancelled.")
               return
             end
-            cTurtle.replace("-Y"..tOngoing.dir.y,false,digSlot)
+            cTurtle.replace("-Y"..dirY,false,digSlot)
             blueprint[nL][nX][nZ] = block:upper()
             blueprint:save(tFile.blueprint,true)
             sync(
@@ -2581,8 +2584,9 @@ function build(blueprint,auto)
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
-            local blockAbove = blueprint[nL+1] and blueprint[nL+1][nX][nZ]
+            local blockAbove = dirY == "+" and (rawget(blueprint,nL+1) and blueprint[nL+1][nX][nZ]) or (rawget(blueprint,nL-1) and blueprint[nL-1][nX][nZ]) --check for break block above/below turtle
             if blockAbove == "X" then
+              local layer = tonumber(nL..dirY.."1")
               turtle.select(blueprint.colorSlots.X[1])
               if tOngoing.dropoff then
                 if turtle.getItemCount(tOngoing.dropoff) > 0 then
@@ -2591,12 +2595,12 @@ function build(blueprint,auto)
               else
                 cTurtle.drop("Y-",false,64)
               end
-              cTurtle.dig("Y"..tOngoing.dir.y)
-              blueprint[nL+1][nX][nZ] = nil
+              cTurtle.dig("Y"..dirY)
+              blueprint[layer][nX][nZ] = nil
               blueprint:save(tFile.blueprint,true)
               sync(
                 {
-                  layer = nL+1,
+                  layer = layer,
                   x = nX,
                   z = nZ,
                   isBuilding = true
@@ -2630,8 +2634,9 @@ function build(blueprint,auto)
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
-            local blockAbove = blueprint[nL+1] and blueprint[nL+1][nX][nZ]
+            local blockAbove = dirY == "+" and (rawget(blueprint,nL+1) and blueprint[nL+1][nX][nZ]) or (rawget(blueprint,nL-1) and blueprint[nL-1][nX][nZ]) --check for break block above/below turtle
             if blockAbove == "X" then
+              local layer = tonumber(nL..dirY.."1")
               turtle.select(blueprint.colorSlots.X[1])
               if tOngoing.dropoff then
                 if turtle.getItemCount(tOngoing.dropoff) > 0 then
@@ -2640,12 +2645,12 @@ function build(blueprint,auto)
               else
                 cTurtle.drop("Y-",false,64)
               end
-              cTurtle.dig("Y"..tOngoing.dir.y)
-              blueprint[nL+1][nX][nZ] = nil
+              cTurtle.dig("Y"..dirY)
+              blueprint[layer][nX][nZ] = nil
               blueprint:save(tFile.blueprint,true)
               sync(
                 {
-                  layer = nL+1,
+                  layer = layer,
                   x = nX,
                   z = nZ,
                   isBuilding = true
@@ -2680,6 +2685,30 @@ function build(blueprint,auto)
               )
               scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
               screen:refresh()
+              local blockAbove = dirY == "+" and (rawget(blueprint,nL+1) and blueprint[nL+1][nX][nZ]) or (rawget(blueprint,nL-1) and blueprint[nL-1][nX][nZ]) --check for break block above/below turtle
+              if blockAbove == "X" then
+                local layer = tonumber(nL..dirY.."1")
+                turtle.select(blueprint.colorSlots.X[1])
+                if tOngoing.dropoff then
+                  if turtle.getItemCount(tOngoing.dropoff) > 0 then
+                    cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
+                  end
+                else
+                  cTurtle.drop("Y-",false,64)
+                end
+                cTurtle.dig("Y"..dirY)
+                blueprint[layer][nX][nZ] = nil
+                blueprint:save(tFile.blueprint,true)
+                sync(
+                  {
+                    layer = layer,
+                    x = nX,
+                    z = nZ,
+                    isBuilding = true
+                  },
+                  "Point"
+                )
+              end
             else
               blueprint[nL][nX][nZ] = nil
               blueprint:save(tFile.blueprint,true)
@@ -2697,24 +2726,40 @@ function build(blueprint,auto)
             end
           end
           block = nil
-          local nextBlock = {}
-          for i=1,-1,-1 do --scan for blocks in vicinity
-            for j=1,-1,-1 do
-              if blueprint[nL][nX+i][nZ+j]:match"[XS%l]" then
+          local nextBlock
+          local dir = cTurtle.tPos.dir
+          local iX1 = 1
+          local iX2 = -1
+          local iX3 = -1
+          local iZ1 = 1
+          local iZ2 = -1
+          local iZ3 = -1
+          if dir == 2 then
+            iX1 = -1
+            iX2 = 1
+            iX3 = 1
+          elseif dir == 4 then
+            iZ1 = -1
+            iZ2 = 1
+            iZ3 = 1
+          end
+          for iX=iX1,iX2,iX3 do --scan for blocks in vicinity
+            for iZ=iZ1,iZ2,iZ3 do
+              if blueprint[nL][nX+iX][nZ+iZ]:match"[XS%l]" then
                 nextBlock = {
-                  b = blueprint[nL][nX+i][nZ+j],
+                  b = blueprint[nL][nX+iX][nZ+iZ],
                   nX = nX+i,
                   nZ = nZ+j
                 }
-                if j == 0
-                or i == 0 then --1 block away, diagonal blocks are second priority
+                if iZ == 0
+                or iX == 0 then --1 block away, diagonal blocks are second priority
                   block = nextBlock.b
                   break
                 end
               end
             end
           end
-          block = block or nextBlock.b
+          block = block or nextBlock and nextBlock.b
           nX = nextBlock.nX
           nZ = nextBlock.nZ
         end
