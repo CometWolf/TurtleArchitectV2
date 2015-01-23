@@ -856,7 +856,7 @@ function renderBottomBar() --renders bottom bar and updates info
         )
         while button ~= "Cancel" do
           if not tBlueprint[tRes.Y] then
-            button, tRes, reInput = reinput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
+            button, tRes, reInput = reInput("The layer "..tRes.Y.." does not exist!\n The current top layer is "..#tBlueprint)
           else
             scroll(tRes.Y,tRes.X,tRes.Z,true)
             return
@@ -1236,7 +1236,7 @@ function scroll(layer,x,z,absolute,forceRefresh) --scrolls the canvas x and z on
     tTerm.scroll.z = math.max(tTerm.scroll.z+z,0)
   end
   if oldX ~= tTerm.scroll.x or oldZ ~= tTerm.scroll.z or layer ~= tTerm.scroll.layer or forceRefresh then
-    if layer ~= tTerm.scroll.layer then
+    if layer ~= tTerm.scroll.layer and tBlueprint[layer] then
       tTerm.scroll.layer = math.max(layer,1)
       tBar.layerBar.tSelected = {
         [tTerm.scroll.layer] = true
