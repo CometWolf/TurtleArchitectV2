@@ -2695,8 +2695,8 @@ function build(blueprint,auto)
                 if blueprint[nL][nX+iX][nZ+iZ]:match"[XS%l]" then
                   nextBlock = {
                     b = blueprint[nL][nX+iX][nZ+iZ],
-                    nX = nX+i,
-                    nZ = nZ+j
+                    nX = nX+iX,
+                    nZ = nZ+iZ
                   }
                   if iZ == 0
                   or iX == 0 then --1 block away, diagonal blocks are second priority
