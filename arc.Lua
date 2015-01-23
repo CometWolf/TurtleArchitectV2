@@ -2658,10 +2658,14 @@ function build(blueprint,auto)
               screen:refresh()
             end
           end
-          local blockAbove = ( --check for block above/below turtle
-            dirY == "+" and (rawget(blueprint,nL+2) and blueprint[nL+2][nX][nZ]) 
-            or (rawget(blueprint,nL-2) and blueprint[nL-2][nX][nZ])
-          )
+          if block.above then
+            nL = tonumber(nL..revBuildDir..(2))
+          else
+            blockAbove = not block.above and ( --check for block above/below turtle
+              dirY == "+" and (rawget(blueprint,nL+2) and blueprint[nL+2][nX][nZ]) 
+              or (rawget(blueprint,nL-2) and blueprint[nL-2][nX][nZ])
+            )
+          end
           if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             block = blockAbove
             block.above = true
