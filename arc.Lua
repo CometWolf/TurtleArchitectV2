@@ -2670,7 +2670,7 @@ function build(blueprint,auto)
           end
           if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             block = blockAbove
-            nL = tonumber(nL..buildDir..(2))
+            nL = tonumber(nL..dirY..(2))
           else
             block = nil
             local nextBlock
