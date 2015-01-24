@@ -482,19 +482,34 @@ menu = {
             button = button2
           end
         else
+          local stringTable = setmetatable(
+            {},
+            {
+              __index = function(t,k)
+                t[k] = setmetatable(
+                  {},
+                  {
+                    __index = function(t,k)
+                      return ""
+                    end
+                  }
+                )
+                return t[k]
+              end
+            }
+          )
           local file = class.fileTable.new(tRes.Path)
           local layer = tBlueprint[layerBar.prevSelected]
-          for nX = 1,layer:size("x") do
-            local sX = ""
-            for nZ,vZ in pairs(layer[nX]) do
-              vZ = paintColors[vZ:lower()]
-              if #sX < nZ then
-                sX = sX..string.rep(" ",nZ-#sX-1)..vZ
-              else
-                sX = sX:sub(1,nZ-1)..vZ..sX:sub(nZ+1)
+          for nX,vX in pairs(layer) do
+            for nZ,vZ in pairs(vX)  do
+              for i=#stringTable[nZ]+1,nX-1 do
+                stringTable[nZ][i] = " "
               end
+              stringTable[nZ][nX] = paintColors[vZ:lower()]
             end
-            file:write(sX,nX)
+          end
+          for i=1,#stringTable do
+            file:write(table.concat(stringTable[i]))
           end
           file:save()
           return
