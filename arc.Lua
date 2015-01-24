@@ -1170,7 +1170,10 @@ function renderSideBar() --renders sidebar and fills the touch map with sidebar 
         if tTool[button].tool == "Help" then
           window.text"These buttons are used to change layers up and down. This one goes up one layer, as well as create new ones if they don't exist"
         else
-          tBlueprint[tTerm.scroll.layer+1] = tBlueprint[tTerm.scroll.layer+1] or class.layer.new()
+          if not tBlueprint[tTerm.scroll.layer+1] then
+            tBlueprint[tTerm.scroll.layer+1] = class.layer.new()
+            sync({layer = tTerm.scroll.layer+1},"Layer add")
+          end
           scroll(tTerm.scroll.layer+1)
         end
       end

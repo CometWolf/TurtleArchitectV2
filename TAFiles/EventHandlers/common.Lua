@@ -487,7 +487,13 @@ common = { --common event handlers, these are always active
           end
           scroll(1,0,0,true,true)
         elseif type == "Colorslots load" then
-          tBlueprint.colorsSlots = class.matrix.new(2,data.colorSlots)
+          tBlueprint.colorsSlots = class.matrix.new(2)
+          local colorSlots = tBlueprint.colorSlots
+          for k,v in pairs(data.colorSlots) do
+            for k2,v2 in pairs(v) do
+              colorSlots[k][k2] = v2
+            end
+          end
           tBlueprint:save(tFile.blueprint,true)
         end
         return true
@@ -520,8 +526,8 @@ common = { --common event handlers, these are always active
           response.progress = loadProgress(data.blueprintName)
           rednet.send(senderId,"Success",response)
         elseif type == "Save blueprint progress" then
-          saveProgress(data.blueprintName,data.progress)
           tFile.blueprint = data.blueprintName
+          saveProgress(data.blueprintName,data.progress)
         elseif type == "Build" then
           local oldSync = tMode.sync
           tMode.sync = {
