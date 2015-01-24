@@ -480,6 +480,7 @@ menu = {
             button,tRes,reInput = reInput"Input save path"
           else 
             button = button2
+            fs.delete(tRes.Path)
           end
         else
           local stringTable = setmetatable(
