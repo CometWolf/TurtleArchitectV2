@@ -509,7 +509,7 @@ menu = {
             end
           end
           for i=1,#stringTable do
-            file:write(table.concat(stringTable[i]))
+            file:write(table.concat(stringTable[i]),i)
           end
           file:save()
           return
