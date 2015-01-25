@@ -624,6 +624,9 @@ Program init
 ----------------------------------------------------------------------------------------------------------]]--
 
 if turtle then
+  if not term.isColor() then
+    error("Turtle Architect is incompatible with regular turtles!",0)
+  end
   if not fs.exists(tFile.cTurtle) then
     assert(http.paste.get(tPaste.cTurtle,tFile.cTurtle),"Error: Failed to download cTurtle API")
   end
