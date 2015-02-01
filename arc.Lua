@@ -1805,7 +1805,7 @@ window = {
       end
     end
   end,
-  scroll = function(text,tItems,multiSelection,customEvent)
+  scroll = function(text,tItems,multiSelection,reinput,customEvent)
     local screenLayer = screen.layers.dialogue+activeInputs
     inputOpen = true
     screen:setLayer(screenLayer)
@@ -2011,7 +2011,15 @@ window = {
     --user interaction begins
       local event,selection = eventHandler.pull()
       if type(event) == "string" then
-        return event,selection
+        if reinput then
+          for i,item in ipairs(tItems) do
+            item.selected = selected[i]
+          end
+          reinput = function(reText)
+            return window.scroll(reText,tItems,multiSelection,true,customEvent)
+          end
+        end
+        return event,selection,reinput
       end
     end
   end
@@ -2363,17 +2371,24 @@ Load?]],
         selected = true
       }
     end
-    local button, tRes = window.scroll(
+    local button, tRes, reinput = window.scroll(
       "Select layers to build",
       tSelection,
+      true,
       true
     )
-    if button ~= "Cancel" then
-      tProgress.layers = {}
-      for i,v in ipairs(tRes) do
-        tProgress.layers[i] = tonumber(v)
+    while button ~= "Cancel" do
+      if #tRes < 1 then
+        button, tRes, reinput = reinput("Atleast 1 layer must be selected")
+      else
+        tProgress.layers = {}
+        for i,v in ipairs(tRes) do
+          tProgress.layers[i] = tonumber(v)
+        end
+        break
       end
-    else
+    end
+    if button == "Cancel" then
       return false
     end
   end
@@ -2549,9 +2564,15 @@ function build(blueprint,auto)
     end
   end
   blueprint = blueprint or tBlueprint
-  local tOngoing = not auto and checkProgress(tFile.blueprint) or loadProgress(tFile.blueprint)
+  local tOngoing 
+  if not auto then
+    tOngoing = checkProgress(tFile.blueprint)
+  else
+    tOngoing = loadProgress(tFile.blueprint)
+  end
   if not tOngoing then
-    return
+    window.text"Construction cancelled"
+      return
   end
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
