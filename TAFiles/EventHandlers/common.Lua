@@ -474,7 +474,7 @@ common = { --common event handlers, these are always active
           renderArea(data.sX,data.sZ,data.eX,data.eZ)
         elseif type == "Blueprint load" then
           tBlueprint = class.blueprint.copy(data.blueprint)
-          tFile.blueprint = type(data.blueprintName) "string" and data.blueprintName or nil
+          tFile.blueprint = data.blueprintName
           scroll(1,0,0,true,true)
           if tMode.layerBar then
             renderLayerBar(true)
