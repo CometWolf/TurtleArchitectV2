@@ -6,6 +6,10 @@
 --------------------------------------------------------------------------------------------------------------
 environment init
 ----------------------------------------------------------------------------------------------------------]]--
+if multishell then --disable multishell for performance reasons
+  term.redirect(term.native())
+end
+
 local env = {  --new environment
   tFile = {
   --file path table, edit in the File paths section

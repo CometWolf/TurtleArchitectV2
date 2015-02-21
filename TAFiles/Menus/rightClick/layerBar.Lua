@@ -277,7 +277,7 @@ menu = {
     end,
     func = function()
       for i,layer in ipairs(layerBar.clipboard) do 
-        table.insert(tBlueprint,layerBar.prevSelected+i,layer)
+        table.insert(tBlueprint,layerBar.prevSelected+i,layer:copy())
       end
       renderLayerBar()
       sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
