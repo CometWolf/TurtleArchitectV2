@@ -18,9 +18,10 @@ layer = { --layer class
   size = function(layer,dir)
     local x,z = 0,0
     for nX,vX in pairs(layer) do
-      x = math.max(nX,x)
-      for nZ in pairs(vX) do
-        z = math.max(nZ,z)
+      local nZ = vX:size()
+      if nZ > 0 then
+        x = math.max(x,nX)
+        z = math.max(z,nZ)
       end
     end
     return dir == "x" and x or dir == "z" and z or x,z

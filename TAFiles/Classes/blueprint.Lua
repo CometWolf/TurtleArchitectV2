@@ -3,6 +3,7 @@ blueprint = { --blueprint class
   new = function(data,auto)
     data = data or {}
     data[1] = class.layer.new(data[1])
+    data.orientation = data.orientation or "Y"
     data.colorSlots = class.matrix.new(2,data.colorSlots)
     if auto then
       return setmetatable(
@@ -67,6 +68,7 @@ blueprint = { --blueprint class
       end
     end
     file:write"END"
+    file:write("Orientation: "..blueprint.orientation)
     file:write((textutils.serialize(blueprint.colorSlots):gsub("\n%s-","")))
     if path == true then
       return file:readAll()
@@ -116,7 +118,14 @@ blueprint = { --blueprint class
         line = read()
       end
     end
-    blueprint.colorSlots = class.matrix.new(2,(textutils.unserialize(read() or "{}")))
+    local line = read()
+    blueprint.orientation = line:match"Orientation: ([XYZ])$"
+    if not blueprint.orientation then
+      blueprint.orientation = "Y"
+    else
+      line = read()
+    end
+    blueprint.colorSlots = class.matrix.new(2,(textutils.unserialize(line or "{}")))
     file.close()
     return blueprint
   end,
@@ -124,11 +133,10 @@ blueprint = { --blueprint class
   --returns the amount of layers and the dimensions of the blueprint
     local x = 0
     local z = 0
-    for iL=1,#blueprint do
-      x = math.max(blueprint[iL]:size(),x)
-      for nX,vX in pairs(blueprint[iL]) do
-        z = math.max(vX:size(),z)
-      end
+    for iL,vL in ipairs(blueprint) do
+      local lX,lZ = vL:size()
+      x = math.max(x,lX)
+      z = math.max(z,lZ)
     end
     return #blueprint,x,z
   end,
@@ -205,5 +213,74 @@ blueprint = { --blueprint class
       blueprint[i] = blueprint[i]:flipZ(x1,z1,x2,z2)
     end
   end,
+  rotate = function(blueprint,axis)
+    if blueprint.orientation == axis then
+      return blueprint
+    end
+    local rotated = class.blueprint.new()
+    local y,x,z = blueprint:size()
+    if axis == "Y" then
+      if blueprint.orientation == "X" then --X to Y
+        for iX = 1,x do
+          rotated[iX] = class.layer.new()
+          for iY,vL in ipairs(blueprint) do
+            rotated[iX][iY] = vL[iX]
+          end
+        end
+      else --Z to Y
+        for iZ = 1,z do
+          rotated[iZ] = class.layer.new()
+          local rL = rotated[iZ]
+          for iY,vY in ipairs(blueprint) do
+            for iX,vX in pairs(vY) do
+              rL[iX][iY] = vX[iZ]
+            end
+          end
+        end
+      end
+    elseif axis == "X" then
+      if blueprint.orientation == "Y" then --Y to X
+        for iX = 1,x do
+          rotated[iX] = class.layer.new()
+          local rL = rotated[iX]
+          for iY,vL in ipairs(blueprint) do
+            rL[iY] = vL[iX]
+          end
+        end
+      else --Z to X
+        for iY,vY in ipairs(blueprint) do
+          rotated[iY] = class.layer.new()
+          for iX,vX in pairs(vY) do
+            for iZ,vZ in pairs(vX) do 
+              rotated[iY][iZ][iX] = vZ
+            end
+          end
+        end
+      end
+    elseif axis == "Z" then
+      if blueprint.orientation == "X" then --X to Z
+        for iY,vY in ipairs(blueprint) do
+          rotated[iY] = class.layer.new()
+          for iX,vX in pairs(vY) do
+            for iZ,vZ in pairs(vX) do 
+              rotated[iY][iZ][iX] = vZ
+            end
+          end
+        end
+      else --Y to Z
+        for iZ = 1,z do
+          rotated[iZ] = class.layer.new()
+          local rL = rotated[iZ]
+          for iY,vY in ipairs(blueprint) do
+            for iX,vX in pairs(vY) do
+              rL[iX][iY] = vX[iZ]
+            end
+          end
+        end
+      end
+    end
+    rotated.orientation = axis
+    return rotated
+  end
 }
 return blueprint

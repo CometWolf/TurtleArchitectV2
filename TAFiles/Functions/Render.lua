@@ -308,12 +308,14 @@ function renderLayerBar(fullRefresh) --updates the layer sidebar, optionally red
   tBar.touchMap[layerBar.eX-2][layerBar.eZ] = nil
   screen:delPoint(layerBar.eX-1,layerBar.eZ)
   screen:delPoint(layerBar.eX-2,layerBar.eZ)
+  if fullRefresh then
+    screen:drawLine(layerBar.sX,layerBar.sZ,layerBar.eX,layerBar.eZ,tColors.layerBar)
+    layerBar.eL = layerBar.eL-layerBar.sL+1
+    layerBar.sL = 1
+  end
   local indicatorLength = #string.format(layerBar.sL)
   for iX = 2,indicatorLength do
     tBar.touchMap[layerBar.eX-iX+1][layerBar.eZ] = layerBarClick
-  end
-  if fullRefresh then
-    screen:drawLine(layerBar.sX,layerBar.sZ,layerBar.eX,layerBar.eZ,tColors.layerBar)
   end
   screen:setCursorPos(layerBar.eX-indicatorLength+1,layerBar.eZ)
   screen:setBackgroundColor(

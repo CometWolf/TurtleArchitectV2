@@ -18,11 +18,11 @@ x = { --x-axis class
     )
   end,
   size = function(t)
-    local size = 0
-    for nZ,vZ in pairs(t) do
-      size = math.max(size,nZ)
+    local z = 0
+    for nZ in pairs(t) do
+      z = math.max(z,nZ)
     end
-    return size
+    return z
   end
 }
 return x

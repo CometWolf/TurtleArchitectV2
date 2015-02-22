@@ -335,6 +335,37 @@ Use the help tool, found under the To menu, if you desire more information.
     end
   },
   [10] = {
+    name = "Change view",
+    enabled = true,
+    func = function()
+      local button,selected = window.scroll(
+        "Select which axis to view from",
+        {
+          {
+            text = "X",
+            selected = tBlueprint.orientation == "X"
+          },
+          {
+            text = "Y",
+            selected = tBlueprint.orientation == "Y",
+          },
+          {
+            text = "Z",
+            selected = tBlueprint.orientation == "Z"
+          }
+        }
+      )
+      if button == "Cancel" then
+        return
+      end
+      tBlueprint = tBlueprint:rotate(selected)
+      scroll(1,nil,nil,nil,true)
+      if tMode.layerBar then
+        renderLayerBar(true)
+      end
+    end
+  },
+  [11] = {
     name = "Quit",
     enabled = true,
     func = function()
