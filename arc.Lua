@@ -165,8 +165,8 @@ tIgnore = { --ids of turtles to ignore status messages from
 }
 --load settings
 loadFile(tFile.settings)
-loadFile(tFile.APIFolder.."/glasses.Lua")
-loadFile(tFile.APIFolder.."/window.Lua")
+loadFile(tFile.APIFolder.."/glasses.lua")
+loadFile(tFile.APIFolder.."/window.lua")
 
 --[[----------------------------------------------------------------------------------------------------------
 Program init
