@@ -187,6 +187,7 @@ function assignColorSlots(color)
     true
   )
   if button ~= "Cancel" then
+    table.sort(tRes)
     tBlueprint.colorSlots[color] = {}
     for i,slot in ipairs(tRes) do
       tBlueprint.colorSlots[color][i] = tonumber(slot)
@@ -493,7 +494,7 @@ function build(blueprint,auto)
               if turtle.getItemCount(tOngoing.dropoff) > 0 then
                 cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
               end
-            else
+            elseif blueprint.colorsSlots.X[#blueprint.colorSlots.X] > 0 then
               cTurtle.drop("Y-",false,64)
             end
             cTurtle.dig(blockAbove and revBuildDir or buildDir)
