@@ -452,6 +452,7 @@ function build(blueprint,auto)
   local buildDir = dirY == "+" and "Y-" or "Y+"
   local revBuildDir = dirY == "+" and "Y+" or "Y-"
   local blockAbove
+  local saveCount = 0
   local function moveTo(nL,nX,nZ)
     cTurtle.moveTo(tOngoing.y + tonumber(dirY..nL-1),"Y",tOngoing.breakMode and digSlot)
     cTurtle.moveTo(tOngoing.x + tonumber(dirX..nX-1),"X",tOngoing.breakMode and digSlot)
@@ -472,7 +473,11 @@ function build(blueprint,auto)
             end
             cTurtle.replace(buildDir,false,digSlot)
             blueprint[nL][nX][nZ] = block:upper()
-            blueprint:save(tFile.blueprint,true)
+            saveCount = saveCount+1
+            if saveCount >= 25 then
+              blueprint:save(tFile.blueprint,true)
+              saveCount = 0
+            end
             sync(
               {
                 layer = nL,
@@ -499,7 +504,11 @@ function build(blueprint,auto)
             end
             cTurtle.dig(blockAbove and revBuildDir or buildDir)
             blueprint[nL][nX][nZ] = nil
-            blueprint:save(tFile.blueprint,true)
+            saveCount = saveCount+1
+            if saveCount >= 25 then
+              blueprint:save(tFile.blueprint,true)
+              saveCount = 0
+            end
             sync(
               {
                 layer = nL,
@@ -525,7 +534,10 @@ function build(blueprint,auto)
               end
               identified = identified and blueprint.colorSlots.S.color[identified] or blueprint.colorsSlots.S.color.unidentified
               blueprint[nL][nX][nZ] = identified
-              blueprint:save(tFile.blueprint,true)
+              if saveCount >= 25 then
+                blueprint:save(tFile.blueprint,true)
+                saveCount = 0
+              end
               sync(
                 {
                   layer = nL,
@@ -540,7 +552,11 @@ function build(blueprint,auto)
               screen:refresh()
             else
               blueprint[nL][nX][nZ] = nil
-              blueprint:save(tFile.blueprint,true)
+              saveCount = saveCount+1
+              if saveCount >= 25 then
+                blueprint:save(tFile.blueprint,true)
+                saveCount = 0
+              end
               sync(
                 {
                   layer = nL,
