@@ -494,7 +494,7 @@ function build(blueprint,auto)
               if turtle.getItemCount(tOngoing.dropoff) > 0 then
                 cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
               end
-            elseif blueprint.colorSlots.X[#blueprint.colorSlots.X] > 0 then
+            elseif turtle.getItemCount(blueprint.colorSlots.X[#blueprint.colorSlots.X]) > 0 then
               cTurtle.drop("Y-",false,64)
             end
             cTurtle.dig(blockAbove and revBuildDir or buildDir)
