@@ -418,7 +418,13 @@ window = {
         selected[i] = type(v) == "table" and v.selected and true or nil
       end
     else
-      selected = 1
+      for i,v in ipairs(#tItems) do
+        if type(v) == "table" and v.selected then
+          selected = i
+          break
+        end
+      end
+      selected = selected or 1
     end
     local oldHandlers = eventHandler.active--stores currently in use event handlers, prior to switch
     local function endExecution(event,selection)
