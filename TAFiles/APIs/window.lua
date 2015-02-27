@@ -418,7 +418,7 @@ window = {
         selected[i] = type(v) == "table" and v.selected and true or nil
       end
     else
-      for i,v in ipairs(#tItems) do
+      for i,v in ipairs(tItems) do
         if type(v) == "table" and v.selected then
           selected = i
           break
