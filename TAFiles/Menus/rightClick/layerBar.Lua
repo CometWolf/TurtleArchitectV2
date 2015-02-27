@@ -7,7 +7,7 @@ menu = {
       return layerBar.selectedAmt == 1
     end,
     help = function()
-      window.text"Inserts a new blank layer below the currently selected layer"
+      window.text"Inserts a new blank layer above the currently selected layer"
     end,
     func = function()
       local layer = layerBar.prevSelected+1

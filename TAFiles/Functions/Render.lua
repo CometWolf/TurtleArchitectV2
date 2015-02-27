@@ -635,7 +635,7 @@ function writePoint(x,z) --renders the specified blueprint point at wherever the
   elseif tMode.backgroundLayer and color == " " and (tMode.backgroundLayer[x][z] ~= " " and tMode.backgroundLayer[x][z] ~= "X") then
     marker = tMode.grid and "+" or " "
     bColor = tColors.backgroundLayer
-    tColor = colorKey[tMode.backgroundLayer[x][z]] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMaker2
+    tColor = colorKey[tMode.backgroundLayer[x][z]] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMarker2
   elseif tMode.builtRender and color:match"%u" then
     marker = "B"
     tColor = tColors.builtMarker
