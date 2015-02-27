@@ -133,6 +133,14 @@ menu = {
       if not tProgress then
         return
       end
+      local button = window.text(
+        "Enable auto resume?",
+        {
+          "Cancel",
+          "Ok"
+        }
+      )
+      local autoRecovery = button == "Ok"
       rednet.send(
         ids,
         "Turtle command",
@@ -167,8 +175,7 @@ menu = {
         )
         xNext = xNext+xChunks
       end
-      rednet.send(ids,"Turtle command",{type = "Build"}
-      )
+      rednet.send(ids,"Turtle command",{type = "Build", auto = autoRecovery})
     end
   }
 }

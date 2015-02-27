@@ -35,6 +35,7 @@ tFile.eventHandlerFolder = tFile.folder.."/EventHandlers"
 tFile.cTurtle = "/cTurtle" --cTurtle API,downloaded automatically if missing on a turtle.
 tFile.settings = tFile.folder.."/Settings.Lua" --settings file
 tFile.installer = tFile.folder.."/installer.Lua" --github installer, used for updates
+tFile.log = tFile.folder.."/log" --error log, errors are only logged while running in auto-recovery
 
 tPaste = {
 --pastebin codes and functions
@@ -286,6 +287,7 @@ local function Quit()
   term.setCursorPos(1,1)
   print"Thank you for using Turtle Architect, by CometWolf."
 end
+local crashCounter = 0
 while true do
   local tRes = {pcall(execution)}
   if not tRes[1] then
@@ -295,7 +297,25 @@ while true do
     or tRes[2] == "Terminated" then
       return Quit()
     elseif tArg[2] == "-r" then
-      --recovery mode ignores errors
+      --recovery mode logs errors and resumes operation as normal
+      if crashCounter > 10 then
+        local button = window.text(
+          "Crash limit exceeded, please check "..tFile.log.." for further details",
+          {
+            "Quit"
+          }
+        )
+        return
+      end
+      local file
+      if not fs.exists(tFile.log) then
+        file = fs.open(tFile.log,"w")
+      else
+        file = fs.open(tFile.log,"a")
+      end
+      file.writeLine(tostring(tRes[2]))
+      file.close()
+      crashCounter = crashCounter+1
     elseif tTerm.color then --color supported crash
       local errors = ""
       local button = window.text(

@@ -537,6 +537,20 @@ common = { --common event handlers, these are always active
             amount = 1,
             turtles = 0
           }
+          if data.auto then
+            local file = class.fileTable.new("/startup")
+            if not file:find("--Turtle Architect auto recovery") then
+              file:write(
+[[
+--Turtle Architect auto recovery
+if fs.exists("]]..tFile.blueprint..[[.TAo") then
+  shell.run("]]..tFile.program.." "..tFile.blueprint..[[ -r")
+end
+]]
+              )
+              file:save()
+            end
+          end
           build(tBlueprint,true)
           tMode.sync = oldSync
         end

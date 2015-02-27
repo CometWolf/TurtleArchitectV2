@@ -413,11 +413,11 @@ Load?]],
     local button = window.text(
       "Enable break mode?",
       {
-        "Cancel",
-        "Ok"
+        "No",
+        "Yes"
       }
     )
-    tProgress.breakMode = (button == "Ok")
+    tProgress.breakMode = (button == "Ok" or button == "Yes")
   end
   saveProgress(fileName,tProgress)
   return tProgress,fileName
@@ -435,12 +435,31 @@ function build(blueprint,auto)
   local tOngoing 
   if not auto then
     tOngoing = checkProgress(tFile.blueprint)
+    if not tOngoing then
+      window.text"Construction cancelled"
+      return
+    end
+    local button = window.text(
+      "Enable auto resume?",
+      {
+        "No",
+        "Yes"
+      }
+    )
+    if button == "Yes" or button == "Ok" then
+      local file = class.fileTable.new("/startup")
+      if not file:find([[shell\.run("]]..tFile.program.." .- -r") then
+        file:write(
+[[--Turtle Architect auto recovery
+if fs.exists("]]..tFile.blueprint..[[.TAo") then
+  shell.run("]]..tFile.program.." "..tFile.blueprint..[[ -r")
+end]]
+        )
+        file:save()
+      end
+    end
   else
     tOngoing = loadProgress(tFile.blueprint)
-  end
-  if not tOngoing then
-    window.text"Construction cancelled"
-      return
   end
   cTurtle.tSettings.enderFuel = tOngoing.enderChest
   screen:refresh()
@@ -453,10 +472,67 @@ function build(blueprint,auto)
   local revBuildDir = dirY == "+" and "Y+" or "Y-"
   local blockAbove
   local saveCount = 0
-  local function moveTo(nL,nX,nZ)
-    cTurtle.moveTo(tOngoing.y + tonumber(dirY..nL-1),"Y",tOngoing.breakMode and digSlot)
-    cTurtle.moveTo(tOngoing.x + tonumber(dirX..nX-1),"X",tOngoing.breakMode and digSlot)
-    cTurtle.moveTo(tOngoing.z + tonumber(dirZ..nZ-1),"Z",tOngoing.breakMode and digSlot)
+  local function moveTo(nL,nX,nZ,skipCheck)
+    local mL = tonumber(dirY..nL-1)
+    local mX = tonumber(dirX..nX-1)
+    local mZ = tonumber(dirZ..nZ-1)
+    local cL = math.abs(cTurtle.tPos.y-tOngoing.y+1)
+    local cX = math.abs(cTurtle.tPos.x-tOngoing.x+1)
+    local cZ = math.abs(cTurtle.tPos.z-tOngoing.z+1)
+    cTurtle.moveTo(tOngoing.y + mL,"Y",tOngoing.breakMode and digSlot)
+    if blueprint[nL+1] then
+      for iL=math.min(cL+1,nL),math.max(nL,cL+1) do
+        local xLine = blueprint[iL][cX]
+        if xLine[cZ] == "X" then
+          xLine[cZ] = nil
+          sync(
+            {
+              layer = iL,
+              x = cX,
+              z = cZ,
+              isBuilding = true
+            },
+            "Point"
+          )
+        end
+      end
+      local layer = blueprint[nL+1]
+      cTurtle.moveTo(tOngoing.x + mX,"X",tOngoing.breakMode and digSlot)
+      for iX=math.min(cX+1,nX),math.max(nX,cX+1) do
+        local xLine = layer[iX]
+        if xLine[cZ] == "X" then
+          xLine[cZ] = nil
+          sync(
+            {
+              layer = nL+1,
+              x = iX,
+              z = cZ,
+              isBuilding = true
+            },
+            "Point"
+          )
+        end
+      end
+      local xLine = layer[nX]
+      cTurtle.moveTo(tOngoing.z + mZ,"Z",tOngoing.breakMode and digSlot)
+      for iZ=math.min(cZ+1,nZ),math.max(nZ,cZ+1) do
+        if xLine[iZ] == "X" then
+          xLine[iZ] = nil
+          sync(
+            {
+              layer = nL+1,
+              x = nX,
+              z = iZ,
+              isBuilding = true
+            },
+            "Point"
+          )
+        end
+      end
+    else
+      cTurtle.moveTo(tOngoing.x + mX,"X",tOngoing.breakMode and digSlot)
+      cTurtle.moveTo(tOngoing.z + mZ,"Z",tOngoing.breakMode and digSlot)
+    end
   end
   for iL,nL in ipairs(tOngoing.layers) do
     local layerCopy = blueprint[nL]:copy() --table copy because fuck you next
@@ -633,7 +709,18 @@ function build(blueprint,auto)
 			rednet.send(tMode.sync.ids,"Turtle status",{type = "Layer complete", blueprintName = tFile.blueprint, layer = nL})
     end
   end
+  blueprint:save(tFile.blueprint,true)
 	if tMode.sync.amount > 0 then
 	  rednet.send(tMode.sync.ids,"Turtle status",{type = "Build complete", blueprintName = tFile.blueprint})
 	end
+  if auto then
+    local file = class.fileTable.new("/startup")
+    local line = file:find("--Turtle Architect auto recovery")
+    if line then
+      for i=line+3,line,-1 do
+        file:delete(i)
+      end
+    end
+    file:save()
+  end
 end
