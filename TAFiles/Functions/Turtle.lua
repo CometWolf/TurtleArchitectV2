@@ -476,12 +476,13 @@ end]]
     local mL = tonumber(dirY..nL-1)
     local mX = tonumber(dirX..nX-1)
     local mZ = tonumber(dirZ..nZ-1)
-    local cL = math.abs(cTurtle.tPos.y-tOngoing.y+1)
-    local cX = math.abs(cTurtle.tPos.x-tOngoing.x+1)
-    local cZ = math.abs(cTurtle.tPos.z-tOngoing.z+1)
+    local cL = math.abs(cTurtle.tPos.y)-math.abs(tOngoing.y)+1
+    local cX = math.abs(cTurtle.tPos.x)-math.abs(tOngoing.x)+1
+    local cZ = math.abs(cTurtle.tPos.z)-math.abs(tOngoing.z)+1
+    local dL = tonumber(nL..dirY..(1))
     cTurtle.moveTo(tOngoing.y + mL,"Y",tOngoing.breakMode and digSlot)
-    if blueprint[nL+1] then
-      for iL=math.min(cL+1,nL),math.max(nL,cL+1) do
+    if blueprint[dL] then
+      for iL=math.min(cL,dL),math.max(nL,dL) do
         local xLine = blueprint[iL][cX]
         if xLine[cZ] == "X" then
           xLine[cZ] = nil
@@ -496,15 +497,15 @@ end]]
           )
         end
       end
-      local layer = blueprint[nL+1]
+      local layer = blueprint[dL]
       cTurtle.moveTo(tOngoing.x + mX,"X",tOngoing.breakMode and digSlot)
-      for iX=math.min(cX+1,nX),math.max(nX,cX+1) do
+      for iX=math.min(cX,nX),math.max(nX,cX) do
         local xLine = layer[iX]
         if xLine[cZ] == "X" then
           xLine[cZ] = nil
           sync(
             {
-              layer = nL+1,
+              layer = dL+1,
               x = iX,
               z = cZ,
               isBuilding = true
@@ -515,12 +516,12 @@ end]]
       end
       local xLine = layer[nX]
       cTurtle.moveTo(tOngoing.z + mZ,"Z",tOngoing.breakMode and digSlot)
-      for iZ=math.min(cZ+1,nZ),math.max(nZ,cZ+1) do
+      for iZ=math.min(cZ,nZ),math.max(nZ,cZ) do
         if xLine[iZ] == "X" then
           xLine[iZ] = nil
           sync(
             {
-              layer = nL+1,
+              layer = dL+1,
               x = nX,
               z = iZ,
               isBuilding = true
