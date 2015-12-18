@@ -47,16 +47,14 @@ function renderGrid() --renders grid overlay and borders
   local nextChar = 1
   for i=2,canvas.eX do
     screen:write(string.format(nextChar))
-    nextChar = nextChar+1
-    nextChar = (nextChar < 10 and nextChar or 0)
+    nextChar = (nextChar < 9 and nextChar+1 or 0)
   end
   screen:setCursorPos(1,2)
   nextChar = 1
   for i=2,canvas.eZ do
     screen:setCursorPos(1,i)
     screen:write(string.format(nextChar))
-    nextChar = nextChar+1
-    nextChar = (nextChar < 10 and nextChar or 0)
+    nextChar = (nextChar < 9 and nextChar+1 or 0)
   end
   canvas.sX = canvas.sX+1
   canvas.tX = canvas.eX-canvas.sX
@@ -622,8 +620,9 @@ function renderToolOverlay() --renders all tool overlays
 end
 
 function writePoint(x,z) --renders the specified blueprint point at wherever the cursor is
-  local marker,bColor,tColor
+  local marker,bColor,tColor,gridColor,gridColor2
   local color = tBlueprint[tTerm.scroll.layer][x][z]
+  local bgLayer = tMode.backgroundLayer
   if color == "X" then
     marker = "X"
     tColor = colorKey.X
@@ -632,16 +631,32 @@ function writePoint(x,z) --renders the specified blueprint point at wherever the
     marker = "S"
     tColor = colorKey.S
     bColor = colors.white
-  elseif tMode.backgroundLayer and color == " " and (tMode.backgroundLayer[x][z] ~= " " and tMode.backgroundLayer[x][z] ~= "X") then
-    marker = tMode.grid and "+" or " "
+  elseif bgLayer and color == " " and (bgLayer[x][z] ~= " " and bgLayer[x][z] ~= "X") then
+    if tMode.grid then
+      marker = "+"
+      if x%tMode.gridMajor == 0 or z%tMode.gridMajor == 0 then
+        gridColor = tColors.gridMarkerMajor
+        gridColor2 = tColors.gridMarkerMajor2
+      else
+        gridColor = tColors.gridMarkerMinor
+        gridColor2 = tColors.gridMarkerMinor2
+      end
+      tColor = tColors.backgroundLayer ~= gridColor and gridColor or gridColor2
+    end
     bColor = tColors.backgroundLayer
-    tColor = tColors.backgroundLayer ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMarker2
   elseif tMode.builtRender and color:match"%u" then
     marker = "B"
     tColor = tColors.builtMarker
   elseif tMode.grid then
     marker = "+"
-    tColor = colorKey[color] ~= tColors.gridMarker and tColors.gridMarker or tColors.gridMarker2
+    if x%tMode.gridMajor == 0 or z%tMode.gridMajor == 0 then
+      gridColor = tColors.gridMarkerMajor
+      gridColor2 = tColors.gridMarkerMajor2
+    else
+      gridColor = tColors.gridMarkerMinor
+      gridColor2 = tColors.gridMarkerMinor2
+    end
+    tColor = colorKey[color] ~= gridColor and gridColor or gridColor2
   end
   screen:drawPoint(nil,nil,bColor or colorKey[color],marker or " ",tColor)
 end

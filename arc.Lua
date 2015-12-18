@@ -254,6 +254,7 @@ local execution = function()
   renderSideBar()
   --renderBottomBar() --sidebar calls this on the first call anyways.
   if tMode.grid then
+    removeGrid()
     renderGrid()
   end
   if tMode.layerBar then

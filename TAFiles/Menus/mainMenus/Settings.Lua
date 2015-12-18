@@ -120,8 +120,8 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
         file:write("  grid = false,",line)
         file:save()
       else
-        tMode.grid = true
         renderGrid()
+        tMode.grid = true
         local file = class.fileTable.new(tFile.settings)
         local line = file:find("  grid = false,",true)
         file:write("  grid = true,",line)
@@ -130,6 +130,50 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
     end
   },
   [5] = {
+    name = "Grid major",
+    enabled = true,
+    help = function()
+      window.text"Change the size of the major grid marker (the darker marker)"
+    end,
+    func = function()
+      local button,tRes,reInput = window.text(
+        "Change the size of the major grid marker",
+        {
+          "Cancel",
+          "Ok"
+        },
+        {
+          {
+            name = "Major",
+            value = tMode.gridMajor,
+            accepted = "%d"
+          },
+        },
+        nil,
+        true
+      )
+      while true do
+        if button == "cancel" then
+          return
+        elseif not tRes.Major then
+          button,tRes,reInput = reInput("Missing major parameter!")
+        else
+          if tRes.Major ~= tMode.gridMajor then
+            tMode.gridMajor = tRes.Major
+            local file = class.fileTable.new(tFile.settings)
+            local line = file:find("  gridMajor = %d-,")
+            file:write("  gridMajor = "..tMode.gridMajor..",",line)
+            file:save()
+            if tMode.grid then
+              scroll()
+            end
+          end
+          return
+        end
+      end
+    end
+  },
+  [6] = {
     name = "Background layer",
     enabled = true,
     help = function()
@@ -169,7 +213,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       end
     end
   },
-  [6] = {
+  [7] = {
     name = "Overwrite mode",
     enabled = true,
     help = function()
@@ -179,7 +223,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       tMode.overwrite = not tMode.overwrite
     end
   },
-  [7] = {
+  [8] = {
     name = "Hide menus",
     enabled = true,
     help = function()
@@ -189,7 +233,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       toggleMenus()
     end
   },
-  [8] = {
+  [9] = {
     name = "Sync mode",
     enabled = function()
       return modem and true or false
@@ -318,7 +362,7 @@ BGL mode: ]]..(tMode.backgroundLayer and "ON" or "OFF"),
       )
     end
   },
-  [9] = {
+  [10] = {
     name = "About",
     enabled = true,
     help = function()
@@ -334,7 +378,7 @@ Use the help tool, found under the To menu, if you desire more information.
       )
     end
   },
-  [10] = {
+  [11] = {
     name = "Change view",
     enabled = true,
     func = function()
@@ -365,7 +409,7 @@ Use the help tool, found under the To menu, if you desire more information.
       end
     end
   },
-  [11] = {
+  [12] = {
     name = "Quit",
     enabled = true,
     func = function()

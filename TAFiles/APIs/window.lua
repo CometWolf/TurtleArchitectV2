@@ -209,6 +209,7 @@ window = {
     if #tInputs > 0 then
       for i=#tInputs,1,-1 do
         local field = tInputs[i]
+        field.value = field.value and field.value or ""
         screen:setBackgroundColor(tColors.inputBox)
         screen:setTextColor(field.nameColor)
         screen:setCursorPos(3,box.bottom-2-#tInputs+i)
@@ -218,7 +219,7 @@ window = {
         field.lX = field.eX-field.sX --total field length
         screen:setTextColor(field.textColor)
         screen:setBackgroundColor(field.backgroundColor)
-        screen:write(string.sub(field.value,1,field.lX))
+        screen:write(string.sub(field.value,1,field.lX) or "")
         field.cX = (screen:getCursorPos())-field.sX --cursor pos
         field.scroll = math.max(0,#field.value-field.lX) --scroll value
         screen:drawLine(field.cX+field.sX,field.y,field.eX,field.y,field.backgroundColor)

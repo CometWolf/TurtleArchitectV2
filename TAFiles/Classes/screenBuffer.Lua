@@ -79,15 +79,17 @@ screenBuffer = {
     end
   end,
   write = function(buffer,text,bColor,tColor)
+    bColor = bColor or buffer.bColor
+	tColor = tColor or buffer.tColor
     for character in string.gmatch(text,".") do
       local p = buffer[buffer.layer][buffer.x][buffer.y]
       if not p
       or p.marker ~= character
-      or p.bColor ~= buffer.bColor
-      or p.tColor ~= buffer.tColor and character ~= " " then
+      or p.bColor ~= bColor
+      or p.tColor ~= tColor and character ~= " " then
         buffer[buffer.layer][buffer.x][buffer.y] = {
-          bColor = buffer.bColor,
-          tColor = buffer.tColor,
+          bColor = bColor,
+          tColor = tColor,
           marker = character,
         }
         if buffer.layer == buffer:getTop(buffer.x,buffer.y) then
