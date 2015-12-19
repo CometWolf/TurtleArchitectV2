@@ -83,7 +83,7 @@ function checkUsage(blueprint,tLayers)
       end
     end
     loop = loop+1
-    if loop%100 == 0 then
+    if loop%1000 == 0 then
       sleep(0.05)
     end
   end
@@ -155,7 +155,7 @@ Load?]],
   local fuelUsage = tUsage.fuel
   tUsage.fuel = nil
   for k,v in pairs(tUsage) do
-    if not tBlueprint.colorSlots[k] or type(tBlueprint.colorSlots[k]) ~= "number" then
+    if (not tBlueprint.colorSlots[k] or type(tBlueprint.colorSlots[k]) ~= "number") and k ~= "X" then
       if not assignColorSlots(k) then
         return false
       end

@@ -66,6 +66,7 @@ function renderGrid() --renders grid overlay and borders
   view.eX = view.sX+tTerm.canvas.tX
   view.eZ = view.sZ+tTerm.canvas.tZ
   scroll()
+  tBlueprint[tTerm.scroll.layer]:render()
 end
 
 function removeGrid() --removes the grid border and overlay

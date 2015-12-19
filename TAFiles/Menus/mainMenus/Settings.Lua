@@ -120,8 +120,8 @@ Built draw mode: ]]..(tMode.builtDraw and "ON" or "OFF"),
         file:write("  grid = false,",line)
         file:save()
       else
-        renderGrid()
         tMode.grid = true
+        renderGrid()
         local file = class.fileTable.new(tFile.settings)
         local line = file:find("  grid = false,",true)
         file:write("  grid = true,",line)
