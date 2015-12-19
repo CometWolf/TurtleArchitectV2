@@ -212,6 +212,14 @@ elseif term.isColor() then
       break
     end
   end
+  if commands then
+    local x,y,z = commands.getBlockPosition()
+    tPos = {
+      x = x,
+      z = z,
+      y = y
+    }
+  end
 else
   error("Turtle Architect is incompatible with regular computers!",0)
 end
@@ -236,8 +244,16 @@ for _k,file in pairs(fs.list(tFile.menuFolder)) do
 end
 
 --load program functions
-for _k,file in pairs(fs.list(tFile.functionFolder)) do
-  loadFile(tFile.functionFolder.."/"..file,progEnv)
+do
+  local tIgnore = {
+    ["Turtle.lua"] = (commands and true),
+    ["Commands.lua"] = (not commands)
+  }
+  for _k,file in pairs(fs.list(tFile.functionFolder)) do
+    if not tIgnore[file] then
+      loadFile(tFile.functionFolder.."/"..file,progEnv)
+    end
+  end
 end
 --[[----------------------------------------------------------------------------------------------------------
 Event handlers

@@ -1,7 +1,8 @@
 local main = { --note that the menus are numbered from the bottom and up
-  [6] = "Blueprint",
-  [5] = "Layer",
-  [4] = "Tools",
+  [7] = "Blueprint",
+  [6] = "Layer",
+  [5] = "Tools",
+  [4] = "Commands",
   [3] = "Turtle",
   [2] = "Sync",
   [1] = "Settings",
