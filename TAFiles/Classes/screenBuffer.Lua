@@ -121,10 +121,6 @@ screenBuffer = {
     x = x or buffer.x
     y = y or buffer.y
     mColor = mColor or color
-    if type(mColor) ~= "number" then
-      debug(mColor)
-      error("lol",2)
-    end
     local p = buffer[buffer.layer][x][y]
     if not p
     or p.bColor ~= color
@@ -248,10 +244,10 @@ screenBuffer = {
     end
   end,
   redraw = function(buffer)
-    for iX = 1,tTerm.screen.x do
-      for iY = 1,tTerm.screen.y do
+    for iY = 1,tTerm.screen.y do
+      term.setCursorPos(1,iY)
+      for iX = 1,tTerm.screen.x do
         local c = buffer[buffer:getTop(iX,iY)][iX][iY]
-        term.setCursorPos(iX,iY)
         term.setBackgroundColor(c.bColor)
         term.setTextColor(c.tColor)
         term.write(c.marker)

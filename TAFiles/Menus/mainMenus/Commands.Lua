@@ -2,53 +2,16 @@ local menu
 menu = {
   enabled = commands and true,
   [1] = {
-    name = "Move construct...",
-    enabled = false,
-    help = function()
-      window.text"Moves an already constructed blueprint to the specified coordinates"
-    end,
-    func = function()
-      local button, tRes = window.text(
-        "Move to coordinates...",
-        {
-          "Cancel",
-          "Ok"
-        },
-        {
-          {
-            name = "X",
-            value = cTurtle.tPos.x,
-            accepted = "[-+%d]"
-          },
-          {
-            name = "Y",
-            value = cTurtle.tPos.y,
-            accepted = "[-+%d]"
-          },
-          {
-            name = "Z",
-            value = cTurtle.tPos.z,
-            accepted = "[-+%d]"
-          },
-        }
-      )
-      if button == "Ok" then
-        screen:refresh()
-        cTurtle.moveToXYZ(tRes.X,tRes.Y,tRes.Z)
-      end
-    end
-  },
-  [2] = {
     name = "Scan construct...",
-    enabled = false,
+    enabled = true,
     help = function()
       window.text"Scans an already built structure and imports it into TA. Block colors will be random."
     end,
     func = function()
-      
+      scan()
     end
   },
-  [3] = {
+  [2] = {
     name = "Build blueprint...",
     enabled = true,
     help = function()
@@ -56,6 +19,16 @@ menu = {
     end,
     func = function()
       build(tBlueprint)
+    end
+  },
+  [3] = {
+    name = "Remove construct...",
+    enabled = true,
+    help = function()
+      window.text"Uses air instead of blocks to build the loaded blueprint. Mainly used to remove already built structures."
+    end,
+    func = function()
+      build(tBlueprint,true)
     end
   },
 }

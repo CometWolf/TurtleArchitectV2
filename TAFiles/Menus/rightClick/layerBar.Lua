@@ -126,7 +126,7 @@ menu = {
           end
         else
           iBlueprint = tBlueprint.load(fileName)
-          if not fs.exists(fileName) then
+          if not fs.exists(fileName..".TAb") then
             button,tRes,reInput = reInput(fileName.." does not exist!")
           else
             button = "Success"
@@ -138,15 +138,13 @@ menu = {
           elseif not iBlueprint[tRes.To] then
             button,tRes,reInput = reInput("The layer "..tRes.To.." does not exist in the blueprint "..tRes.Blueprint.."!")
           else
-            while #tBlueprint < tRes.Into do
-              tBlueprint[#tBlueprint+1] = class.layer.new()
-            end
             for i=tRes.From,tRes.To do
-              local layer = tRes.Into+i-tRes.From
-              table.insert(tBlueprint,iBlueprint[i]:copy(),layer)
+              local layer = layerBar.prevSelected+i-tRes.From
+              table.insert(tBlueprint,layer,iBlueprint[i]:copy())
             end
             scroll()
             sync({blueprint = tBlueprint,blueprintName = tFile.blueprint},"Blueprint load")
+            return
           end
         end
       end
