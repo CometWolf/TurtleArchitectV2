@@ -259,9 +259,27 @@ end
 Event handlers
 ----------------------------------------------------------------------------------------------------------]]--
 eventHandler = loadFile(tFile.eventHandlerFolder.."/eventHandler.Lua")
+local firstRun = true
 local execution = function()
-  while rawget(screen,1) do --clear buffer for redraw, incase of crash
-    screen:delLayer(1)
+  if not firstRun then
+    while rawget(screen,1) do --clear buffer for redraw, incase of crash
+      screen:delLayer(1)
+    end
+    if tMode.grid then
+      removeGrid()
+      renderGrid()
+    end
+    if tMode.layerBar then 
+      closeLayerBar()
+      openLayerBar()
+    end
+  else
+    if tMode.grid then 
+      renderGrid()
+    end
+    if tMode.layerBar then
+      openLayerBar()
+    end
   end
   eventHandler.switch(eventHandler.main)
   tBlueprint[1] = tBlueprint[1] or class.layer.new()
@@ -269,18 +287,12 @@ local execution = function()
   tTimers.blink.toggle = true
   renderSideBar()
   --renderBottomBar() --sidebar calls this on the first call anyways.
-  if tMode.grid then
-    removeGrid()
-    renderGrid()
-  end
-  if tMode.layerBar then
-    openLayerBar()
-  end
   tBlueprint[tTerm.scroll.layer]:render()
   if turtle and tArg[2] == "-r" then
     build(tBlueprint,true)
     tArg[2] = nil
-  end
+  end 
+  firstRun = false
   while true do
     eventHandler.pull()
   end
