@@ -125,7 +125,7 @@ layer = { --layer class
     for nX = x.min,x.max do
       local vX = layer[nX]
       for nZ,vZ in pairs(vX) do
-        if nZ >= z.min and nZ <= z.max then
+        if nZ >= z.min and nZ <= z.max and vZ ~= "X" then
           vX[nZ] = vZ:lower()
         end
       end
