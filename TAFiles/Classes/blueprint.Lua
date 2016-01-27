@@ -155,14 +155,7 @@ blueprint = { --blueprint class
       z.max = math.max(z1,z2)
       z.min = math.min(z1,z2)
     end
-    local colorSlots = {}
-    for k,v in pairs(cBlueprint.colorSlots) do
-      colorSlots[k] = {}
-      for k2,v2 in pairs(v) do
-        colorSlots[k][k2] = v2
-      end
-    end
-    local copy = blueprint.new({colorSlots = colorSlots})
+    local copy = blueprint.new({colorSlots = table.deepCopy(cBlueprint.colorSlots)})
     for nL=1,#cBlueprint do
       copy[nL] = class.layer.new()
       for nX,vX in pairs(cBlueprint[nL]) do

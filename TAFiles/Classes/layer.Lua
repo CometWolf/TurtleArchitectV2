@@ -17,13 +17,13 @@ layer = { --layer class
   end,
   size = function(layer,dir)
     local x,z = 0,0
-    for nX,vX in pairs(layer) do
-      local nZ = vX:size()
-      if nZ > 0 then
-        x = math.max(x,nX)
-        z = math.max(z,nZ)
+      for nX,vX in pairs(layer) do
+        local nZ = type(vX) == "table" and class.x.size(vX) or #vX
+        if nZ > 0 then
+          x = math.max(x,nX)
+          z = math.max(z,nZ)
+        end
       end
-    end
     return dir == "x" and x or dir == "z" and z or x,z
   end,
   copy = function(layer,x1,z1,x2,z2,clipboard)
