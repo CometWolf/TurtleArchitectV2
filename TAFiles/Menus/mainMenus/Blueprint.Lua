@@ -366,6 +366,40 @@ menu = {
     end
   },
   [7] = {
+    name = "Rotate",
+    enabled = true,
+    help = function()
+      window.text"Rotate the blueprint along a coordinal axis (X, Y or Z)."
+    end,
+    func = function()
+      local button,selected = window.scroll(
+        "Select which axis to view from",
+        {
+          {
+            text = "X",
+            selected = tBlueprint.orientation == "X"
+          },
+          {
+            text = "Y",
+            selected = tBlueprint.orientation == "Y",
+          },
+          {
+            text = "Z",
+            selected = tBlueprint.orientation == "Z"
+          }
+        }
+      )
+      if button == "Cancel" then
+        return
+      end
+      tBlueprint = tBlueprint:rotate(selected)
+      scroll(1,nil,nil,nil,true)
+      if tMode.layerBar then
+        renderLayerBar(true)
+      end
+    end
+  },
+  [8] = {
     name = "Edit slot data...",
     enabled = true,
     help = function()
@@ -376,7 +410,7 @@ menu = {
       sync({colorSlots = tBlueprint.colorSlots},"Colorslots load")
     end
   },
-  [8] = {
+  [9] = {
     name = "Mark built",
     enabled = true,
     help = function()
@@ -405,7 +439,7 @@ menu = {
       end
     end
   },
-  [9] = {
+  [10] = {
     name = "Mark unbuilt",
     enabled = true,
     help = function()
@@ -429,7 +463,7 @@ menu = {
       sync({blueprint = true},"Mark unbuilt")
     end
   },
-  [10] = {
+  [11] = {
     name = "Check usage",
     enabled = true,
     help = function()
