@@ -366,7 +366,7 @@ menu = {
     end
   },
   [7] = {
-    name = "Rotate",
+    name = "Rotate...",
     enabled = true,
     help = function()
       window.text"Rotate the blueprint along a coordinal axis (X, Y or Z)."
