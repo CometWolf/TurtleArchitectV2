@@ -448,7 +448,7 @@ function build(blueprint,auto)
     )
     if button == "Yes" or button == "Ok" then
       local file = class.fileTable.new("/startup")
-      if not file:find([[shell\.run("]]..tFile.program.." .- -r") then
+      if not file:find("--Turtle Architect auto recovery") then
         file:write(
 [[--Turtle Architect auto recovery
 if fs.exists("]]..tFile.blueprint..[[.TAo") then
@@ -457,6 +457,7 @@ end]]
         )
         file:save()
       end
+      auto = true
     end
   else
     tOngoing = loadProgress(tFile.blueprint)
