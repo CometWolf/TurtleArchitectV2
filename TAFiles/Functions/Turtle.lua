@@ -119,7 +119,7 @@ function checkUsage(blueprint,tLayers)
       for nZ,block in pairs(vX) do
         local nX = nX
         while block do
-          if block:match"[%lX]"
+          if block:match"[%lXS]"
           and not placed[nL][nX][nZ] then
             tUsage.fuel = math.abs(nX-tPos.x+math.abs(nZ-tPos.z))+tUsage.fuel
             tPos.z = nZ
@@ -473,6 +473,7 @@ end]]
   local revBuildDir = dirY == "+" and "Y+" or "Y-"
   local blockAbove
   local saveCount = 0
+  local scanMode = blueprint.colorSlots.S 
   local function moveTo(nL,nX,nZ,skipCheck)
     local mL = tonumber(dirY..nL-1)
     local mX = tonumber(dirX..nX-1)
@@ -543,7 +544,59 @@ end]]
         local block = blueprint[nL][nX][nZ]
         local nX = nX
         while block do
-          if block:match"%l" then --unbuilt block
+          if scanMode then
+            if block == "S" then --scan block
+              if not blockAbove then
+                moveTo(nL,nX,nZ)
+              end
+              if cTurtle.detect(blockAbove and revBuildDir or buildDir) then
+                local identified
+                for i,slot in ipairs(blueprint.colorSlots.S) do
+                  if cTurtle.compare(buildDir,slot) then
+                    identified = slot
+                    break
+                  end
+                end
+                identified = identified and colorKey[2^identified] or "X"
+                blueprint[nL][nX][nZ] = identified
+                saveCount = saveCount+1
+                if saveCount >= 25 then
+                  blueprint:save(tFile.blueprint,true)
+                  saveCount = 0
+                end
+                sync(
+                  {
+                    layer = nL,
+                    x = nX,
+                    z = nZ,
+                    color = identified,
+                    isBuilding = true
+                  },
+                  "Point"
+                )
+                scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+                screen:refresh()
+              else
+                blueprint[nL][nX][nZ] = nil
+                saveCount = saveCount+1
+                if saveCount >= 25 then
+                  blueprint:save(tFile.blueprint,true)
+                  saveCount = 0
+                end
+                sync(
+                  {
+                    layer = nL,
+                    x = nX,
+                    z = nZ,
+                    isBuilding = true
+                  },
+                  "Point"
+                )
+                scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
+                screen:refresh()
+              end
+            end
+          elseif block:match"%l" then --unbuilt block
             moveTo(nL,nX,nZ)
             if not selectColor(block,2) then
               window.text("Construction cancelled.")
@@ -598,55 +651,6 @@ end]]
             )
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
-          elseif block == "S" then --scan block
-            if not blockAbove then
-              moveTo(nL,nX,nZ)
-            end
-            if cTurtle.detect(blockAbove and revBuildDir or buildDir) then
-              local identified
-              for i,slot in ipairs(blueprint.colorSlots.S[1]) do
-                if cTurtle.compare(buildDir,slot) then
-                  identified = i
-                  break
-                end
-              end
-              identified = identified and blueprint.colorSlots.S.color[identified] or blueprint.colorsSlots.S.color.unidentified
-              blueprint[nL][nX][nZ] = identified
-              if saveCount >= 25 then
-                blueprint:save(tFile.blueprint,true)
-                saveCount = 0
-              end
-              sync(
-                {
-                  layer = nL,
-                  x = nX,
-                  z = nZ,
-                  color = identified,
-                  isBuilding = true
-                },
-                "Point"
-              )
-              scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
-              screen:refresh()
-            else
-              blueprint[nL][nX][nZ] = nil
-              saveCount = saveCount+1
-              if saveCount >= 25 then
-                blueprint:save(tFile.blueprint,true)
-                saveCount = 0
-              end
-              sync(
-                {
-                  layer = nL,
-                  x = nX,
-                  z = nZ,
-                  isBuilding = true
-                },
-                "Point"
-              )
-              scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
-              screen:refresh()
-            end
           end
           if blockAbove and (blockAbove == "X" or blockAbove == "S") then
             nL = dirY == "+" and nL-2 or nL+2
@@ -657,7 +661,7 @@ end]]
               or (rawget(blueprint,nL-2) and blueprint[nL-2][nX][nZ])
             )
           end
-          if blockAbove and (blockAbove == "X" or blockAbove == "S") then
+          if blockAbove and (blockAbove == "X" and not scanMode or blockAbove == "S") then
             block = blockAbove
             nL = dirY == "+" and nL+2 or nL-2
           else
@@ -682,7 +686,7 @@ end]]
             for iX=iX1,iX2,iX3 do --scan for blocks in vicinity
               for iZ=iZ1,iZ2,iZ3 do
                 local newBlock = blueprint[nL][nX+iX][nZ+iZ]
-                if newBlock and newBlock:match"[XS%l]" then
+                if newBlock and newBlock:match"[XS%l]" and (not scanMode or newBlock == "S") then
                   nextBlock = {
                     b = newBlock,
                     nX = nX+iX,
