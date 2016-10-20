@@ -473,7 +473,7 @@ end]]
   local revBuildDir = dirY == "+" and "Y+" or "Y-"
   local blockAbove
   local saveCount = 0
-  local scanMode = blueprint.colorSlots.S 
+  local scanMode = blueprint.colorSlots.S and blueprint.colorSlots.S[1]
   local function moveTo(nL,nX,nZ,skipCheck)
     local mL = tonumber(dirY..nL-1)
     local mX = tonumber(dirX..nX-1)
