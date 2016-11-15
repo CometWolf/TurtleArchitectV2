@@ -5,6 +5,10 @@ rednet = setmetatable(
       content.rID = type(rID) == "table" and rID or {[rID] = true}
       content.sID = os.id
       content.event = event
+      -- Fields used by repeaters
+      content.nMessageID = math.random( 1, 2147483647 )
+      content.nRecipient = modemChannel
+      -- End Fields used by repeaters
       local clear
       for id in pairs(content.rID) do
         local timerId
@@ -46,6 +50,11 @@ rednet = setmetatable(
       end
       modem.transmit(
         modemChannel,
+        modemChannel,
+        content
+      )
+      modem.transmit( -- Also transmit on the repeater channel
+        65533,
         modemChannel,
         content
       )
