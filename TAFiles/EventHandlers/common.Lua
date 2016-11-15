@@ -1,3 +1,7 @@
+-- Variables used for the modem_message handler
+local modem_messageMessages = {}
+local modem_messageTimeouts = {}
+
 local common
 common = { --common event handlers, these are always active
   turtle_response = function(tEvent)
@@ -63,6 +67,10 @@ common = { --common event handlers, these are always active
     elseif os.sleepTimer[timerID] then
       os.sleepTimer[timerID]()
       return true
+    elseif modem_messageTimeouts[timerID] then
+      local messageID = modem_messageTimeouts[ timerID ]
+      modem_messageTimeouts[ timerID ] = nil
+      modem_messageMessages[ messageID ] = nil
     end
   end,
   peripheral = function(tEvent)
@@ -244,6 +252,15 @@ common = { --common event handlers, these are always active
       local event = data.event
       local senderId = data.sID
       local type = data.type
+      if data.nMessageID ~= nil then
+        if modem_messageMessages[ data.nMessageID ] then
+          -- The message is a duplicate
+          return true
+        else
+          modem_messageMessages[ data.nMessageID ] = true
+          modem_messageTimeouts[ os.startTimer( 30 ) ] = data.nMessageID
+        end
+      end
       if event == "Success" then
         local func = tTransmissions.success[type][senderId]
         if func then
