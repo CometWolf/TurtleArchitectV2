@@ -466,6 +466,7 @@ end]]
   screen:refresh()
   local digSlot = blueprint.colorSlots.X[1] or 1
   tOngoing.dropoff = #blueprint.colorSlots.X > 1 and tOngoing.enderChest and blueprint.colorSlots.X[#blueprint.colorSlots.X]
+  table.sort(blueprint.colorSlots.X)
   local dirX = tOngoing.dir.x
   local dirZ = tOngoing.dir.z
   local dirY = tOngoing.dir.y
@@ -622,10 +623,10 @@ end]]
             scroll(nL,nX-math.floor(tTerm.canvas.tX/2),nZ-math.floor(tTerm.canvas.tZ/2),true,true)
             screen:refresh()
           elseif block == "X" then --break block
+            turtle.select(blueprint.colorSlots.X[1])
             if not blockAbove then
               moveTo(nL,nX,nZ)
             end
-            turtle.select(blueprint.colorSlots.X[1])
             if tOngoing.dropoff then
               if turtle.getItemCount(tOngoing.dropoff) > 0 then
                 cTurtle.enderDropoff(cTurtle.tSettings.enderFuel,tBlueprint.colorSlots.X,tBlueprint.colorSlots.X)
