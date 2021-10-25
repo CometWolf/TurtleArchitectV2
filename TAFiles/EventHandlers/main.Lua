@@ -31,40 +31,40 @@ main = {
   end,
   key = function(tEvent)
     local key = tEvent[2]
-    if key == 203 then --left arrow
+    if key == keys.left then --left arrow
       scroll(false,-1,0)
       return true
-    elseif key == 205 then --right arrow
+    elseif key == keys.right then --right arrow
       scroll(false,1,0)
       return true
-    elseif key == 208 then --down arrow
+    elseif key == keys.down then --down arrow
       scroll(false,0,1)
       return true
-    elseif key == 200 then --up arrow
+    elseif key == keys.up then --up arrow
       scroll(false,0,-1)
       return true
-    elseif key == 209 then --page down
+    elseif key == keys.pageDown then --page down
       scroll(tTerm.scroll.layer-1)
       return true
-    elseif key == 201 then --page up
+    elseif key == keys.pageUp then --page up
       scroll(tTerm.scroll.layer+1)
       return true
-    elseif key == 207 then --end
+    elseif key == keys["end"] then --end
       scroll(#tBlueprint)
       return true
-    elseif key == 199 then --home
+    elseif key == keys.home then --home
       scroll(1)
       return true
-    elseif key == 87 then -- F11
+    elseif key == keys.f11 then -- F11
       toggleMenus()
-    elseif key == 42
-    or key == 54 then --shift
+    elseif key == keys.leftShift
+    or key == keys.rightShift then --shift
       if not tTimers.shift.pressed then
         tTimers.shift.pressed = true
         tTimers.shift.start()
         return true
       end
-    elseif key == 29 then --left ctrl
+    elseif key == keys.leftCtrl then --left ctrl
       if not tTimers.ctrl.lPressed then
         tTimers.ctrl.lPressed = true
         tTimers.ctrl.start()
@@ -73,7 +73,7 @@ main = {
     elseif tTimers.ctrl.lPressed and ctrlShortcuts.active[key] then
       ctrlShortcuts.active[key](1)
       return true
-    elseif key == 157 then --right ctrl
+    elseif key == keys.rightCtrl then --right ctrl
       if not tTimers.ctrl.rPressed then
         tTimers.ctrl.rPressed = true
         tTimers.ctrl.start()
