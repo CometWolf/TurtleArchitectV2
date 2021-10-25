@@ -257,36 +257,36 @@ end
 
 ctrlShortcuts = { --ctrl+key shortcuts, left ctrl button = 1, right ctrl button = 2
   default = { --these are active by default
-    [48] = function(button) --B
+    [keys.b] = function(button) --B
       shortcutChange("Brush",nil,button)
     end,
-    [33] = function(button) --F
+    [keys.f] = function(button) --F
       shortcutChange("Fill",nil,button)
     end,
-    [25] = function(button) --P
+    [keys.p] = function(button) --P
       shortcutChange("Pipette",nil,button)
     end,
-    [31] = function(button) --S
+    [keys.s] = function(button) --S
       if tTool[1].tool == "Select" then
         shortcutChange("Select",true,button)
       else
         tTool.selected.Select()
       end
     end,
-    [46] = function(button) --C
+    [keys.c] = function(button) --C
       shortcutChange("Code",nil,button)
     end,
-    [38] = function(button) --L
+    [keys.l] = function(button) --L
       shortcutChange("Line",true,button)
     end,
-    [32] = function(button) --D
+    [keys.d] = function(button) --D
       shortcutChange("Drag",nil,button)
     end,
-    [49] = function() --N
+    [keys.n] = function() --N
       table.insert(tBlueprint,tTerm.scroll.layer+1,class.layer.new())
       scroll(tTerm.scroll.layer+1)
     end,
-    [35] = function() --H
+    [keys.h] = function() --H
       toggleMenus()
     end,
   },
