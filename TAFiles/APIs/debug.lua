@@ -15,7 +15,7 @@ debug = {
     while true do
       local tEvent = {os.pullEventRaw()}
       if tEvent[1] == "key" then
-        if tEvent[2] == 14 then
+        if tEvent[2] == keys.backspace then
           error("Quit",0)
         else
           return
