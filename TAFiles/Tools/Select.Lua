@@ -1,4 +1,4 @@
-local rightClickFunc = function(name,button) --used for modularity's sake
+.local rightClickFunc = function(name,button) --used for modularity's sake
   for _i,v in ipairs(tMenu.rightClick.select) do
     if v.name == name then
       return v.enabled() and v.func(button)
@@ -8,22 +8,22 @@ local rightClickFunc = function(name,button) --used for modularity's sake
 end
 
 local shortcuts = {
-  [46] = function(button) --C
+  [keys.c] = function(button) --C
     rightClickFunc"Copy"
   end,
-  [45] = function(button) --X
+  [keys.x] = function(button) --X
     rightClickFunc"Cut"
   end,
-  [47] = function(button) --V
+  [keys.v] = function(button) --V
     rightClickFunc"Paste"
   end,
-  [19] = function(button) --R
+  [keys.r] = function(button) --R
     rightClickFunc("Recolor",button)
   end,
-  [48] = function(button) --B
+  [keys.b] = function(button) --B
     rightClickFunc"Mark built"
   end,
-  [22] = function(button) --U
+  [keys.u] = function(button) --U
     rightClickFunc"Mark unbuilt"
   end,
 }

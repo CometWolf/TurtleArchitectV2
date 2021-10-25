@@ -277,7 +277,7 @@ window = {
         if tInputs.enabled then
           local field = tInputs[tInputs.enabled]
           --input box
-          if key == 14
+          if key == keys.backspace
           and field.cX > 0 then
             --backspace
             local curs = field.cX+field.scroll
@@ -287,28 +287,28 @@ window = {
             else
               field.cX = field.cX-1
             end
-          elseif key == 205 then --right arrow
+          elseif key == keys.right then --right arrow
             field.cX = field.cX+1
-          elseif key == 203 then --left arrow
+          elseif key == keys.left then --left arrow
             field.cX = field.cX-1
-          elseif key == 200 then --up arrow
+          elseif key == keys.up then --up arrow
             tInputs.enabled = math.max(1,tInputs.enabled-1)
-          elseif key == 208 then --down arrow
+          elseif key == keys.down then --down arrow
             tInputs.enabled = math.min(#tInputs,tInputs.enabled+1)
-          elseif key == 211 then --delete
+          elseif key == keys.delete then --delete
             local curs = field.cX+field.scroll
             if #field.value <= 1 and curs == 0 then
               field.value = ""
             else
               field.value = field.value:sub(1,curs)..field.value:sub(curs+2)
             end
-          elseif key == 207 then --end
+          elseif key == keys["end"] then --end
             field.cX = field.lX
             field.scroll = #field.value-field.lX
-          elseif key == 199 then --home
+          elseif key == keys.home then --home
             field.cX = 1
             field.scroll = 0
-          elseif key == 28 then --enter
+          elseif key == keys.enter then --enter
             if tInputs.enabled == #tInputs then
               return endExecution("Ok")
             else
@@ -317,7 +317,7 @@ window = {
           end
           refreshField(tInputs.enabled)
         else --no input boxes
-          if key == 28 then --enter
+          if key == keys.enter then --enter
             return endExecution("Ok")
           end
         end
